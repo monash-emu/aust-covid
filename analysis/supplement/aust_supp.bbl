@@ -1,0 +1,512 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global}
+    \entry{mossong2008}{article}{}
+      \name{author}{14}{}{%
+        {{hash=c86c9383a207bdeef570c48f3308584f}{%
+           family={Mossong},
+           familyi={M\bibinitperiod},
+           given={Joël},
+           giveni={J\bibinitperiod}}}%
+        {{hash=487a67f30be03f166cf202def585bf22}{%
+           family={Hens},
+           familyi={H\bibinitperiod},
+           given={Niel},
+           giveni={N\bibinitperiod}}}%
+        {{hash=165185e1eeadecd573532952f87ce8bd}{%
+           family={Jit},
+           familyi={J\bibinitperiod},
+           given={Mark},
+           giveni={M\bibinitperiod}}}%
+        {{hash=d46d397ed756c1504752fd2c25da9e21}{%
+           family={Beutels},
+           familyi={B\bibinitperiod},
+           given={Philippe},
+           giveni={P\bibinitperiod}}}%
+        {{hash=de0031ab6fe37d29337f269802f8ecfa}{%
+           family={Auranen},
+           familyi={A\bibinitperiod},
+           given={Kari},
+           giveni={K\bibinitperiod}}}%
+        {{hash=6d64fa03df57e80c4c10b1b8f20a9ffc}{%
+           family={Mikolajczyk},
+           familyi={M\bibinitperiod},
+           given={Rafael},
+           giveni={R\bibinitperiod}}}%
+        {{hash=c4fde0b206e36df01c6158bea69499ed}{%
+           family={Massari},
+           familyi={M\bibinitperiod},
+           given={Marco},
+           giveni={M\bibinitperiod}}}%
+        {{hash=5f6cc5cf2a827d543ced1eae0b8845be}{%
+           family={Salmaso},
+           familyi={S\bibinitperiod},
+           given={Stefania},
+           giveni={S\bibinitperiod}}}%
+        {{hash=fae962b5c1d367d24bf98af874345255}{%
+           family={Tomba},
+           familyi={T\bibinitperiod},
+           given={Gianpaolo\bibnamedelima Scalia},
+           giveni={G\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+        {{hash=7c6393cc64eb6f09cd4765ae4833ef61}{%
+           family={Wallinga},
+           familyi={W\bibinitperiod},
+           given={Jacco},
+           giveni={J\bibinitperiod}}}%
+        {{hash=6ed6e819a97fdb2bd20f09a28388a9f1}{%
+           family={Heijne},
+           familyi={H\bibinitperiod},
+           given={Janneke},
+           giveni={J\bibinitperiod}}}%
+        {{hash=fe92eee770dbd25fb84ea51a0da435d3}{%
+           family={Sadkowska-Todys},
+           familyi={S\bibinithyphendelim T\bibinitperiod},
+           given={Malgorzata},
+           giveni={M\bibinitperiod}}}%
+        {{hash=43083cc6cdc90f845c3286220571fc83}{%
+           family={Rosinska},
+           familyi={R\bibinitperiod},
+           given={Magdalena},
+           giveni={M\bibinitperiod}}}%
+        {{hash=6c1caa99906312db238b4bcd5056a17a}{%
+           family={Edmunds},
+           familyi={E\bibinitperiod},
+           given={W.\bibnamedelimi John},
+           giveni={W\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \strng{namehash}{2e8e729236f1409cd0b3b50b1022974f}
+      \strng{fullhash}{dbbd42c0103dcea47989513df361860f}
+      \strng{bibnamehash}{2e8e729236f1409cd0b3b50b1022974f}
+      \strng{authorbibnamehash}{2e8e729236f1409cd0b3b50b1022974f}
+      \strng{authornamehash}{2e8e729236f1409cd0b3b50b1022974f}
+      \strng{authorfullhash}{dbbd42c0103dcea47989513df361860f}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{PLOS Medicine}
+      \field{number}{3}
+      \field{title}{Social Contacts and Mixing Patterns Relevant to the Spread of Infectious Diseases}
+      \field{type}{Journal Article}
+      \field{volume}{5}
+      \field{year}{2008}
+      \field{pages}{e74}
+      \range{pages}{-1}
+      \verb{doi}
+      \verb 10.1371/journal.pmed.0050074
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1371/journal.pmed.0050074
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1371/journal.pmed.0050074
+      \endverb
+    \endentry
+    \entry{bi2020}{article}{}
+      \name{author}{21}{}{%
+        {{hash=5ba018d7b9de112e25033bfabc090aef}{%
+           family={Bi},
+           familyi={B\bibinitperiod},
+           given={Q.},
+           giveni={Q\bibinitperiod}}}%
+        {{hash=c84333257e5fef7e25ef4f7a4111077c}{%
+           family={Wu},
+           familyi={W\bibinitperiod},
+           given={Y.},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=c28311428fcdbbf57e019f4e81d6746e}{%
+           family={Mei},
+           familyi={M\bibinitperiod},
+           given={S.},
+           giveni={S\bibinitperiod}}}%
+        {{hash=7426d66fc1a8c205c657b6ad2f2c3961}{%
+           family={Ye},
+           familyi={Y\bibinitperiod},
+           given={C.},
+           giveni={C\bibinitperiod}}}%
+        {{hash=13f776a6de4860a4aca3a0b856ae3155}{%
+           family={Zou},
+           familyi={Z\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=5ee5d3d5470ac29a2e7c8df70ed54725}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Z.},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=4b44bba1743c2ad874f7d960887af663}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=582467bbf15555b58c0c28c0211d49aa}{%
+           family={Wei},
+           familyi={W\bibinitperiod},
+           given={L.},
+           giveni={L\bibinitperiod}}}%
+        {{hash=37a93f1fae60abe8f0e5de483310c151}{%
+           family={Truelove},
+           familyi={T\bibinitperiod},
+           given={S.\bibnamedelimi A.},
+           giveni={S\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=6987c26bf5f9b6e119893b5d925c7b8c}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={T.},
+           giveni={T\bibinitperiod}}}%
+        {{hash=fd45ec1ffa48e8b38c950f320f981dc3}{%
+           family={Gao},
+           familyi={G\bibinitperiod},
+           given={W.},
+           giveni={W\bibinitperiod}}}%
+        {{hash=397fae6017d2c44d3d304cf89c2a48ce}{%
+           family={Cheng},
+           familyi={C\bibinitperiod},
+           given={C.},
+           giveni={C\bibinitperiod}}}%
+        {{hash=f5b6a698669c62232fdf42115d528d64}{%
+           family={Tang},
+           familyi={T\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=9113b5835843309fa06504ea7ee28c1d}{%
+           family={Wu},
+           familyi={W\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=6e16aa4068db42a4d6a601d334f40032}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={B.},
+           giveni={B\bibinitperiod}}}%
+        {{hash=6d4d76d3dacb90eb76d32a306c6c87fd}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={S.},
+           giveni={S\bibinitperiod}}}%
+        {{hash=c67619924cd2ecb1e99e1432d09d6dbd}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Y.},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=8afab9bdc9b292debbeb136dfd97036c}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={J.},
+           giveni={J\bibinitperiod}}}%
+        {{hash=dc76eef66c89440e4e5275de607ffbfe}{%
+           family={Ma},
+           familyi={M\bibinitperiod},
+           given={T.},
+           giveni={T\bibinitperiod}}}%
+        {{hash=4c89df15d1bcc6830240eba85571dc18}{%
+           family={Lessler},
+           familyi={L\bibinitperiod},
+           given={J.},
+           giveni={J\bibinitperiod}}}%
+        {{hash=adb294950d2b5ceca2524a86b1777150}{%
+           family={Feng},
+           familyi={F\bibinitperiod},
+           given={T.},
+           giveni={T\bibinitperiod}}}%
+      }
+      \strng{namehash}{fc69cf616f507c270b9c7393b1720fb2}
+      \strng{fullhash}{5f6a78b14097c9b7ad05e5013ab40d4b}
+      \strng{bibnamehash}{fc69cf616f507c270b9c7393b1720fb2}
+      \strng{authorbibnamehash}{fc69cf616f507c270b9c7393b1720fb2}
+      \strng{authornamehash}{fc69cf616f507c270b9c7393b1720fb2}
+      \strng{authorfullhash}{5f6a78b14097c9b7ad05e5013ab40d4b}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issn}{1474-4457}
+      \field{journaltitle}{Lancet Infect Dis}
+      \field{number}{8}
+      \field{title}{Epidemiology and transmission of COVID-19 in 391 cases and 1286 of their close contacts in Shenzhen, China: a retrospective cohort study}
+      \field{type}{Journal Article}
+      \field{volume}{20}
+      \field{year}{2020}
+      \field{pages}{911\bibrangedash 919}
+      \range{pages}{9}
+      \verb{doi}
+      \verb 10.1016/S1473-3099(20)30287-5
+      \endverb
+      \verb{urlraw}
+      \verb https://www.ncbi.nlm.nih.gov/pubmed/32353347
+      \endverb
+      \verb{url}
+      \verb https://www.ncbi.nlm.nih.gov/pubmed/32353347
+      \endverb
+    \endentry
+    \entry{he2020}{article}{}
+      \name{author}{23}{}{%
+        {{hash=b5fceee09cbf412999a05dbeffc3dd5b}{%
+           family={He},
+           familyi={H\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=3c6c23a313b56c93ca637ec3d534caa7}{%
+           family={Lau},
+           familyi={L\bibinitperiod},
+           given={E.\bibnamedelimi H.\bibnamedelimi Y.},
+           giveni={E\bibinitperiod\bibinitdelim H\bibinitperiod\bibinitdelim Y\bibinitperiod}}}%
+        {{hash=4cfdeeeca5cdac9599af6e56039efa6b}{%
+           family={Wu},
+           familyi={W\bibinitperiod},
+           given={P.},
+           giveni={P\bibinitperiod}}}%
+        {{hash=e927b4d2d42e8b6ec4d8c52f1a441f7d}{%
+           family={Deng},
+           familyi={D\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=3702f1c146e64a6c91fc47b81ea59fc7}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={J.},
+           giveni={J\bibinitperiod}}}%
+        {{hash=27e1c3ce808aa1023e2653b6ecb09438}{%
+           family={Hao},
+           familyi={H\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=13d89971bc366ae6ed22124a609a897b}{%
+           family={Lau},
+           familyi={L\bibinitperiod},
+           given={Y.\bibnamedelimi C.},
+           giveni={Y\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
+        {{hash=0be1babc929d084b2184322277f3d8ba}{%
+           family={Wong},
+           familyi={W\bibinitperiod},
+           given={J.\bibnamedelimi Y.},
+           giveni={J\bibinitperiod\bibinitdelim Y\bibinitperiod}}}%
+        {{hash=caf8d6bcd06b0fad88b10276ee14543a}{%
+           family={Guan},
+           familyi={G\bibinitperiod},
+           given={Y.},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=ad55da739d00c0b305a055e103b0c50f}{%
+           family={Tan},
+           familyi={T\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=3c15d0281d60ded5e741a366c98aa243}{%
+           family={Mo},
+           familyi={M\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=ff38b98d2dc65002f66d028a85b9d58d}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Y.},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=d15e051486e7dfa52004a3efd3397dda}{%
+           family={Liao},
+           familyi={L\bibinitperiod},
+           given={B.},
+           giveni={B\bibinitperiod}}}%
+        {{hash=2bdd48dc68b3d7c9d63e3844f2459fd6}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={W.},
+           giveni={W\bibinitperiod}}}%
+        {{hash=2fb4960a077810dfdda80e2725b80ed1}{%
+           family={Hu},
+           familyi={H\bibinitperiod},
+           given={F.},
+           giveni={F\bibinitperiod}}}%
+        {{hash=602a29bc69d6755cee5ce57fb171886f}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Q.},
+           giveni={Q\bibinitperiod}}}%
+        {{hash=933efa88cdd3918ff5244918e6b0cf08}{%
+           family={Zhong},
+           familyi={Z\bibinitperiod},
+           given={M.},
+           giveni={M\bibinitperiod}}}%
+        {{hash=c84333257e5fef7e25ef4f7a4111077c}{%
+           family={Wu},
+           familyi={W\bibinitperiod},
+           given={Y.},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=0d4a8cff3cc7aa7cf7a8e2b46e93005e}{%
+           family={Zhao},
+           familyi={Z\bibinitperiod},
+           given={L.},
+           giveni={L\bibinitperiod}}}%
+        {{hash=6e8985d8cb66644995173e9d72791746}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={F.},
+           giveni={F\bibinitperiod}}}%
+        {{hash=cdbd186fcc2f04e0b294e5ed0dacbd9f}{%
+           family={Cowling},
+           familyi={C\bibinitperiod},
+           given={B.\bibnamedelimi J.},
+           giveni={B\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=6026ccfc90df3a5fa9c8628348d98cc0}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={F.},
+           giveni={F\bibinitperiod}}}%
+        {{hash=22f0fb788bdade16e3291760cd2e9b19}{%
+           family={Leung},
+           familyi={L\bibinitperiod},
+           given={G.\bibnamedelimi M.},
+           giveni={G\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+      }
+      \strng{namehash}{827d0fcb541b59c93a4c0bd6a518b6d7}
+      \strng{fullhash}{ea729ab795c52b056f031d64b5f8539c}
+      \strng{bibnamehash}{827d0fcb541b59c93a4c0bd6a518b6d7}
+      \strng{authorbibnamehash}{827d0fcb541b59c93a4c0bd6a518b6d7}
+      \strng{authornamehash}{827d0fcb541b59c93a4c0bd6a518b6d7}
+      \strng{authorfullhash}{ea729ab795c52b056f031d64b5f8539c}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issn}{1546-170X}
+      \field{journaltitle}{Nat Med}
+      \field{number}{5}
+      \field{title}{Temporal dynamics in viral shedding and transmissibility of COVID-19}
+      \field{type}{Journal Article}
+      \field{volume}{26}
+      \field{year}{2020}
+      \field{pages}{672\bibrangedash 675}
+      \range{pages}{4}
+      \verb{doi}
+      \verb 10.1038/s41591-020-0869-5
+      \endverb
+      \verb{urlraw}
+      \verb https://www.ncbi.nlm.nih.gov/pubmed/32296168
+      \endverb
+      \verb{url}
+      \verb https://www.ncbi.nlm.nih.gov/pubmed/32296168
+      \endverb
+    \endentry
+    \entry{byrne2020}{article}{}
+      \name{author}{14}{}{%
+        {{hash=2dbeb8e2837af462c687e0ddbecc4cdf}{%
+           family={Byrne},
+           familyi={B\bibinitperiod},
+           given={A.\bibnamedelimi W.},
+           giveni={A\bibinitperiod\bibinitdelim W\bibinitperiod}}}%
+        {{hash=c60c60443f9eb329ff4a9e13b2169be1}{%
+           family={McEvoy},
+           familyi={M\bibinitperiod},
+           given={D.},
+           giveni={D\bibinitperiod}}}%
+        {{hash=bb98bccf7276f694720564dad68644e9}{%
+           family={Collins},
+           familyi={C\bibinitperiod},
+           given={A.\bibnamedelimi B.},
+           giveni={A\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{hash=f4eabaaa2a03dabad14d3d3cbfcdb736}{%
+           family={Hunt},
+           familyi={H\bibinitperiod},
+           given={K.},
+           giveni={K\bibinitperiod}}}%
+        {{hash=914cb603c794011c2e763a1edf12f377}{%
+           family={Casey},
+           familyi={C\bibinitperiod},
+           given={M.},
+           giveni={M\bibinitperiod}}}%
+        {{hash=17194ac1c4213ffedfeb50cf50ed0599}{%
+           family={Barber},
+           familyi={B\bibinitperiod},
+           given={A.},
+           giveni={A\bibinitperiod}}}%
+        {{hash=b14d7fd2c67f6ec46fe73927ccaa786b}{%
+           family={Butler},
+           familyi={B\bibinitperiod},
+           given={F.},
+           giveni={F\bibinitperiod}}}%
+        {{hash=713a6c256edba266bd022c13c0b020d1}{%
+           family={Griffin},
+           familyi={G\bibinitperiod},
+           given={J.},
+           giveni={J\bibinitperiod}}}%
+        {{hash=f0fd478caf812d9eaed7ae187c166e82}{%
+           family={Lane},
+           familyi={L\bibinitperiod},
+           given={E.\bibnamedelimi A.},
+           giveni={E\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=85158a805fee0ad89e99858d53f6a919}{%
+           family={McAloon},
+           familyi={M\bibinitperiod},
+           given={C.},
+           giveni={C\bibinitperiod}}}%
+        {{hash=76f233db82d51e42d11123b1ab434d0f}{%
+           family={O'Brien},
+           familyi={O\bibinitperiod},
+           given={K.},
+           giveni={K\bibinitperiod}}}%
+        {{hash=5803093c4c6d8cc377a7278bd9c5c20b}{%
+           family={Wall},
+           familyi={W\bibinitperiod},
+           given={P.},
+           giveni={P\bibinitperiod}}}%
+        {{hash=0a517d9a81b153209af1a71a1db7d247}{%
+           family={Walsh},
+           familyi={W\bibinitperiod},
+           given={K.\bibnamedelimi A.},
+           giveni={K\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=44c5b6cdfdcfca551b9be358843ebf24}{%
+           family={More},
+           familyi={M\bibinitperiod},
+           given={S.\bibnamedelimi J.},
+           giveni={S\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \strng{namehash}{80b435e93799b7c82e410db54fdf6bc1}
+      \strng{fullhash}{15f31e7d5a068fe854f6eccba6aaea55}
+      \strng{bibnamehash}{80b435e93799b7c82e410db54fdf6bc1}
+      \strng{authorbibnamehash}{80b435e93799b7c82e410db54fdf6bc1}
+      \strng{authornamehash}{80b435e93799b7c82e410db54fdf6bc1}
+      \strng{authorfullhash}{15f31e7d5a068fe854f6eccba6aaea55}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issn}{2044-6055}
+      \field{journaltitle}{BMJ Open}
+      \field{number}{8}
+      \field{title}{Inferred duration of infectious period of SARS-CoV-2: rapid scoping review and analysis of available evidence for asymptomatic and symptomatic COVID-19 cases}
+      \field{type}{Journal Article}
+      \field{volume}{10}
+      \field{year}{2020}
+      \field{pages}{e039856}
+      \range{pages}{-1}
+      \verb{doi}
+      \verb 10.1136/bmjopen-2020-039856
+      \endverb
+      \verb{urlraw}
+      \verb https://www.ncbi.nlm.nih.gov/pubmed/32759252
+      \endverb
+      \verb{url}
+      \verb https://www.ncbi.nlm.nih.gov/pubmed/32759252
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
