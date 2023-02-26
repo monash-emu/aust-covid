@@ -1,2 +1,3 @@
 ./analysis/supplement/*
+*.pyc
 *ipynb_checkpoints*
