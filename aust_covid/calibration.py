@@ -12,7 +12,7 @@ from aust_covid.doc_utils import DocumentedProcess, FigElement, TextElement, Tab
 from aust_covid.model import build_aust_model
 from estival.calibration.mcmc.adaptive import AdaptiveChain
 
-BASE_PATH = Path(__file__).parent.resolve()
+BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
 
 

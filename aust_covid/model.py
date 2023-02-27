@@ -13,7 +13,7 @@ from aust_covid.doc_utils import TextElement, FigElement, DocumentedProcess
 
 
 REF_DATE = datetime(2019, 12, 31)
-BASE_PATH = Path(__file__).parent.resolve()
+BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
 
 
