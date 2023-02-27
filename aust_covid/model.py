@@ -9,7 +9,7 @@ from jax import numpy as jnp
 from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
-from autumn.projects.austcovid.doc_utils import TextElement, FigElement, DocumentedProcess
+from aust_covid.doc_utils import TextElement, FigElement, DocumentedProcess
 
 
 REF_DATE = datetime(2019, 12, 31)
