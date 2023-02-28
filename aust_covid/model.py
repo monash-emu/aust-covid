@@ -285,20 +285,16 @@ class DocumentedAustModel(DocumentedProcess):
         Args:
             strains: The names of the strains to use
         """
-
-        strain_names_dict = {
-            "ba1": "BA.1",
-            "ba2": "BA.2",
-        }
+        strain_strings = list(strains.keys())
 
         # The strains we're working with
-        starting_strain = strains[0]  # BA.1
-        other_strains = strains[1:]  # The others, currently just BA.2
+        starting_strain = strain_strings[0]  # BA.1
+        other_strains = strain_strings[1:]  # The others, currently just BA.2
 
         # The stratification object
         compartments_to_stratify = [comp for comp in compartments if comp != "susceptible"]
         starting_compartment = compartments_to_stratify[0]
-        strain_strat = StrainStratification("strain", strains, compartments_to_stratify)
+        strain_strat = StrainStratification("strain", strain_strings, compartments_to_stratify)
 
         # The starting population split
         population_split = {starting_strain: 1.0}
@@ -307,9 +303,9 @@ class DocumentedAustModel(DocumentedProcess):
 
         if self.add_documentation:
             description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}. " \
-                f"including compartments to represent strains: {', '.join(strain_names_dict.values())}. " \
+                f"including compartments to represent strains: {', '.join(strains.values())}. " \
                 f"This was implemented using summer's `{StrainStratification.__name__}' class. " \
-                f"All of the starting infectious seed was assigned to the {strain_names_dict[starting_strain]} category " \
+                f"All of the starting infectious seed was assigned to the {strains[starting_strain]} category " \
                 f"within the {starting_compartment} category. "
             self.add_element_to_doc("Strain stratification", TextElement(description))
 
@@ -386,7 +382,10 @@ def build_aust_model(
     aust_model.add_age_stratification_to_model(compartments, age_strata, adjusted_matrix)
     
     # Strain stratification
-    strain_strata = ["ba1", "ba2"]
+    strain_strata = {
+        "ba1": "BA.1",
+        "ba2": "BA.2",
+    }
     strain_strat, starting_strain, other_strains = aust_model.get_strain_stratification(compartments, strain_strata)
     aust_model.adjust_strain_infectiousness(strain_strat, starting_strain, other_strains)
     aust_model.model.stratify_with(strain_strat)
