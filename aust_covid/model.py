@@ -44,19 +44,21 @@ class DocumentedAustModel(DocumentedProcess):
         end_date: datetime,
         compartments: list,
     ):
+        infectious_compartment = "infectious"
         self.model = CompartmentalModel(
             times=(
                 (start_date - REF_DATE).days, 
                 (end_date - REF_DATE).days,
             ),
             compartments=compartments,
-            infectious_compartments=["infectious"],
+            infectious_compartments=[infectious_compartment],
             ref_date=REF_DATE,
         )
 
         if self.add_documentation:
-            description = "The base model consists of three states, " \
-                "representing fully susceptible, infected (and infectious) and recovered persons. " \
+            description = f"The base model consists of {len(compartments)} states, " \
+                f"representing the following states: {', '.join([str(comp) for comp in compartments])}. " \
+                f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
                 f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
@@ -66,7 +68,7 @@ class DocumentedAustModel(DocumentedProcess):
         
         if self.add_documentation:
             description = f"The simulation starts with {str(population / 1e6)} million susceptible persons only, " \
-                "with infectious persons only introduced through strain seeding as described below. "
+                "with infectious persons then introduced through strain seeding as described below. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_infection_to_model(self):
