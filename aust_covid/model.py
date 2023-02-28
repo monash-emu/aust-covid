@@ -107,6 +107,31 @@ class DocumentedAustModel(DocumentedProcess):
                 "with the rate of transition calculated as the reciprocal of the infectious period."
             self.add_element_to_doc("General model construction", TextElement(description))
 
+    def add_immunity_wane_to_model(self):
+        process = "waning"
+        origin = "recovered"
+        destination = "waned"
+        self.model.add_transition_flow(process, 1.0 / Parameter("full_immune_period"), origin, destination)
+
+        if self.add_documentation:
+            description = "After recovery, previously infected persons are initially fully protected " \
+                f"from reinfection through natural immunity, but later progress to a '{destination}' state, " \
+                f"through a {process} process. " \
+                f"This occurs at a rate equal to the reciprocal of the period spent in the fully immune state. "
+            self.add_element_to_doc("General model construction", TextElement(description))
+
+    def add_reinfection_to_model(self):
+        process = "reinfection"
+        origin = "waned"
+        destination = "latent"
+        self.model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
+        
+        if self.add_documentation:
+            description = f"The {process} moves people from the {origin} " \
+                f"compartment to the {destination} compartment, " \
+                "under the frequency-dependent transmission assumption. "
+            self.add_element_to_doc("General model construction", TextElement(description))
+
     def add_notifications_output_to_model(self):
         process = "onset"
         output = "notifications"
@@ -332,6 +357,7 @@ def build_aust_model(
         "latent",
         "infectious",
         "recovered",
+        "waned",
     ]
     aust_model = DocumentedAustModel(doc, add_documentation)
     aust_model.build_base_model(start_date, end_date, compartments)
@@ -339,6 +365,8 @@ def build_aust_model(
     aust_model.add_infection_to_model()
     aust_model.add_progression_to_model()
     aust_model.add_recovery_to_model()
+    aust_model.add_immunity_wane_to_model()
+    aust_model.add_reinfection_to_model()
     aust_model.add_notifications_output_to_model()
 
     # Age stratification
