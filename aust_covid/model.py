@@ -277,6 +277,7 @@ class DocumentedAustModel(DocumentedProcess):
 
     def get_strain_stratification(
         self, 
+        compartments: list,
         strains: list,
     ):
         """
@@ -294,8 +295,8 @@ class DocumentedAustModel(DocumentedProcess):
         other_strains = strains[1:]  # The others, currently just BA.2
 
         # The stratification object
-        starting_compartment = "latent"
-        compartments_to_stratify = ["latent", "infectious", "recovered", "waned"]
+        compartments_to_stratify = [comp for comp in compartments if comp != "susceptible"]
+        starting_compartment = compartments_to_stratify[0]
         strain_strat = StrainStratification("strain", strains, compartments_to_stratify)
 
         # The starting population split
@@ -385,7 +386,7 @@ def build_aust_model(
     
     # Strain stratification
     strain_strata = ["ba1", "ba2"]
-    strain_strat, starting_strain, other_strains = aust_model.get_strain_stratification(strain_strata)
+    strain_strat, starting_strain, other_strains = aust_model.get_strain_stratification(compartments, strain_strata)
     aust_model.adjust_strain_infectiousness(strain_strat, starting_strain, other_strains)
     aust_model.model.stratify_with(strain_strat)
     aust_model.seed_vocs()
