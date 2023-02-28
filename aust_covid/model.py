@@ -126,9 +126,10 @@ class DocumentedAustModel(DocumentedProcess):
         destination = "latent"
         for dest_strain in strain_strata:
             for source_strain in strain_strata:
+                infection_adjuster = 1.0 - Parameter(f"{source_strain}infection_protect_{dest_strain}")
                 self.model.add_infection_frequency_flow(
                     process, 
-                    Parameter("contact_rate"), 
+                    Parameter("contact_rate") * infection_adjuster,
                     origin, 
                     destination,
                     source_strata={"strain": source_strain},
