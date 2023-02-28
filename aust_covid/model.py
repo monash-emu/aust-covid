@@ -57,7 +57,7 @@ class DocumentedAustModel(DocumentedProcess):
 
         if self.add_documentation:
             description = f"The base model consists of {len(compartments)} states, " \
-                f"representing the following states: {', '.join([str(comp) for comp in compartments])}. " \
+                f"representing the following states: {', '.join(compartments)}. " \
                 f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
                 f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
             self.add_element_to_doc("General model construction", TextElement(description))
@@ -92,7 +92,7 @@ class DocumentedAustModel(DocumentedProcess):
         if self.add_documentation:
             description = f"The {process} process moves " \
                 f"people directly from the {origin} state to the {destination} compartment, " \
-                "with the rate of transition calculated as the reciprocal of the latent period."
+                "with the rate of transition calculated as the reciprocal of the latent period. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_recovery_to_model(self):
@@ -104,7 +104,7 @@ class DocumentedAustModel(DocumentedProcess):
         if self.add_documentation:
             description = f"The {process} process moves " \
                 f"people directly from the {origin} state to the {destination} compartment, " \
-                "with the rate of transition calculated as the reciprocal of the infectious period."
+                "with the rate of transition calculated as the reciprocal of the infectious period. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_immunity_wane_to_model(self):
@@ -183,12 +183,12 @@ class DocumentedAustModel(DocumentedProcess):
                 "on 12th February 2023 (downloaded in their native docx format). " \
                 "The matrix is transposed because summer assumes that rows represent infectees " \
                 "and columns represent infectors, whereas the POLYMOD data are labelled " \
-                "`age of contact' for the rows and `age group of participant' for the columns."
+                "`age of contact' for the rows and `age group of participant' for the columns. "
             self.add_element_to_doc("General model construction", TextElement(description))
             filename = "raw_matrix.jpg"
             matrix_plotly_fig = px.imshow(matrix, x=strata, y=strata)
             matrix_plotly_fig.write_image(SUPPLEMENT_PATH / filename)
-            caption = "Raw matrices from Great Britain POLYMOD. Values are contacts per person per day."
+            caption = "Raw matrices from Great Britain POLYMOD. Values are contacts per person per day. "
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
 
         return matrix
@@ -236,7 +236,7 @@ class DocumentedAustModel(DocumentedProcess):
             filename = "adjusted_matrix.jpg"
             matrix_plotly_fig = px.imshow(unadjusted_matrix, x=strata, y=strata)
             matrix_plotly_fig.write_image(SUPPLEMENT_PATH / filename)
-            caption = "Matrices adjusted to Australian population. Values are contacts per person per day."
+            caption = "Matrices adjusted to Australian population. Values are contacts per person per day. "
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
 
         return adjusted_matrix
@@ -279,7 +279,6 @@ class DocumentedAustModel(DocumentedProcess):
             "ba1": "BA.1",
             "ba2": "BA.2",
         }
-        strain_names = " ".join([strain_names_dict[i_strain] for i_strain in strains])
 
         # The strains we're working with
         starting_strain = strains[0]  # BA.1
@@ -287,7 +286,8 @@ class DocumentedAustModel(DocumentedProcess):
 
         # The stratification object
         starting_compartment = "latent"
-        strain_strat = StrainStratification("strain", strains, ["latent", "infectious"])
+        compartments_to_stratify = ["latent", "infectious", "recovered"]
+        strain_strat = StrainStratification("strain", strains, compartments_to_stratify)
 
         # The starting population split
         population_split = {starting_strain: 1.0}
@@ -295,8 +295,8 @@ class DocumentedAustModel(DocumentedProcess):
         strain_strat.set_population_split(population_split)
 
         if self.add_documentation:
-            description = "We stratified the infectious compartment according to strain, " \
-                f"including compartments to represent strains: {strain_names}. " \
+            description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}. " \
+                f"including compartments to represent strains: {', '.join(strain_names_dict.values())}. " \
                 f"This was implemented using summer's `{StrainStratification.__name__}' class. " \
                 f"All of the starting infectious seed was assigned to the {strain_names_dict[starting_strain]} category " \
                 f"within the {starting_compartment} category. "
