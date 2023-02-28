@@ -120,11 +120,20 @@ class DocumentedAustModel(DocumentedProcess):
                 f"This occurs at a rate equal to the reciprocal of the period spent in the fully immune state. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
-    def add_reinfection_to_model(self):
+    def add_reinfection_to_model(self, strain_strata):
         process = "reinfection"
         origin = "waned"
         destination = "latent"
-        self.model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
+        for dest_strain in strain_strata:
+            for source_strain in strain_strata:
+                self.model.add_infection_frequency_flow(
+                    process, 
+                    Parameter("contact_rate"), 
+                    origin, 
+                    destination,
+                    source_strata={"strain": source_strain},
+                    dest_strata={"strain": dest_strain},
+                )
         
         if self.add_documentation:
             description = f"The {process} moves people from the {origin} " \
@@ -286,7 +295,7 @@ class DocumentedAustModel(DocumentedProcess):
 
         # The stratification object
         starting_compartment = "latent"
-        compartments_to_stratify = ["latent", "infectious", "recovered"]
+        compartments_to_stratify = ["latent", "infectious", "recovered", "waned"]
         strain_strat = StrainStratification("strain", strains, compartments_to_stratify)
 
         # The starting population split
@@ -366,7 +375,6 @@ def build_aust_model(
     aust_model.add_progression_to_model()
     aust_model.add_recovery_to_model()
     aust_model.add_immunity_wane_to_model()
-    aust_model.add_reinfection_to_model()
     aust_model.add_notifications_output_to_model()
 
     # Age stratification
@@ -381,6 +389,9 @@ def build_aust_model(
     aust_model.adjust_strain_infectiousness(strain_strat, starting_strain, other_strains)
     aust_model.model.stratify_with(strain_strat)
     aust_model.seed_vocs()
+
+    # Reinfection
+    aust_model.add_reinfection_to_model(strain_strata)
 
     # Documentation
     if add_documentation:
