@@ -25,6 +25,15 @@ def make_voc_seed_func(entry_rate: float, start_time: float, seed_duration: floa
 
 
 class DocumentedAustModel(DocumentedProcess):
+    """
+    The Australia-specific documented model.
+    Constructed through sequentially calling its methods.
+    Rather than docstrings for each, the text string to be included 
+    in the documentation is best description of the code's function.
+
+    Args:
+        DocumentedProcess: General epidemiological process with documentation
+    """
 
     def __init__(self, doc=None, add_documentation=False):
         super().__init__(doc, add_documentation)
@@ -35,10 +44,6 @@ class DocumentedAustModel(DocumentedProcess):
         end_date: datetime,
         compartments: list,
     ):
-        """
-        Build the base model object with no features yet, as described below.
-        """
-
         self.model = CompartmentalModel(
             times=(
                 (start_date - REF_DATE).days, 
@@ -56,10 +61,6 @@ class DocumentedAustModel(DocumentedProcess):
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def set_model_starting_conditions(self):
-        """
-        Add the starting populations to the model as described below.
-        """
-
         population = 2.6e7
         self.model.set_initial_population({"susceptible": population})
         
@@ -69,10 +70,6 @@ class DocumentedAustModel(DocumentedProcess):
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_infection_to_model(self):
-        """
-        Add the infection process as described below.
-        """
-
         process = "infection"
         origin = "susceptible"
         destination = "infectious"
@@ -90,10 +87,6 @@ class DocumentedAustModel(DocumentedProcess):
             self.add_element_to_doc("General model construction", TextElement(description))
             
     def add_recovery_to_model(self):
-        """
-        Add recovery as described below.
-        """
-
         process = "recovery"
         origin = "infectious"
         destination = "recovered"
@@ -106,10 +99,6 @@ class DocumentedAustModel(DocumentedProcess):
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_notifications_output_to_model(self):
-        """
-        Track notifications as described below.
-        """
-
         process = "onset"
         output = "notifications"
         transition = "infection"
@@ -127,8 +116,6 @@ class DocumentedAustModel(DocumentedProcess):
         strata: list,
     ) -> np.array:
         """
-        Get the raw data for Great Britain as described below.
-
         Args:
             strata: The strata to apply in age stratification
         Returns:
@@ -178,9 +165,6 @@ class DocumentedAustModel(DocumentedProcess):
         strata: list, 
     ) -> np.array:
         """
-        Adjust the Great Britain matrix to Australia's population distribution,
-        as described below.
-
         Args:
             unadjusted_matrix: The unadjusted matrix
             strata: The strata to apply in age stratification
@@ -230,10 +214,6 @@ class DocumentedAustModel(DocumentedProcess):
         matrix: np.array,
     ):
         """
-        Add age stratification to the model as described below,
-        using summer's Stratification class rather than AgeStratification
-        because we are not requesting ageing between age brackets.
-
         Args:
             compartments: All the unstratified model compartments
             strata: The strata to apply
@@ -257,8 +237,6 @@ class DocumentedAustModel(DocumentedProcess):
         strains: list,
     ):
         """
-        Add strain stratification to the model as described below.
-
         Args:
             strains: The names of the strains to use
         """
@@ -293,10 +271,6 @@ class DocumentedAustModel(DocumentedProcess):
         return strain_strat, starting_strain, other_strains
 
     def adjust_strain_infectiousness(self, strat, starting_strain, other_strains):
-        """
-        Adjust the infectiousness of the SARS-CoV-2 sub-variants modelled.
-        """
-        
         infectiousness_adjs = {starting_strain: None}
         infectiousness_adjs.update({strain: Parameter(f"{strain}_rel_infness") for strain in other_strains})
         strat.set_flow_adjustments("infection", infectiousness_adjs)
@@ -309,10 +283,6 @@ class DocumentedAustModel(DocumentedProcess):
         return strat
 
     def seed_vocs(self):
-        """
-        Seed each new strain into the model as described below.
-        """
-
         for strain in self.model.stratifications["strain"].strata:
             voc_seed_func = make_voc_seed_func(
                 Parameter("seed_rate"), 
