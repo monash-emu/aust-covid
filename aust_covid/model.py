@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 from pathlib import Path
-from jax import numpy as jnp
+from summer2.functions.time import get_linear_interpolation_function
 
 from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
@@ -15,13 +15,6 @@ from aust_covid.doc_utils import TextElement, FigElement, DocumentedProcess
 REF_DATE = datetime(2019, 12, 31)
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
-
-
-def make_voc_seed_func(entry_rate: float, start_time: float, seed_duration: float):
-    def voc_seed_func(time, entry_rate, start_time, seed_duration):
-        offset = time - start_time
-        return jnp.where(offset > 0, jnp.where(offset < seed_duration, entry_rate, 0.0), 0.0)
-    return Function(voc_seed_func, [Time, entry_rate, start_time, seed_duration])
 
 
 class DocumentedAustModel(DocumentedProcess):
@@ -324,11 +317,20 @@ class DocumentedAustModel(DocumentedProcess):
         return strat
 
     def seed_vocs(self):
+
+        # Want to parameterise these quantities, but don't know how to
+        seed_starts = {
+            "ba1": 600.0,
+            "ba2": 720.0,
+        }
+        seed_duration = 2.0
+        seed_peak_rate = 1.0
+        
         for strain in self.model.stratifications["strain"].strata:
-            voc_seed_func = make_voc_seed_func(
-                Parameter("seed_rate"), 
-                Parameter(f"{strain}_seed_time"), 
-                Parameter("seed_duration")
+            seed_start = seed_starts[strain]
+            voc_seed_func = get_linear_interpolation_function(
+                [seed_start, seed_start + seed_duration / 2.0, seed_start + seed_duration], 
+                [0.0, seed_peak_rate, 0.0],
             )
             self.model.add_importation_flow(
                 "seed_{strain}",
