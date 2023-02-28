@@ -72,20 +72,27 @@ class DocumentedAustModel(DocumentedProcess):
     def add_infection_to_model(self):
         process = "infection"
         origin = "susceptible"
-        destination = "infectious"
-        self.model.add_infection_frequency_flow(
-            process,
-            Parameter("contact_rate"),
-            origin,
-            destination,
-        )
+        destination = "latent"
+        self.model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
         
         if self.add_documentation:
             description = f"The {process} moves people from the {origin} " \
                 f"compartment to the {destination} compartment, " \
                 "under the frequency-dependent transmission assumption. "
             self.add_element_to_doc("General model construction", TextElement(description))
-            
+
+    def add_progression_to_model(self):
+        process = "progression"
+        origin = "latent"
+        destination = "infectious"
+        self.model.add_transition_flow(process, 1.0 / Parameter("latent_period"), origin, destination)
+
+        if self.add_documentation:
+            description = f"The {process} process moves " \
+                f"people directly from the {origin} state to the {destination} compartment, " \
+                "with the rate of transition calculated as the reciprocal of the latent period."
+            self.add_element_to_doc("General model construction", TextElement(description))
+
     def add_recovery_to_model(self):
         process = "recovery"
         origin = "infectious"
@@ -252,8 +259,8 @@ class DocumentedAustModel(DocumentedProcess):
         other_strains = strains[1:]  # The others, currently just BA.2
 
         # The stratification object
-        starting_compartment = "infectious"
-        strain_strat = StrainStratification("strain", strains, [starting_compartment])
+        starting_compartment = "latent"
+        strain_strat = StrainStratification("strain", strains, ["latent", "infectious"])
 
         # The starting population split
         population_split = {starting_strain: 1.0}
@@ -292,7 +299,7 @@ class DocumentedAustModel(DocumentedProcess):
             self.model.add_importation_flow(
                 "seed_{strain}",
                 voc_seed_func,
-                "infectious",
+                "latent",
                 dest_strata={"strain": strain},
                 split_imports=True,
             )
@@ -320,6 +327,7 @@ def build_aust_model(
     # Basic model construction
     compartments = [
         "susceptible",
+        "latent",
         "infectious",
         "recovered",
     ]
@@ -327,6 +335,7 @@ def build_aust_model(
     aust_model.build_base_model(start_date, end_date, compartments)
     aust_model.set_model_starting_conditions()
     aust_model.add_infection_to_model()
+    aust_model.add_progression_to_model()
     aust_model.add_recovery_to_model()
     aust_model.add_notifications_output_to_model()
 
