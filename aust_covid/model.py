@@ -78,7 +78,7 @@ class DocumentedAustModel(DocumentedProcess):
         self.model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
         
         if self.add_documentation:
-            description = f"The {process} moves people from the {origin} " \
+            description = f"The {process} process moves people from the {origin} " \
                 f"compartment to the {destination} compartment, " \
                 "under the frequency-dependent transmission assumption. "
             self.add_element_to_doc("General model construction", TextElement(description))

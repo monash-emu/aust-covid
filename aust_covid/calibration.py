@@ -61,13 +61,14 @@ def get_prior_dist_param_str(
 ) -> str:
     """
     Extract the parameters to the distribution used for a prior.
+    Note rounding to three decimal places.
     
     Args:
         prior: The prior object
     Return:
         The parameters to the prior's distribution joined together
     """
-    return " ".join([f"{param}: {prior.distri_params[param]}" for param in prior.distri_params])
+    return " ".join([f"{param}: {round(prior.distri_params[param], 3)}" for param in prior.distri_params])
 
 
 def get_prior_dist_support(
