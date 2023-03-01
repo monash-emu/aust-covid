@@ -65,24 +65,28 @@ class DocumentedAustModel(DocumentedProcess):
 
     def load_pop_data(self):
         """
-        31010do002_202206.xlsx downloaded from https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population/latest-release#data-downloads-data-cubes on 1st March 2023
+        
         """
-        skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(329, 332))
+        skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
         for group in range(16):
             skip_rows += list(range(228 + group * 6, 233 + group * 6))
-        return pd.read_excel(
-            DATA_PATH / "31010do002_202206.xlsx", 
-            sheet_name="Table_7", 
-            skiprows=skip_rows,
-            index_col=[0]
-        )
+        sheet_name = "31010do002_202206.xlsx"
+        pop_data = pd.read_excel(DATA_PATH / sheet_name, sheet_name="Table_7", skiprows=skip_rows, index_col=[0])
 
-    def set_model_starting_conditions(self):
-        population = 2.6e7
+        if self.add_documentation:
+            description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded from " \
+                "the Australian Bureau of Statistics website on the 1st of March 2023, which is available at: " \
+                "https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population/latest-release#data-downloads-data-cubes. "
+            self.add_element_to_doc("General model construction", TextElement(description))
+
+        return pop_data
+
+    def set_model_starting_conditions(self, pop_data):
+        population = pop_data["Australia"].sum()
         self.model.set_initial_population({"susceptible": population})
         
         if self.add_documentation:
-            description = f"The simulation starts with {str(population / 1e6)} million susceptible persons only, " \
+            description = f"The simulation starts with {str(round(population / 1e6, 3))} million susceptible persons only, " \
                 "with infectious persons then introduced through strain seeding as described below. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
@@ -270,6 +274,7 @@ class DocumentedAustModel(DocumentedProcess):
         self,
         compartments: list,
         strata: list,
+        pop_data: pd.DataFrame,
         matrix: np.array,
     ):
         """
@@ -279,7 +284,11 @@ class DocumentedAustModel(DocumentedProcess):
             matrix: The mixing matrix to apply
         """
 
+        aust_pop_series = pop_data["Australia"]
+        pop_modelled_groups = pd.concat([aust_pop_series[:"65-69"], pd.Series({"70": aust_pop_series["70-74":].sum()})])
+        pop_splits = {str(group): pop / aust_pop_series.sum() for group, pop in zip(strata, pop_modelled_groups)}
         age_strat = Stratification("agegroup", strata, compartments)
+        age_strat.set_population_split(pop_splits)
         age_strat.set_mixing_matrix(matrix)
         self.model.stratify_with(age_strat)
 
@@ -383,9 +392,8 @@ def build_aust_model(
     ]
     aust_model = DocumentedAustModel(doc, add_documentation)
     pop_data = aust_model.load_pop_data()
-    print(pop_data)
     aust_model.build_base_model(start_date, end_date, compartments)
-    aust_model.set_model_starting_conditions()
+    aust_model.set_model_starting_conditions(pop_data)
     aust_model.add_infection_to_model()
     aust_model.add_progression_to_model()
     aust_model.add_recovery_to_model()
@@ -396,7 +404,7 @@ def build_aust_model(
     age_strata = list(range(0, 75, 5))
     matrix = aust_model.build_polymod_britain_matrix(age_strata)
     adjusted_matrix = aust_model.adapt_gb_matrix_to_aust(matrix, age_strata)
-    aust_model.add_age_stratification_to_model(compartments, age_strata, adjusted_matrix)
+    aust_model.add_age_stratification_to_model(compartments, age_strata, pop_data, adjusted_matrix)
     
     # Strain stratification
     strain_strata = {
