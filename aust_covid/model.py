@@ -64,9 +64,6 @@ class DocumentedAustModel(DocumentedProcess):
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def load_pop_data(self):
-        """
-        
-        """
         skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
         for group in range(16):
             skip_rows += list(range(228 + group * 6, 233 + group * 6))
