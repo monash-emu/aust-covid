@@ -15,6 +15,7 @@ from aust_covid.doc_utils import TextElement, FigElement, DocumentedProcess
 REF_DATE = datetime(2019, 12, 31)
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
+DATA_PATH = BASE_PATH / "data"
 
 
 def make_voc_seed_func(entry_rate: float, start_time: float, seed_duration: float):
@@ -61,6 +62,20 @@ class DocumentedAustModel(DocumentedProcess):
                 f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
                 f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
             self.add_element_to_doc("General model construction", TextElement(description))
+
+    def load_pop_data(self):
+        """
+        31010do002_202206.xlsx downloaded from https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population/latest-release#data-downloads-data-cubes on 1st March 2023
+        """
+        skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(329, 332))
+        for group in range(16):
+            skip_rows += list(range(228 + group * 6, 233 + group * 6))
+        return pd.read_excel(
+            DATA_PATH / "31010do002_202206.xlsx", 
+            sheet_name="Table_7", 
+            skiprows=skip_rows,
+            index_col=[0]
+        )
 
     def set_model_starting_conditions(self):
         population = 2.6e7
@@ -367,6 +382,8 @@ def build_aust_model(
         "waned",
     ]
     aust_model = DocumentedAustModel(doc, add_documentation)
+    pop_data = aust_model.load_pop_data()
+    print(pop_data)
     aust_model.build_base_model(start_date, end_date, compartments)
     aust_model.set_model_starting_conditions()
     aust_model.add_infection_to_model()
