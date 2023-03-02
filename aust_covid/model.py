@@ -18,11 +18,11 @@ SUPPLEMENT_PATH = BASE_PATH / "supplement"
 DATA_PATH = BASE_PATH / "data"
 
 
-def make_voc_seed_func(entry_rate: float, start_time: float, seed_duration: float):
-    def voc_seed_func(time, entry_rate, start_time, seed_duration):
-        offset = time - start_time
-        return jnp.where(offset > 0, jnp.where(offset < seed_duration, entry_rate, 0.0), 0.0)
-    return Function(voc_seed_func, [Time, entry_rate, start_time, seed_duration])
+def triangle_wave_func(time, start, duration, peak):
+    gradient = peak / (duration / 2.0)
+    peak_time = start + duration / 2.0
+    time_from_peak = jnp.abs(peak_time - time)
+    return jnp.where(time_from_peak < duration / 2.0, peak - time_from_peak * gradient, 0.0)
 
 
 def load_pop_data():
@@ -352,10 +352,14 @@ class DocumentedAustModel(DocumentedProcess):
 
     def seed_vocs(self):
         for strain in self.model.stratifications["strain"].strata:
-            voc_seed_func = make_voc_seed_func(
-                Parameter("seed_rate"), 
-                Parameter(f"{strain}_seed_time"), 
-                Parameter("seed_duration")
+            voc_seed_func = Function(
+                triangle_wave_func, 
+                [
+                    Time, 
+                    Parameter(f"{strain}_seed_time"), 
+                    Parameter("seed_duration"), 
+                    Parameter("seed_rate"),
+                ]
             )
             self.model.add_importation_flow(
                 "seed_{strain}",
