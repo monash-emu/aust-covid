@@ -15,6 +15,7 @@ from aust_covid.doc_utils import TextElement, FigElement, DocumentedProcess
 REF_DATE = datetime(2019, 12, 31)
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
+DATA_PATH = BASE_PATH / "data"
 
 
 def make_voc_seed_func(entry_rate: float, start_time: float, seed_duration: float):
@@ -22,6 +23,15 @@ def make_voc_seed_func(entry_rate: float, start_time: float, seed_duration: floa
         offset = time - start_time
         return jnp.where(offset > 0, jnp.where(offset < seed_duration, entry_rate, 0.0), 0.0)
     return Function(voc_seed_func, [Time, entry_rate, start_time, seed_duration])
+
+
+def load_pop_data():
+    skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
+    for group in range(16):
+        skip_rows += list(range(228 + group * 6, 233 + group * 6))
+    sheet_name = "31010do002_202206.xlsx"
+    data = pd.read_excel(DATA_PATH / sheet_name, sheet_name="Table_7", skiprows=skip_rows, index_col=[0])
+    return data, sheet_name
 
 
 class DocumentedAustModel(DocumentedProcess):
@@ -62,12 +72,23 @@ class DocumentedAustModel(DocumentedProcess):
                 f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
-    def set_model_starting_conditions(self):
-        population = 2.6e7
-        self.model.set_initial_population({"susceptible": population})
+    def get_pop_data(self):
+        pop_data, sheet_name = load_pop_data()
+
+        if self.add_documentation:
+            description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded from " \
+                "the Australian Bureau of Statistics website on the 1st of March 2023, which is available at: " \
+                "https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population/latest-release#data-downloads-data-cubes. "
+            self.add_element_to_doc("General model construction", TextElement(description))
+
+        return pop_data
+
+    def set_model_starting_conditions(self, pop_data):
+        total_pop = pop_data["Australia"].sum()
+        self.model.set_initial_population({"susceptible": total_pop})
         
         if self.add_documentation:
-            description = f"The simulation starts with {str(population / 1e6)} million susceptible persons only, " \
+            description = f"The simulation starts with {str(round(total_pop / 1e6, 3))} million susceptible persons only, " \
                 "with infectious persons then introduced through strain seeding as described below. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
@@ -206,6 +227,7 @@ class DocumentedAustModel(DocumentedProcess):
     def adapt_gb_matrix_to_aust(
         self,
         unadjusted_matrix: np.array, 
+        pop_data: pd.DataFrame,
         strata: list, 
     ) -> np.array:
         """
@@ -223,15 +245,12 @@ class DocumentedAustModel(DocumentedProcess):
         ]
         uk_age_pops = pd.Series(uk_pops_list, index=strata)
         uk_age_props = uk_age_pops / uk_age_pops.sum()
-        
-        # Australian distributions from https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population/jun-2022/31010do002_202206.xlsx, 13/2/23
-        aust_percs_list = [
-            5.8, 6.2, 6.3, 5.9, 6.3, 7.0, 7.3, 7.3, 6.6, 6.2, 6.4, 5.9, 5.7, 5.0, 4.4, 3.4, 2.2, 2.1,
-        ]
-        aust_percs_list = aust_percs_list[:14] + [sum(aust_percs_list[14:])]  # Adapt to our age groups
-        aust_age_percs = pd.Series(aust_percs_list, index=strata)
-        aust_age_props = aust_age_percs / aust_age_percs.sum()  # Sum is just 100
-        
+
+        # Australian population distribution by age        
+        aust_pop_series = pop_data["Australia"]
+        modelled_pops = pd.concat([aust_pop_series[:"65-69"], pd.Series({"70": aust_pop_series["70-74":].sum()})])
+        aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=strata)
+
         # Calculation
         aust_uk_ratios = aust_age_props / uk_age_props
         adjusted_matrix = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
@@ -249,22 +268,26 @@ class DocumentedAustModel(DocumentedProcess):
             caption = "Matrices adjusted to Australian population. Values are contacts per person per day. "
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
 
-        return adjusted_matrix
+        aust_age_props.index = aust_age_props.index.astype(str)
+        return adjusted_matrix, aust_age_props
 
     def add_age_stratification_to_model(
         self,
         compartments: list,
         strata: list,
+        pop_splits: pd.Series,
         matrix: np.array,
     ):
         """
         Args:
             compartments: All the unstratified model compartments
             strata: The strata to apply
+            pop_splits: The proportion of the population to assign to each age group
             matrix: The mixing matrix to apply
         """
 
         age_strat = Stratification("agegroup", strata, compartments)
+        age_strat.set_population_split(pop_splits.to_dict())
         age_strat.set_mixing_matrix(matrix)
         self.model.stratify_with(age_strat)
 
@@ -273,8 +296,12 @@ class DocumentedAustModel(DocumentedProcess):
                 "into sequential age brackets in five year " \
                 "bands from age 0 to 4 through to age 65 to 69 " \
                 "with a final age band to represent those aged 70 and above. " \
-                "These age brackets were chosen to match those used by the POLYMOD survey. "
+                "These age brackets were chosen to match those used by the POLYMOD survey. " \
+                "The population distribution by age group was informed by the data from the Australian " \
+                "Bureau of Statistics introduced previously. "
             self.add_element_to_doc("Age stratification", TextElement(description))
+        
+        return pop_splits
 
     def get_strain_stratification(
         self, 
@@ -367,8 +394,9 @@ def build_aust_model(
         "waned",
     ]
     aust_model = DocumentedAustModel(doc, add_documentation)
+    pop_data = aust_model.get_pop_data()
     aust_model.build_base_model(start_date, end_date, compartments)
-    aust_model.set_model_starting_conditions()
+    aust_model.set_model_starting_conditions(pop_data)
     aust_model.add_infection_to_model()
     aust_model.add_progression_to_model()
     aust_model.add_recovery_to_model()
@@ -378,8 +406,8 @@ def build_aust_model(
     # Age stratification
     age_strata = list(range(0, 75, 5))
     matrix = aust_model.build_polymod_britain_matrix(age_strata)
-    adjusted_matrix = aust_model.adapt_gb_matrix_to_aust(matrix, age_strata)
-    aust_model.add_age_stratification_to_model(compartments, age_strata, adjusted_matrix)
+    adjusted_matrix, pop_splits = aust_model.adapt_gb_matrix_to_aust(matrix, pop_data, age_strata)
+    aust_model.add_age_stratification_to_model(compartments, age_strata, pop_splits, adjusted_matrix)
     
     # Strain stratification
     strain_strata = {
