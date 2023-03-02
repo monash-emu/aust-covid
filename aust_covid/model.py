@@ -19,10 +19,10 @@ DATA_PATH = BASE_PATH / "data"
 
 
 def triangle_wave_func(time, start, duration, peak):
-    gradient = peak / (duration / 2.0)
-    peak_time = start + duration / 2.0
+    gradient = peak / (duration * 0.5)
+    peak_time = start + duration * 0.5
     time_from_peak = jnp.abs(peak_time - time)
-    return jnp.where(time_from_peak < duration / 2.0, peak - time_from_peak * gradient, 0.0)
+    return jnp.where(time_from_peak < duration * 0.5, peak - time_from_peak * gradient, 0.0)
 
 
 def load_pop_data():
