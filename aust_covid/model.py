@@ -69,7 +69,11 @@ class DocumentedAustModel(DocumentedProcess):
         DocumentedProcess: General epidemiological process with documentation
     """
 
-    def __init__(self, doc=None, add_documentation=False):
+    def __init__(
+        self, 
+        doc=None, 
+        add_documentation=False,
+    ):
         super().__init__(doc, add_documentation)
 
     def build_base_model(
@@ -107,7 +111,10 @@ class DocumentedAustModel(DocumentedProcess):
 
         return pop_data
 
-    def set_model_starting_conditions(self, pop_data):
+    def set_model_starting_conditions(
+        self, 
+        pop_data: pd.DataFrame,
+    ):
         total_pop = pop_data["Australia"].sum()
         self.model.set_initial_population({"susceptible": total_pop})
         
@@ -165,7 +172,10 @@ class DocumentedAustModel(DocumentedProcess):
                 f"This occurs at a rate equal to the reciprocal of the period spent in the fully immune state. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
-    def add_reinfection_to_model(self, strain_strata):
+    def add_reinfection_to_model(
+        self, 
+        strain_strata: list,
+    ):
         process = "reinfection"
         origin = "waned"
         destination = "latent"
@@ -240,9 +250,10 @@ class DocumentedAustModel(DocumentedProcess):
                 "and columns represent infectors, whereas the POLYMOD data are labelled " \
                 "`age of contact' for the rows and `age group of participant' for the columns. "
             self.add_element_to_doc("General model construction", TextElement(description))
+            
             filename = "raw_matrix.jpg"
-            matrix_plotly_fig = px.imshow(matrix, x=strata, y=strata)
-            matrix_plotly_fig.write_image(SUPPLEMENT_PATH / filename)
+            matrix_fig = px.imshow(matrix, x=strata, y=strata)
+            matrix_fig.write_image(SUPPLEMENT_PATH / filename)
             caption = "Raw matrices from Great Britain POLYMOD. Values are contacts per person per day. "
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
 
@@ -253,15 +264,19 @@ class DocumentedAustModel(DocumentedProcess):
         unadjusted_matrix: np.array, 
         pop_data: pd.DataFrame,
         strata: list, 
-    ) -> np.array:
+    ) -> tuple:
         """
         Args:
             unadjusted_matrix: The unadjusted matrix
+            pop_data: ABS population numbers
             strata: The strata to apply in age stratification
         Returns:
             Matrix adjusted to target population
+            Proportions of Australian population in modelled age groups
         """
         
+        assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], "Unadjusted mixing matrix not square"
+
         # UK population distributions
         uk_pops_list = [
             3458060, 3556024, 3824317, 3960916, 3911291, 3762213, 4174675, 4695853, 
@@ -269,11 +284,13 @@ class DocumentedAustModel(DocumentedProcess):
         ]
         uk_age_pops = pd.Series(uk_pops_list, index=strata)
         uk_age_props = uk_age_pops / uk_age_pops.sum()
-
+        assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
+        
         # Australian population distribution by age        
         aust_pop_series = pop_data["Australia"]
         modelled_pops = pd.concat([aust_pop_series[:"65-69"], pd.Series({"70": aust_pop_series["70-74":].sum()})])
         aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=strata)
+        assert len(aust_age_props) == unadjusted_matrix.shape[0], "Different number of Aust age groups from mixing categories"
 
         # Calculation
         aust_uk_ratios = aust_age_props / uk_age_props
@@ -326,6 +343,7 @@ class DocumentedAustModel(DocumentedProcess):
         """
 
         age_strat = Stratification("agegroup", strata, compartments)
+        assert len(pop_splits) == len(strata), "Different number of age group sizes from age strata request"
         age_strat.set_population_split(pop_splits.to_dict())
         age_strat.set_mixing_matrix(matrix)
         self.model.stratify_with(age_strat)
@@ -340,15 +358,14 @@ class DocumentedAustModel(DocumentedProcess):
                 "Bureau of Statistics introduced previously. "
             self.add_element_to_doc("Age stratification", TextElement(description))
         
-        return pop_splits
-
     def get_strain_stratification(
         self, 
         compartments: list,
         strains: list,
-    ):
+    ) -> tuple:
         """
         Args:
+            compartments: Unstratified model compartments
             strains: The names of the strains to use
         """
         strain_strings = list(strains.keys())
@@ -377,7 +394,12 @@ class DocumentedAustModel(DocumentedProcess):
 
         return strain_strat, starting_strain, other_strains
 
-    def adjust_strain_infectiousness(self, strat, starting_strain, other_strains):
+    def adjust_strain_infectiousness(
+        self, 
+        strat, 
+        starting_strain, 
+        other_strains,
+    ):
         infectiousness_adjs = {starting_strain: None}
         infectiousness_adjs.update({strain: Parameter(f"{strain}_rel_infness") for strain in other_strains})
         strat.set_flow_adjustments("infection", infectiousness_adjs)
@@ -386,8 +408,6 @@ class DocumentedAustModel(DocumentedProcess):
             description = "The relative infectiousness of the BA.2 strain was adjusted relative " \
                 "to the starting strain (BA.1) as indicated in the parameters table. "
             self.add_element_to_doc("Strain stratification", TextElement(description))
-        
-        return strat
 
     def seed_vocs(self):
         for strain in self.model.stratifications["strain"].strata:
