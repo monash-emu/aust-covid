@@ -18,14 +18,38 @@ SUPPLEMENT_PATH = BASE_PATH / "supplement"
 DATA_PATH = BASE_PATH / "data"
 
 
-def triangle_wave_func(time, start, duration, peak):
+def triangle_wave_func(
+        time: Time, 
+        start: float, 
+        duration: float, 
+        peak: float,
+    ) -> jnp.where:
+    """
+    Generate a peaked triangular wave function.
+
+    Args:
+        time: Model time
+        start: Time at which wave starts
+        duration: Duration of wave
+        peak: Peak flow rate for wave
+
+    Returns:
+        The wave function
+    """
     gradient = peak / (duration * 0.5)
     peak_time = start + duration * 0.5
     time_from_peak = jnp.abs(peak_time - time)
     return jnp.where(time_from_peak < duration * 0.5, peak - time_from_peak * gradient, 0.0)
 
 
-def load_pop_data():
+def load_pop_data() -> tuple:
+    """
+    Get the Australian population data from ABS source.
+
+    Returns:
+        The population data
+        The name of the sheet
+    """
     skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
     for group in range(16):
         skip_rows += list(range(228 + group * 6, 233 + group * 6))
