@@ -286,6 +286,21 @@ class DocumentedAustModel(DocumentedProcess):
                 "containing the vector of the ratios between the proportion of the British and Australian populations " \
                 "within each age bracket as its diagonal elements. "
             self.add_element_to_doc("Age stratification", TextElement(description))
+
+            filename = "input_population.jpg"
+            pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
+            pop_fig.update_layout(showlegend=False)
+            pop_fig.write_image(SUPPLEMENT_PATH / filename)
+            caption = "Population sizes by age group obtained from Australia Bureau of Statistics."
+            self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
+
+            filename = "modelled_population.jpg"
+            modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
+            modelled_pop_fig.update_layout(showlegend=False)
+            modelled_pop_fig.write_image(SUPPLEMENT_PATH / filename)
+            caption = "Population sizes by age group included in the model."
+            self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
+
             filename = "adjusted_matrix.jpg"
             matrix_plotly_fig = px.imshow(unadjusted_matrix, x=strata, y=strata)
             matrix_plotly_fig.write_image(SUPPLEMENT_PATH / filename)
