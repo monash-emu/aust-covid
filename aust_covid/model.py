@@ -104,10 +104,10 @@ class DocumentedAustModel(DocumentedProcess):
         pop_data, sheet_name = load_pop_data()
 
         if self.add_documentation:
-            description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded from " \
-                "the Australian Bureau of Statistics website on the 1st of March 2023, which is available at: " \
-                "https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population/latest-release#data-downloads-data-cubes. "
+            description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded "
+            description2 = "from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. "
             self.add_element_to_doc("General model construction", TextElement(description))
+            self.add_element_to_doc("General model construction", TextElement(description2))
 
         return pop_data
 
