@@ -185,15 +185,15 @@ class DocumentedAustModel(DocumentedProcess):
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_notifications_output_to_model(self):
-        process = "onset"
         output = "notifications"
-        transition = "infection"
-        self.model.request_output_for_flow(process, transition, save_results=False)
-        self.model.request_function_output(output, func=DerivedOutput(process) * Parameter("cdr"))
+        processes = ["infection", "reinfection"]
+        for process in processes:
+            self.model.request_output_for_flow(f"{process}_onset", process, save_results=False)
+        self.model.request_function_output(output, func=(DerivedOutput("infection_onset") + DerivedOutput("reinfection_onset")) * Parameter("cdr"))
 
         if self.add_documentation:
             description = f"Modelled {output} are calculated as " \
-                f"the absolute rate of {transition} in the community " \
+                f"the absolute rate of infection or reinfection in the community " \
                 "multiplied by the case detection rate. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
@@ -422,7 +422,6 @@ def build_aust_model(
     aust_model.add_infection_to_model()
     aust_model.add_progression_to_model()
     aust_model.add_recovery_to_model()
-    aust_model.add_notifications_output_to_model()
 
     # Age stratification
     age_strata = list(range(0, 75, 5))
@@ -441,6 +440,9 @@ def build_aust_model(
 
     # Reinfection
     aust_model.add_reinfection_to_model(strain_strata)
+
+    # Outputs
+    aust_model.add_notifications_output_to_model()
 
     # Documentation
     if add_documentation:
