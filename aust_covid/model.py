@@ -159,25 +159,12 @@ class DocumentedAustModel(DocumentedProcess):
                 "with the rate of transition calculated as the reciprocal of the infectious period. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
-    def add_immunity_wane_to_model(self):
-        process = "waning"
-        origin = "recovered"
-        destination = "waned"
-        self.model.add_transition_flow(process, 1.0 / Parameter("full_immune_period"), origin, destination)
-
-        if self.add_documentation:
-            description = "After recovery, previously infected persons are initially fully protected " \
-                f"from reinfection through natural immunity, but later progress to a '{destination}' state, " \
-                f"through a {process} process. " \
-                f"This occurs at a rate equal to the reciprocal of the period spent in the fully immune state. "
-            self.add_element_to_doc("General model construction", TextElement(description))
-
     def add_reinfection_to_model(
         self, 
         strain_strata: list,
     ):
         process = "reinfection"
-        origin = "waned"
+        origin = "recovered"
         destination = "latent"
         for dest_strain in strain_strata:
             for source_strain in strain_strata:
@@ -394,21 +381,6 @@ class DocumentedAustModel(DocumentedProcess):
 
         return strain_strat, starting_strain, other_strains
 
-    def adjust_strain_infectiousness(
-        self, 
-        strat, 
-        starting_strain, 
-        other_strains,
-    ):
-        infectiousness_adjs = {starting_strain: None}
-        infectiousness_adjs.update({strain: Parameter(f"{strain}_rel_infness") for strain in other_strains})
-        strat.set_flow_adjustments("infection", infectiousness_adjs)
-
-        if self.add_documentation:
-            description = "The relative infectiousness of the BA.2 strain was adjusted relative " \
-                "to the starting strain (BA.1) as indicated in the parameters table. "
-            self.add_element_to_doc("Strain stratification", TextElement(description))
-
     def seed_vocs(self):
         for strain in self.model.stratifications["strain"].strata:
             voc_seed_func = Function(
@@ -454,7 +426,6 @@ def build_aust_model(
         "latent",
         "infectious",
         "recovered",
-        "waned",
     ]
     aust_model = DocumentedAustModel(doc, add_documentation)
     pop_data = aust_model.get_pop_data()
@@ -463,7 +434,6 @@ def build_aust_model(
     aust_model.add_infection_to_model()
     aust_model.add_progression_to_model()
     aust_model.add_recovery_to_model()
-    aust_model.add_immunity_wane_to_model()
     aust_model.add_notifications_output_to_model()
 
     # Age stratification
@@ -478,7 +448,6 @@ def build_aust_model(
         "ba2": "BA.2",
     }
     strain_strat, starting_strain, other_strains = aust_model.get_strain_stratification(compartments, strain_strata)
-    aust_model.adjust_strain_infectiousness(strain_strat, starting_strain, other_strains)
     aust_model.model.stratify_with(strain_strat)
     aust_model.seed_vocs()
 
