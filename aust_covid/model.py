@@ -349,17 +349,13 @@ class DocumentedAustModel(DocumentedProcess):
         self, 
         compartments: list,
         strains: list,
-    ) -> tuple:
+    ) -> StrainStratification:
         """
         Args:
             compartments: Unstratified model compartments
             strains: The names of the strains to use
         """
         strain_strings = list(strains.keys())
-
-        # The strains we're working with
-        starting_strain = strain_strings[0]  # BA.1
-        other_strains = strain_strings[1:]  # The others, currently just BA.2
 
         # The stratification object
         compartments_to_stratify = [comp for comp in compartments if comp != "susceptible"]
@@ -371,7 +367,7 @@ class DocumentedAustModel(DocumentedProcess):
                 f"This was implemented using summer's `{StrainStratification.__name__}' class. "
             self.add_element_to_doc("Strain stratification", TextElement(description))
 
-        return strain_strat, starting_strain, other_strains
+        return strain_strat
 
     def seed_vocs(self):
         for strain in self.model.stratifications["strain"].strata:
@@ -439,7 +435,7 @@ def build_aust_model(
         "ba1": "BA.1",
         "ba2": "BA.2",
     }
-    strain_strat, starting_strain, other_strains = aust_model.get_strain_stratification(compartments, strain_strata)
+    strain_strat = aust_model.get_strain_stratification(compartments, strain_strata)
     aust_model.model.stratify_with(strain_strat)
     aust_model.seed_vocs()
 
