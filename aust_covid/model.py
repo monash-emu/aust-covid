@@ -363,20 +363,12 @@ class DocumentedAustModel(DocumentedProcess):
 
         # The stratification object
         compartments_to_stratify = [comp for comp in compartments if comp != "susceptible"]
-        starting_compartment = compartments_to_stratify[0]
         strain_strat = StrainStratification("strain", strain_strings, compartments_to_stratify)
-
-        # The starting population split
-        population_split = {starting_strain: 1.0}
-        population_split.update({strain: 0.0 for strain in other_strains})
-        strain_strat.set_population_split(population_split)
 
         if self.add_documentation:
             description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}. " \
                 f"including compartments to represent strains: {', '.join(strains.values())}. " \
-                f"This was implemented using summer's `{StrainStratification.__name__}' class. " \
-                f"All of the starting infectious seed was assigned to the {strains[starting_strain]} category " \
-                f"within the {starting_compartment} category. "
+                f"This was implemented using summer's `{StrainStratification.__name__}' class. "
             self.add_element_to_doc("Strain stratification", TextElement(description))
 
         return strain_strat, starting_strain, other_strains
