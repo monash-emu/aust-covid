@@ -13,7 +13,6 @@ from aust_covid.doc_utils import TextElement, FigElement, DocumentedProcess
 from aust_covid.inputs import load_pop_data
 
 
-REF_DATE = datetime(2019, 12, 31)
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
 DATA_PATH = BASE_PATH / "data"
@@ -53,6 +52,19 @@ class DocumentedAustModel(DocumentedProcess):
     Args:
         DocumentedProcess: General epidemiological process with documentation
     """
+    ref_date = datetime(2019, 12, 31)
+    compartments = [
+        "susceptible",
+        "latent",
+        "infectious",
+        "recovered",
+    ]
+    age_strata = list(range(0, 75, 5))
+    strain_strata = {
+        "ba1": "BA.1",
+        "ba2": "BA.2",
+        "ba5": "BA.5",
+    }
 
     def __init__(
         self, 
@@ -65,22 +77,21 @@ class DocumentedAustModel(DocumentedProcess):
         self,
         start_date: datetime,
         end_date: datetime,
-        compartments: list,
     ):
         infectious_compartment = "infectious"
         self.model = CompartmentalModel(
             times=(
-                (start_date - REF_DATE).days, 
-                (end_date - REF_DATE).days,
+                (start_date - self.ref_date).days, 
+                (end_date - self.ref_date).days,
             ),
-            compartments=compartments,
+            compartments=self.compartments,
             infectious_compartments=[infectious_compartment],
-            ref_date=REF_DATE,
+            ref_date=self.ref_date,
         )
 
         if self.add_documentation:
-            description = f"The base model consists of {len(compartments)} states, " \
-                f"representing the following states: {', '.join(compartments)}. " \
+            description = f"The base model consists of {len(self.compartments)} states, " \
+                f"representing the following states: {', '.join(self.compartments)}. " \
                 f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
                 f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
             self.add_element_to_doc("General model construction", TextElement(description))
@@ -105,7 +116,7 @@ class DocumentedAustModel(DocumentedProcess):
         
         if self.add_documentation:
             description = f"The simulation starts with {str(round(total_pop / 1e6, 3))} million susceptible persons only, " \
-                "with infectious persons then introduced through strain seeding as described below. "
+                "with infectious persons introduced later through strain seeding as described below. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_infection_to_model(self):
@@ -144,15 +155,12 @@ class DocumentedAustModel(DocumentedProcess):
                 "with the rate of transition calculated as the reciprocal of the infectious period. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
-    def add_reinfection_to_model(
-        self, 
-        strain_strata: list,
-    ):
+    def add_reinfection_to_model(self):
         process = "reinfection"
         origin = "recovered"
         destination = "latent"
-        for dest_strain in strain_strata:
-            for source_strain in strain_strata:
+        for dest_strain in self.strain_strata:
+            for source_strain in self.strain_strata:
                 if int(dest_strain[-1]) > int(source_strain[-1]): 
                     self.model.add_infection_frequency_flow(
                         process, 
@@ -172,7 +180,9 @@ class DocumentedAustModel(DocumentedProcess):
                 "That is, BA.2 reinfection is possible for persons previously infected with " \
                 "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
                 "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
-                "and differs for BA.2 and BA.5. "
+                "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
+                "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
+                "as it is for those recovered from past BA.2 infection. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_notifications_output_to_model(self):
@@ -184,17 +194,12 @@ class DocumentedAustModel(DocumentedProcess):
 
         if self.add_documentation:
             description = f"Modelled {output} are calculated as " \
-                f"the absolute rate of infection or reinfection in the community " \
+                f"the absolute rate of {process[0]} or {process[1]} in the community, " \
                 "multiplied by the case detection rate. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
-    def build_polymod_britain_matrix(
-        self,
-        strata: list,
-    ) -> np.array:
+    def build_polymod_britain_matrix(self) -> np.array:
         """
-        Args:
-            strata: The strata to apply in age stratification
         Returns:
             15 by 15 matrix with daily contact rates for age groups
         """
@@ -230,7 +235,7 @@ class DocumentedAustModel(DocumentedProcess):
             self.add_element_to_doc("General model construction", TextElement(description))
             
             filename = "raw_matrix.jpg"
-            matrix_fig = px.imshow(matrix, x=strata, y=strata)
+            matrix_fig = px.imshow(matrix, x=self.age_strata, y=self.age_strata)
             matrix_fig.write_image(SUPPLEMENT_PATH / filename)
             caption = "Raw matrices from Great Britain POLYMOD. Values are contacts per person per day. "
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
@@ -241,13 +246,11 @@ class DocumentedAustModel(DocumentedProcess):
         self,
         unadjusted_matrix: np.array, 
         pop_data: pd.DataFrame,
-        strata: list, 
     ) -> tuple:
         """
         Args:
             unadjusted_matrix: The unadjusted matrix
             pop_data: ABS population numbers
-            strata: The strata to apply in age stratification
         Returns:
             Matrix adjusted to target population
             Proportions of Australian population in modelled age groups
@@ -260,14 +263,14 @@ class DocumentedAustModel(DocumentedProcess):
             3458060, 3556024, 3824317, 3960916, 3911291, 3762213, 4174675, 4695853, 
             4653082, 3986098, 3620216, 3892985, 3124676, 2706365, 6961183,
         ]
-        uk_age_pops = pd.Series(uk_pops_list, index=strata)
+        uk_age_pops = pd.Series(uk_pops_list, index=self.age_strata)
         uk_age_props = uk_age_pops / uk_age_pops.sum()
         assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
         
         # Australian population distribution by age        
         aust_pop_series = pop_data["Australia"]
         modelled_pops = pd.concat([aust_pop_series[:"65-69"], pd.Series({"70": aust_pop_series["70-74":].sum()})])
-        aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=strata)
+        aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=self.age_strata)
         assert len(aust_age_props) == unadjusted_matrix.shape[0], "Different number of Aust age groups from mixing categories"
 
         # Calculation
@@ -276,7 +279,7 @@ class DocumentedAustModel(DocumentedProcess):
         
         if self.add_documentation:
             description = "Matrices were adjusted to account for the differences in the age distribution of the " \
-                "Australian population distribution in 2022 compared to the population of Great Britain in 2008. " \
+                "Australian population distribution in 2022 compared to the population of Great Britain in 2000. " \
                 "The matrices were adjusted by taking the dot product of the unadjusted matrices and the diagonal matrix " \
                 "containing the vector of the ratios between the proportion of the British and Australian populations " \
                 "within each age bracket as its diagonal elements. "
@@ -297,7 +300,7 @@ class DocumentedAustModel(DocumentedProcess):
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
 
             filename = "adjusted_matrix.jpg"
-            matrix_plotly_fig = px.imshow(unadjusted_matrix, x=strata, y=strata)
+            matrix_plotly_fig = px.imshow(unadjusted_matrix, x=self.age_strata, y=self.age_strata)
             matrix_plotly_fig.write_image(SUPPLEMENT_PATH / filename)
             caption = "Matrices adjusted to Australian population. Values are contacts per person per day. "
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
@@ -307,21 +310,17 @@ class DocumentedAustModel(DocumentedProcess):
 
     def add_age_stratification_to_model(
         self,
-        compartments: list,
-        strata: list,
         pop_splits: pd.Series,
         matrix: np.array,
     ):
         """
         Args:
-            compartments: All the unstratified model compartments
-            strata: The strata to apply
             pop_splits: The proportion of the population to assign to each age group
             matrix: The mixing matrix to apply
         """
 
-        age_strat = Stratification("agegroup", strata, compartments)
-        assert len(pop_splits) == len(strata), "Different number of age group sizes from age strata request"
+        age_strat = Stratification("agegroup", self.age_strata, self.compartments)
+        assert len(pop_splits) == len(self.age_strata), "Different number of age group sizes from age strata request"
         age_strat.set_population_split(pop_splits.to_dict())
         age_strat.set_mixing_matrix(matrix)
         self.model.stratify_with(age_strat)
@@ -336,32 +335,22 @@ class DocumentedAustModel(DocumentedProcess):
                 "Bureau of Statistics introduced previously. "
             self.add_element_to_doc("Age stratification", TextElement(description))
         
-    def get_strain_stratification(
-        self, 
-        compartments: list,
-        strains: list,
-    ) -> StrainStratification:
-        """
-        Args:
-            compartments: Unstratified model compartments
-            strains: The names of the strains to use
-        """
-        strain_strings = list(strains.keys())
-
-        # The stratification object
-        compartments_to_stratify = [comp for comp in compartments if comp != "susceptible"]
+    def get_strain_stratification(self) -> StrainStratification:
+        strain_strings = list(self.strain_strata.keys())
+        compartments_to_stratify = [comp for comp in self.compartments if comp != "susceptible"]
         strain_strat = StrainStratification("strain", strain_strings, compartments_to_stratify)
 
         if self.add_documentation:
             description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}. " \
-                f"including compartments to represent strains: {', '.join(strains.values())}. " \
+                f"including compartments to represent strains: {', '.join(self.strain_strata.values())}. " \
                 f"This was implemented using summer's `{StrainStratification.__name__}' class. "
             self.add_element_to_doc("Strain stratification", TextElement(description))
 
         return strain_strat
 
     def seed_vocs(self):
-        for strain in self.model.stratifications["strain"].strata:
+        strains = self.model.stratifications["strain"].strata
+        for strain in strains:
             voc_seed_func = Function(
                 triangle_wave_func, 
                 [
@@ -380,7 +369,7 @@ class DocumentedAustModel(DocumentedProcess):
             )
 
         if self.add_documentation:
-            description = "Each strain (including the starting wild-type) is seeded through " \
+            description = f"Each strain (including the starting {strains[0]} strain) is seeded through " \
                 "a step function that allows the introduction of a constant rate of new infectious " \
                 "persons into the system over a fixed seeding duration. "
             self.add_element_to_doc("Strain stratification", TextElement(description))
@@ -400,40 +389,27 @@ def build_aust_model(
     """
 
     # Basic model construction
-    compartments = [
-        "susceptible",
-        "latent",
-        "infectious",
-        "recovered",
-    ]
     aust_model = DocumentedAustModel(doc, add_documentation)
     pop_data = aust_model.get_pop_data()
-    aust_model.build_base_model(start_date, end_date, compartments)
+    aust_model.build_base_model(start_date, end_date)
     aust_model.set_model_starting_conditions(pop_data)
     aust_model.add_infection_to_model()
     aust_model.add_progression_to_model()
     aust_model.add_recovery_to_model()
 
     # Age stratification
-    age_strata = list(range(0, 75, 5))
-    matrix = aust_model.build_polymod_britain_matrix(age_strata)
-    adjusted_matrix, pop_splits = aust_model.adapt_gb_matrix_to_aust(matrix, pop_data, age_strata)
-    aust_model.add_age_stratification_to_model(compartments, age_strata, pop_splits, adjusted_matrix)
+    matrix = aust_model.build_polymod_britain_matrix()
+    adjusted_matrix, pop_splits = aust_model.adapt_gb_matrix_to_aust(matrix, pop_data)
+    aust_model.add_age_stratification_to_model(pop_splits, adjusted_matrix)
     
     # Strain stratification
-    strain_strata = {
-        "ba1": "BA.1",
-        "ba2": "BA.2",
-        "ba5": "BA.5",
-    }
-    strain_strat = aust_model.get_strain_stratification(compartments, strain_strata)
-    aust_model.model.stratify_with(strain_strat)
+    aust_model.model.stratify_with(aust_model.get_strain_stratification())
     aust_model.seed_vocs()
 
-    # Reinfection
-    aust_model.add_reinfection_to_model(strain_strata)
+    # Reinfection (must come after strain stratification)
+    aust_model.add_reinfection_to_model()
 
-    # Outputs
+    # Outputs (must come after infection and reinfection)
     aust_model.add_notifications_output_to_model()
 
     # Documentation
