@@ -398,8 +398,8 @@ def build_aust_model(
     aust_model.add_recovery_to_model()
 
     # Age stratification
-    matrix = aust_model.build_polymod_britain_matrix()
-    adjusted_matrix, pop_splits = aust_model.adapt_gb_matrix_to_aust(matrix, pop_data)
+    raw_matrix = aust_model.build_polymod_britain_matrix()
+    adjusted_matrix, pop_splits = aust_model.adapt_gb_matrix_to_aust(raw_matrix, pop_data)
     aust_model.add_age_stratification_to_model(pop_splits, adjusted_matrix)
     
     # Strain stratification
