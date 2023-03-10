@@ -432,6 +432,7 @@ def build_aust_model(
     strain_strata = {
         "ba1": "BA.1",
         "ba2": "BA.2",
+        "ba5": "BA.5",
     }
     strain_strat = aust_model.get_strain_stratification(compartments, strain_strata)
     aust_model.model.stratify_with(strain_strat)
