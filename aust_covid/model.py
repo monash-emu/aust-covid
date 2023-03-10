@@ -10,6 +10,7 @@ from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
 from aust_covid.doc_utils import TextElement, FigElement, DocumentedProcess
+from aust_covid.inputs import load_pop_data
 
 
 REF_DATE = datetime(2019, 12, 31)
@@ -25,14 +26,14 @@ def triangle_wave_func(
         peak: float,
     ) -> jnp.where:
     """
-    Generate a peaked triangular wave function.
+    Generate a peaked triangular wave function
+    that starts from and returns to zero.
 
     Args:
         time: Model time
         start: Time at which wave starts
         duration: Duration of wave
         peak: Peak flow rate for wave
-
     Returns:
         The wave function
     """
@@ -40,22 +41,6 @@ def triangle_wave_func(
     peak_time = start + duration * 0.5
     time_from_peak = jnp.abs(peak_time - time)
     return jnp.where(time_from_peak < duration * 0.5, peak - time_from_peak * gradient, 0.0)
-
-
-def load_pop_data() -> tuple:
-    """
-    Get the Australian population data from ABS source.
-
-    Returns:
-        The population data
-        The name of the sheet
-    """
-    skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
-    for group in range(16):
-        skip_rows += list(range(228 + group * 6, 233 + group * 6))
-    sheet_name = "31010do002_202206.xlsx"
-    data = pd.read_excel(DATA_PATH / sheet_name, sheet_name="Table_7", skiprows=skip_rows, index_col=[0])
-    return data, sheet_name
 
 
 class DocumentedAustModel(DocumentedProcess):
@@ -181,7 +166,13 @@ class DocumentedAustModel(DocumentedProcess):
         if self.add_documentation:
             description = f"The {process} moves people from the {origin} " \
                 f"compartment to the {destination} compartment, " \
-                "under the frequency-dependent transmission assumption. "
+                "under the frequency-dependent transmission assumption. " \
+                "Reinfection with a later sub-variant is only possible " \
+                "for persons who have recovered from an earlier sub-variant. " \
+                "That is, BA.2 reinfection is possible for persons previously infected with " \
+                "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
+                "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
+                "and differs for BA.2 and BA.5. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_notifications_output_to_model(self):
