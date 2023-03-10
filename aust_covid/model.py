@@ -168,14 +168,15 @@ class DocumentedAustModel(DocumentedProcess):
         destination = "latent"
         for dest_strain in strain_strata:
             for source_strain in strain_strata:
-                self.model.add_infection_frequency_flow(
-                    process, 
-                    Parameter("contact_rate") * Parameter(f"{dest_strain}_escape_{source_strain}"),
-                    origin, 
-                    destination,
-                    source_strata={"strain": source_strain},
-                    dest_strata={"strain": dest_strain},
-                )
+                if int(dest_strain[-1]) > int(source_strain[-1]): 
+                    self.model.add_infection_frequency_flow(
+                        process, 
+                        Parameter("contact_rate") * Parameter(f"{dest_strain}_escape"),
+                        origin, 
+                        destination,
+                        source_strata={"strain": source_strain},
+                        dest_strata={"strain": dest_strain},
+                    )
         
         if self.add_documentation:
             description = f"The {process} moves people from the {origin} " \
