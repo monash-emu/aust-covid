@@ -44,7 +44,7 @@ def triangle_wave_func(
 
 
 def convolve_probability(source_output, density_kernel):
-    return jnp.convolve(source_output, density_kernel)[0: len(source_output)]
+    return jnp.convolve(source_output, density_kernel)[:len(source_output)]
 
 
 def gamma_cdf(shape, mean, x):
