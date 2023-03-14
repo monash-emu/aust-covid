@@ -20,7 +20,7 @@ DATA_PATH = BASE_PATH / "data"
 
 
 def triangle_wave_func(
-    time: Time, 
+    time: float, 
     start: float, 
     duration: float, 
     peak: float,
