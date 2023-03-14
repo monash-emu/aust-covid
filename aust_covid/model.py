@@ -215,7 +215,7 @@ class DocumentedAustModel(DocumentedProcess):
             self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_notifs_output_to_model(self):
-        delay = build_gamma_dens_interval_func(2.0, 4.0, self.model.times)
+        delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), self.model.times)
         notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput("incidence"), delay]) * Parameter("cdr")
         self.model.request_function_output(name="notifs", func=notif_dist_rel_inc)
 
