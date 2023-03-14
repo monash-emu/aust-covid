@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.express as px
 from pathlib import Path
 from jax import numpy as jnp
-import scipy
+from jax import scipy as jsp
 
 from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time, Data
@@ -48,7 +48,7 @@ def convolve_probability(source_output, density_kernel):
 
 
 def gamma_cdf(shape, mean, x):
-    return scipy.special.gammainc(shape, x * shape / mean)
+    return jsp.special.gammainc(shape, x * shape / mean)
 
 
 def build_gamma_dens_interval_func(shape, mean, model_times):
