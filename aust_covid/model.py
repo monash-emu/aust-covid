@@ -20,11 +20,11 @@ DATA_PATH = BASE_PATH / "data"
 
 
 def triangle_wave_func(
-        time: Time, 
-        start: float, 
-        duration: float, 
-        peak: float,
-    ) -> jnp.where:
+    time: Time, 
+    start: float, 
+    duration: float, 
+    peak: float,
+) -> jnp.where:
     """
     Generate a peaked triangular wave function
     that starts from and returns to zero.
@@ -47,7 +47,23 @@ def convolve_probability(source_output, density_kernel):
     return jnp.convolve(source_output, density_kernel)[:len(source_output)]
 
 
-def gamma_cdf(shape, mean, x):
+def gamma_cdf(
+    shape: float, 
+    mean: float, 
+    x: jnp.array,
+) -> jnp.array:
+    """
+    The regularised gamma function is the CDF of the gamma distribution
+    (which is referred to by scipy as "gammainc")
+
+    Args:
+        shape: Shape parameter to the desired gamma distribution
+        mean: Expectation of the desired gamma distribution
+        x: Values to calculate the result over
+
+    Returns:
+        Array of CDF values corresponding to input request (x)
+    """
     return jsp.special.gammainc(shape, x * shape / mean)
 
 
