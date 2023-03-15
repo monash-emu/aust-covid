@@ -5,9 +5,10 @@ import pandas as pd
 import plotly.express as px
 from pathlib import Path
 from jax import numpy as jnp
+from jax import scipy as jsp
 
 from summer2 import CompartmentalModel, Stratification, StrainStratification
-from summer2.parameters import Parameter, DerivedOutput, Function, Time
+from summer2.parameters import Parameter, DerivedOutput, Function, Time, Data
 
 from aust_covid.doc_utils import TextElement, FigElement, DocumentedProcess
 from aust_covid.inputs import load_pop_data
@@ -19,11 +20,11 @@ DATA_PATH = BASE_PATH / "data"
 
 
 def triangle_wave_func(
-        time: Time, 
-        start: float, 
-        duration: float, 
-        peak: float,
-    ) -> jnp.where:
+    time: float, 
+    start: float, 
+    duration: float, 
+    peak: float,
+) -> float:
     """
     Generate a peaked triangular wave function
     that starts from and returns to zero.
@@ -40,6 +41,36 @@ def triangle_wave_func(
     peak_time = start + duration * 0.5
     time_from_peak = jnp.abs(peak_time - time)
     return jnp.where(time_from_peak < duration * 0.5, peak - time_from_peak * gradient, 0.0)
+
+
+def convolve_probability(source_output, density_kernel):
+    return jnp.convolve(source_output, density_kernel)[:len(source_output)]
+
+
+def gamma_cdf(
+    shape: float, 
+    mean: float, 
+    x: jnp.array,
+) -> jnp.array:
+    """
+    The regularised gamma function is the CDF of the gamma distribution
+    (which is referred to by scipy as "gammainc")
+
+    Args:
+        shape: Shape parameter to the desired gamma distribution
+        mean: Expectation of the desired gamma distribution
+        x: Values to calculate the result over
+
+    Returns:
+        Array of CDF values corresponding to input request (x)
+    """
+    return jsp.special.gammainc(shape, x * shape / mean)
+
+
+def build_gamma_dens_interval_func(shape, mean, model_times):
+    lags = Data(model_times - model_times[0])
+    cdf_values = Function(gamma_cdf, [shape, mean, lags])
+    return Function(jnp.gradient, [cdf_values])
 
 
 class DocumentedAustModel(DocumentedProcess):
@@ -190,6 +221,7 @@ class DocumentedAustModel(DocumentedProcess):
         processes = ["infection", "reinfection"]
         for process in processes:
             self.model.request_output_for_flow(f"{process}_onset", process, save_results=False)
+        self.model.request_function_output("incidence", func=(DerivedOutput("infection_onset") + DerivedOutput("reinfection_onset")))
         self.model.request_function_output(output, func=(DerivedOutput("infection_onset") + DerivedOutput("reinfection_onset")) * Parameter("cdr"))
 
         if self.add_documentation:
@@ -197,6 +229,11 @@ class DocumentedAustModel(DocumentedProcess):
                 f"the absolute rate of {process[0]} or {process[1]} in the community, " \
                 "multiplied by the case detection rate. "
             self.add_element_to_doc("General model construction", TextElement(description))
+
+    def add_notifs_output_to_model(self):
+        delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), self.model.times)
+        notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput("incidence"), delay]) * Parameter("cdr")
+        self.model.request_function_output(name="notifs", func=notif_dist_rel_inc)
 
     def build_polymod_britain_matrix(self) -> np.array:
         """
@@ -411,6 +448,7 @@ def build_aust_model(
 
     # Outputs (must come after infection and reinfection)
     aust_model.add_notifications_output_to_model()
+    aust_model.add_notifs_output_to_model()
 
     # Documentation
     if add_documentation:
