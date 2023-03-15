@@ -96,6 +96,7 @@ class DocumentedAustModel(DocumentedProcess):
         "ba2": "BA.2",
         "ba5": "BA.5",
     }
+    infection_processes = ["infection", "reinfection"]
 
     def __init__(
         self, 
@@ -218,10 +219,12 @@ class DocumentedAustModel(DocumentedProcess):
 
     def add_incidence_output_to_model(self):
         output = "incidence"
-        processes = ["infection", "reinfection"]
-        for process in processes:
+        for process in self.infection_processes:
             self.model.request_output_for_flow(f"{process}_onset", process, save_results=False)
-        self.model.request_function_output("incidence", func=(DerivedOutput("infection_onset") + DerivedOutput("reinfection_onset")))
+        self.model.request_function_output(
+            output,
+            func=sum([DerivedOutput(f"{process}_onset") for process in self.infection_processes])
+        )
 
         if self.add_documentation:
             description = f"Modelled {output} is calculated as " \
@@ -241,13 +244,9 @@ class DocumentedAustModel(DocumentedProcess):
                 f"multiplied by the case detection rate. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
-    def add_death_output_to_model(self):
-        output = "deaths"
-        output_to_convolve = "incidence"
-
-        processes = ["infection", "reinfection"]
+    def track_age_specific_incidence(self):
         for age in self.model.stratifications["agegroup"].strata:
-            for process in processes:
+            for process in self.infection_processes:
                 self.model.request_output_for_flow(
                     f"{process}_onsetXagegroup_{age}", 
                     process, 
@@ -256,12 +255,12 @@ class DocumentedAustModel(DocumentedProcess):
                 )
             self.model.request_function_output(
                 f"incidenceXagegroup_{age}",
-                func=(
-                    DerivedOutput(f"infection_onsetXagegroup_{age}") + 
-                    DerivedOutput(f"reinfection_onsetXagegroup_{age}")
-                ),
-            )
 
+                func=sum([DerivedOutput(f"{process}_onsetXagegroup_{age}") for process in self.infection_processes])
+                    # DerivedOutput(f"infection_onsetXagegroup_{age}") + 
+                    # DerivedOutput(f"reinfection_onsetXagegroup_{age}")
+                # ),
+            )
 
     def build_polymod_britain_matrix(self) -> np.array:
         """
@@ -477,7 +476,7 @@ def build_aust_model(
     # Outputs (must come after infection and reinfection)
     aust_model.add_incidence_output_to_model()
     aust_model.add_notifications_output_to_model()
-    aust_model.add_death_output_to_model()
+    aust_model.track_age_specific_incidence()
 
     # Documentation
     if add_documentation:
