@@ -241,6 +241,28 @@ class DocumentedAustModel(DocumentedProcess):
                 f"multiplied by the case detection rate. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
+    def add_death_output_to_model(self):
+        output = "deaths"
+        output_to_convolve = "incidence"
+
+        processes = ["infection", "reinfection"]
+        for age in self.model.stratifications["agegroup"].strata:
+            for process in processes:
+                self.model.request_output_for_flow(
+                    f"{process}_onsetXagegroup_{age}", 
+                    process, 
+                    source_strata={"agegroup": age},
+                    save_results=False,
+                )
+            self.model.request_function_output(
+                f"incidenceXagegroup_{age}",
+                func=(
+                    DerivedOutput(f"infection_onsetXagegroup_{age}") + 
+                    DerivedOutput(f"reinfection_onsetXagegroup_{age}")
+                ),
+            )
+
+
     def build_polymod_britain_matrix(self) -> np.array:
         """
         Returns:
@@ -455,6 +477,7 @@ def build_aust_model(
     # Outputs (must come after infection and reinfection)
     aust_model.add_incidence_output_to_model()
     aust_model.add_notifications_output_to_model()
+    aust_model.add_death_output_to_model()
 
     # Documentation
     if add_documentation:
