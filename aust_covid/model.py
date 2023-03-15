@@ -216,24 +216,30 @@ class DocumentedAustModel(DocumentedProcess):
                 "as it is for those recovered from past BA.2 infection. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
-    def add_notifications_output_to_model(self):
-        output = "notifications"
+    def add_incidence_output_to_model(self):
+        output = "incidence"
         processes = ["infection", "reinfection"]
         for process in processes:
             self.model.request_output_for_flow(f"{process}_onset", process, save_results=False)
         self.model.request_function_output("incidence", func=(DerivedOutput("infection_onset") + DerivedOutput("reinfection_onset")))
-        self.model.request_function_output(output, func=(DerivedOutput("infection_onset") + DerivedOutput("reinfection_onset")) * Parameter("cdr"))
 
         if self.add_documentation:
-            description = f"Modelled {output} are calculated as " \
-                f"the absolute rate of {process[0]} or {process[1]} in the community, " \
-                "multiplied by the case detection rate. "
+            description = f"Modelled {output} is calculated as " \
+                f"the absolute rate of {process[0]} or {process[1]} in the community. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
-    def add_notifs_output_to_model(self):
+    def add_notifications_output_to_model(self):
+        output = "notifications"
+        output_to_convolve = "incidence"
         delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), self.model.times)
-        notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput("incidence"), delay]) * Parameter("cdr")
-        self.model.request_function_output(name="notifs", func=notif_dist_rel_inc)
+        notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter("cdr")
+        self.model.request_function_output(name=output, func=notif_dist_rel_inc)
+
+        if self.add_documentation:
+            description = f"Modelled {output} is calculated as " \
+                f"the {output_to_convolve} rate convolved with a gamma-distributed onset to notification delay, " \
+                f"multiplied by the case detection rate. "
+            self.add_element_to_doc("General model construction", TextElement(description))
 
     def build_polymod_britain_matrix(self) -> np.array:
         """
@@ -447,8 +453,8 @@ def build_aust_model(
     aust_model.add_reinfection_to_model()
 
     # Outputs (must come after infection and reinfection)
+    aust_model.add_incidence_output_to_model()
     aust_model.add_notifications_output_to_model()
-    aust_model.add_notifs_output_to_model()
 
     # Documentation
     if add_documentation:
