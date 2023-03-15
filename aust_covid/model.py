@@ -255,12 +255,22 @@ class DocumentedAustModel(DocumentedProcess):
                 )
             self.model.request_function_output(
                 f"incidenceXagegroup_{age}",
-
-                func=sum([DerivedOutput(f"{process}_onsetXagegroup_{age}") for process in self.infection_processes])
-                    # DerivedOutput(f"infection_onsetXagegroup_{age}") + 
-                    # DerivedOutput(f"reinfection_onsetXagegroup_{age}")
-                # ),
+                func=sum([DerivedOutput(f"{process}_onsetXagegroup_{age}") for process in self.infection_processes]),
+                save_results=False,
             )
+    
+    def add_death_output_to_model(self):
+        agegroups = self.model.stratifications["agegroup"].strata
+        for age in agegroups:
+            output = f"deathsXagegroup_{age}"
+            output_to_convolve = f"incidenceXagegroup_{age}"
+            delay = build_gamma_dens_interval_func(Parameter("deaths_shape"), Parameter("deaths_mean"), self.model.times)
+            death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter(f"ifr_{age}")
+            self.model.request_function_output(name=output, func=death_dist_rel_inc, save_results=False)
+        self.model.request_function_output(
+            f"deaths",
+            func=sum([DerivedOutput(f"deathsXagegroup_{age}") for age in agegroups]),
+        )
 
     def build_polymod_britain_matrix(self) -> np.array:
         """
@@ -477,6 +487,7 @@ def build_aust_model(
     aust_model.add_incidence_output_to_model()
     aust_model.add_notifications_output_to_model()
     aust_model.track_age_specific_incidence()
+    aust_model.add_death_output_to_model()
 
     # Documentation
     if add_documentation:
