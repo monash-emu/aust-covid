@@ -228,8 +228,9 @@ class DocumentedAustModel(DocumentedProcess):
 
         if self.add_documentation:
             description = f"Modelled {output} is calculated as " \
-                f"the absolute rate of {process[0]} or {process[1]} in the community. "
-            self.add_element_to_doc("General model construction", TextElement(description))
+                f"the absolute rate of {self.infection_processes[0]} or {self.infection_processes[1]} " \
+                "in the community. "
+            self.add_element_to_doc("Outputs", TextElement(description))
 
     def add_notifications_output_to_model(self):
         output = "notifications"
@@ -242,7 +243,7 @@ class DocumentedAustModel(DocumentedProcess):
             description = f"Modelled {output} is calculated as " \
                 f"the {output_to_convolve} rate convolved with a gamma-distributed onset to notification delay, " \
                 f"multiplied by the case detection rate. "
-            self.add_element_to_doc("General model construction", TextElement(description))
+            self.add_element_to_doc("Outputs", TextElement(description))
 
     def track_age_specific_incidence(self):
         for age in self.model.stratifications["agegroup"].strata:
@@ -278,7 +279,7 @@ class DocumentedAustModel(DocumentedProcess):
                 f"the age-specific incidence rate convolved with a gamma-distributed onset to death delay, " \
                 f"multiplied by an age-specific infection fatality rate for each age bracket. " \
                 f"The time series of deaths for each age gorup is then summed to obtain total modelled {output}. "
-            self.add_element_to_doc("General model construction", TextElement(description))
+            self.add_element_to_doc("Outputs", TextElement(description))
 
     def build_polymod_britain_matrix(self) -> np.array:
         """
