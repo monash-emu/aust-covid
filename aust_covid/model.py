@@ -24,7 +24,7 @@ def triangle_wave_func(
     start: float, 
     duration: float, 
     peak: float,
-) -> jnp.where:
+) -> float:
     """
     Generate a peaked triangular wave function
     that starts from and returns to zero.
