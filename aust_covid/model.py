@@ -96,7 +96,10 @@ class DocumentedAustModel(DocumentedProcess):
         "ba2": "BA.2",
         "ba5": "BA.5",
     }
-    infection_processes = ["infection", "reinfection"]
+    infection_processes = [
+        "infection", 
+        "reinfection",
+    ]
 
     def __init__(
         self, 
