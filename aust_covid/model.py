@@ -284,11 +284,10 @@ class DocumentedAustModel(DocumentedProcess):
         assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], "Unadjusted mixing matrix not square"
 
         # UK population distributions
-        uk_pops_list = [
-            3458060, 3556024, 3824317, 3960916, 3911291, 3762213, 4174675, 4695853, 
-            4653082, 3986098, 3620216, 3892985, 3124676, 2706365, 6961183,
-        ]
-        uk_age_pops = pd.Series(uk_pops_list, index=strata)
+        raw_uk_data = get_uk_pop_data()
+        uk_age_pops = raw_uk_data[:14]
+        uk_age_pops["75 years and up"] = raw_uk_data[15:].sum()
+        uk_age_pops.index = strata
         uk_age_props = uk_age_pops / uk_age_pops.sum()
         assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
         
