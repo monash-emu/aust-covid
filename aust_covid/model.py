@@ -321,6 +321,13 @@ class DocumentedAustModel(DocumentedProcess):
             caption = "Population sizes by age group obtained from Australia Bureau of Statistics."
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
 
+            filename = "matrix_ref_pop.jpg"
+            uk_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "age_group": ""})
+            uk_pop_fig.update_layout(showlegend=False)
+            pop_fig.write_image(SUPPLEMENT_PATH / filename)
+            caption = "United Kingdom population sizes."
+            self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
+
             filename = "modelled_population.jpg"
             modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
             modelled_pop_fig.update_layout(showlegend=False)
