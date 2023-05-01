@@ -63,7 +63,7 @@ def load_pop_data() -> tuple:
     return data, sheet_name
 
 
-def get_uk_pop_data():
+def load_uk_pop_data():
     """
     Get the UK census data.
 
@@ -289,9 +289,9 @@ class DocumentedAustModel(DocumentedProcess):
         assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], "Unadjusted mixing matrix not square"
 
         # UK population distributions
-        raw_uk_data = get_uk_pop_data()
+        raw_uk_data = load_uk_pop_data()
         uk_age_pops = raw_uk_data[:14]
-        uk_age_pops["70 years and up"] = raw_uk_data[15:].sum()
+        uk_age_pops["70 years and up"] = raw_uk_data[14:].sum()
         uk_age_pops.index = strata
         uk_age_props = uk_age_pops / uk_age_pops.sum()
         assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
