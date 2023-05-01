@@ -286,7 +286,7 @@ class DocumentedAustModel(DocumentedProcess):
         # UK population distributions
         raw_uk_data = get_uk_pop_data()
         uk_age_pops = raw_uk_data[:14]
-        uk_age_pops["75 years and up"] = raw_uk_data[15:].sum()
+        uk_age_pops["70 years and up"] = raw_uk_data[15:].sum()
         uk_age_pops.index = strata
         uk_age_props = uk_age_pops / uk_age_pops.sum()
         assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
