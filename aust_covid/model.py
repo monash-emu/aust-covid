@@ -301,14 +301,6 @@ class DocumentedAustModel(DocumentedProcess):
         
         assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], "Unadjusted mixing matrix not square"
 
-        # UK population distributions
-        raw_uk_data = load_uk_pop_data()
-        uk_age_pops = raw_uk_data[:14]
-        uk_age_pops["70 years and up"] = raw_uk_data[14:].sum()
-        uk_age_pops.index = self.age_strata
-        uk_age_props = uk_age_pops / uk_age_pops.sum()
-        assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
-        
         # Australian population distribution by age        
         aust_pop_series = pop_data["Australia"]
         modelled_pops = aust_pop_series[:"65-69"]
@@ -317,6 +309,14 @@ class DocumentedAustModel(DocumentedProcess):
         aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=self.age_strata)
         assert len(aust_age_props) == unadjusted_matrix.shape[0], "Different number of Aust age groups from mixing categories"
 
+        # UK population distributions
+        raw_uk_data = load_uk_pop_data()
+        uk_age_pops = raw_uk_data[:14]
+        uk_age_pops["70 years and up"] = raw_uk_data[14:].sum()
+        uk_age_pops.index = self.age_strata
+        uk_age_props = uk_age_pops / uk_age_pops.sum()
+        assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
+        
         # Calculation
         aust_uk_ratios = aust_age_props / uk_age_props
         adjusted_matrix = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
@@ -326,7 +326,10 @@ class DocumentedAustModel(DocumentedProcess):
                 "Australian population distribution in 2022 compared to the population of Great Britain in 2000. " \
                 "The matrices were adjusted by taking the dot product of the unadjusted matrices and the diagonal matrix " \
                 "containing the vector of the ratios between the proportion of the British and Australian populations " \
-                "within each age bracket as its diagonal elements. "
+                "within each age bracket as its diagonal elements. " \
+                "To align with the methodology of the POLYMOD study \cite{mossong2008} " \
+                "we sourced the 2001 UK census population for those living in the UK at the time of the census " \
+                "from the Eurostat database (https://ec.europa.eu/eurostat). "
             self.add_element_to_doc("Age stratification", TextElement(description))
 
             filename = "input_population.jpg"
@@ -336,18 +339,18 @@ class DocumentedAustModel(DocumentedProcess):
             caption = "Population sizes by age group obtained from Australia Bureau of Statistics."
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
 
-            filename = "matrix_ref_pop.jpg"
-            uk_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "age_group": ""})
-            uk_pop_fig.update_layout(showlegend=False)
-            uk_pop_fig.write_image(SUPPLEMENT_PATH / filename)
-            caption = "United Kingdom population sizes."
-            self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
-
             filename = "modelled_population.jpg"
             modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
             modelled_pop_fig.update_layout(showlegend=False)
             modelled_pop_fig.write_image(SUPPLEMENT_PATH / filename)
             caption = "Population sizes by age group included in the model."
+            self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
+
+            filename = "matrix_ref_pop.jpg"
+            uk_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
+            uk_pop_fig.update_layout(showlegend=False)
+            uk_pop_fig.write_image(SUPPLEMENT_PATH / filename)
+            caption = "United Kingdom population sizes."
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
 
             filename = "adjusted_matrix.jpg"
