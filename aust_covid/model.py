@@ -11,7 +11,7 @@ from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time, Data
 
 from aust_covid.doc_utils import TextElement, FigElement, DocumentedProcess
-from aust_covid.inputs import load_pop_data
+from aust_covid.inputs import load_pop_data, load_uk_pop_data
 
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
@@ -71,26 +71,6 @@ def build_gamma_dens_interval_func(shape, mean, model_times):
     lags = Data(model_times - model_times[0])
     cdf_values = Function(gamma_cdf, [shape, mean, lags])
     return Function(jnp.gradient, [cdf_values])
-
-
-def load_uk_pop_data():
-    """
-    Get the UK census data.
-
-    Returns:
-        The population data
-    """
-    sheet_name = "cens_01nscbirth__custom_6028079_page_spreadsheet.xlsx"
-    data = pd.read_excel(
-        DATA_PATH / sheet_name, 
-        sheet_name="Sheet_1", 
-        skiprows=list(range(0, 11)) + list(range(30, 37)), 
-        usecols="B:C", 
-        index_col=0,
-    )
-    data.index.name = "age_group"
-    data.columns = ["uk_pops"]
-    return data["uk_pops"]
 
 
 class DocumentedAustModel(DocumentedProcess):
@@ -331,7 +311,9 @@ class DocumentedAustModel(DocumentedProcess):
         
         # Australian population distribution by age        
         aust_pop_series = pop_data["Australia"]
-        modelled_pops = pd.concat([aust_pop_series[:"65-69"], pd.Series({"70": aust_pop_series["70-74":].sum()})])
+        modelled_pops = aust_pop_series[:"65-69"]
+        modelled_pops["70"] = aust_pop_series["70-74":].sum()
+        modelled_pops.index = self.age_strata
         aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=self.age_strata)
         assert len(aust_age_props) == unadjusted_matrix.shape[0], "Different number of Aust age groups from mixing categories"
 
@@ -357,7 +339,7 @@ class DocumentedAustModel(DocumentedProcess):
             filename = "matrix_ref_pop.jpg"
             uk_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "age_group": ""})
             uk_pop_fig.update_layout(showlegend=False)
-            pop_fig.write_image(SUPPLEMENT_PATH / filename)
+            uk_pop_fig.write_image(SUPPLEMENT_PATH / filename)
             caption = "United Kingdom population sizes."
             self.add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
 
