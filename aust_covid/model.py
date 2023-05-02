@@ -96,6 +96,10 @@ class DocumentedAustModel(DocumentedProcess):
         "ba2": "BA.2",
         "ba5": "BA.5",
     }
+    infection_processes = [
+        "infection", 
+        "reinfection",
+    ]
 
     def __init__(
         self, 
@@ -218,15 +222,18 @@ class DocumentedAustModel(DocumentedProcess):
 
     def add_incidence_output_to_model(self):
         output = "incidence"
-        processes = ["infection", "reinfection"]
-        for process in processes:
+        for process in self.infection_processes:
             self.model.request_output_for_flow(f"{process}_onset", process, save_results=False)
-        self.model.request_function_output("incidence", func=(DerivedOutput("infection_onset") + DerivedOutput("reinfection_onset")))
+        self.model.request_function_output(
+            output,
+            func=sum([DerivedOutput(f"{process}_onset") for process in self.infection_processes])
+        )
 
         if self.add_documentation:
             description = f"Modelled {output} is calculated as " \
-                f"the absolute rate of {process[0]} or {process[1]} in the community. "
-            self.add_element_to_doc("General model construction", TextElement(description))
+                f"the absolute rate of {self.infection_processes[0]} or {self.infection_processes[1]} " \
+                "in the community. "
+            self.add_element_to_doc("Outputs", TextElement(description))
 
     def add_notifications_output_to_model(self):
         output = "notifications"
@@ -239,7 +246,43 @@ class DocumentedAustModel(DocumentedProcess):
             description = f"Modelled {output} is calculated as " \
                 f"the {output_to_convolve} rate convolved with a gamma-distributed onset to notification delay, " \
                 f"multiplied by the case detection rate. "
-            self.add_element_to_doc("General model construction", TextElement(description))
+            self.add_element_to_doc("Outputs", TextElement(description))
+
+    def track_age_specific_incidence(self):
+        for age in self.model.stratifications["agegroup"].strata:
+            for process in self.infection_processes:
+                self.model.request_output_for_flow(
+                    f"{process}_onsetXagegroup_{age}", 
+                    process, 
+                    source_strata={"agegroup": age},
+                    save_results=False,
+                )
+            self.model.request_function_output(
+                f"incidenceXagegroup_{age}",
+                func=sum([DerivedOutput(f"{process}_onsetXagegroup_{age}") for process in self.infection_processes]),
+                save_results=False,
+            )
+    
+    def add_death_output_to_model(self):
+        agegroups = self.model.stratifications["agegroup"].strata
+        for age in agegroups:
+            age_output = f"deathsXagegroup_{age}"
+            output_to_convolve = f"incidenceXagegroup_{age}"
+            delay = build_gamma_dens_interval_func(Parameter("deaths_shape"), Parameter("deaths_mean"), self.model.times)
+            death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter(f"ifr_{age}")
+            self.model.request_function_output(name=age_output, func=death_dist_rel_inc, save_results=False)
+        output = "deaths"
+        self.model.request_function_output(
+            output,
+            func=sum([DerivedOutput(f"deathsXagegroup_{age}") for age in agegroups]),
+        )
+
+        if self.add_documentation:
+            description = f"Modelled {output} is calculated from " \
+                f"the age-specific incidence rate convolved with a gamma-distributed onset to death delay, " \
+                f"multiplied by an age-specific infection fatality rate for each age bracket. " \
+                f"The time series of deaths for each age gorup is then summed to obtain total modelled {output}. "
+            self.add_element_to_doc("Outputs", TextElement(description))
 
     def build_polymod_britain_matrix(self) -> np.array:
         """
@@ -466,6 +509,8 @@ def build_aust_model(
     # Outputs (must come after infection and reinfection)
     aust_model.add_incidence_output_to_model()
     aust_model.add_notifications_output_to_model()
+    aust_model.track_age_specific_incidence()
+    aust_model.add_death_output_to_model()
 
     # Documentation
     if add_documentation:
