@@ -196,8 +196,15 @@ class DocumentedAustModel(DocumentedProcess):
         process = "waning"
         origin = "recovered"
         destination = "waned"
+        self.model.add_transition_flow(process, 1.0 / Parameter("natural_immunity_period"), origin, destination)
 
-        self.model.add_transition_flow(process, 1.0 / Parameter("high_immunity_period"), origin, destination)
+        if self.add_documentation:
+            description = "A waned compartment is included in the model " \
+                "to represent persons who no longer have immunity from past natural immunity. " \
+                f"Modelled individuals transition from the {origin} compartment to the " \
+                f"{destination} compartment at a rate equal to the reciprocal of the " \
+                "requested period of time spent with natural immunity. "
+            self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_reinfection_to_model(self):
         for dest_strain in self.strain_strata:
@@ -225,19 +232,24 @@ class DocumentedAustModel(DocumentedProcess):
                     dest_strata={"strain": dest_strain},
                 )
 
-        # if self.add_documentation:
-        #     description = f"The {process} moves people from the {origin} " \
-        #         f"compartment to the {destination} compartment, " \
-        #         "under the frequency-dependent transmission assumption. " \
-        #         "Reinfection with a later sub-variant is only possible " \
-        #         "for persons who have recovered from an earlier sub-variant. " \
-        #         "That is, BA.2 reinfection is possible for persons previously infected with " \
-        #         "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
-        #         "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
-        #         "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
-        #         "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
-        #         "as it is for those recovered from past BA.2 infection. "
-        #     self.add_element_to_doc("General model construction", TextElement(description))
+        if self.add_documentation:
+            description = "Reinfection is possible from both the recovered " \
+                "and waned compartments, with these processes termed " \
+                "`early' and `late' reinfection respectively. " \
+                "In the case of early reinfection, this is only possible " \
+                "for persons who have recovered from an earlier circulating sub-variant. " \
+                "That is, BA.2 early reinfection is possible for persons previously infected with " \
+                "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
+                "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
+                "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
+                "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
+                "as it is for those recovered from past BA.2 infection. " \
+                "For late reinfection, all natural immunity is lost for persons in the waned compartment, " \
+                "such that the rate of reinfection for these persons is the same as the rate of infection " \
+                "for fully susceptible persons. " \
+                "As for the first infection process, " \
+                "all reinfection processes transition people to the model's latent compartment. "
+            self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_incidence_output_to_model(self):
         output = "incidence"
