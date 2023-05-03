@@ -233,8 +233,16 @@ class DocumentedAustModel(DocumentedProcess):
         process = "late_reinfection"
         origin = "waned"
         destination = "latent"
-
-        self.model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
+        for dest_strain in self.strain_strata:
+            for source_strain in self.strain_strata:
+                self.model.add_infection_frequency_flow(
+                    process, 
+                    Parameter("contact_rate"), 
+                    origin, 
+                    destination,
+                    source_strata={"strain": source_strain},
+                    dest_strata={"strain": dest_strain},
+                )
 
     def add_incidence_output_to_model(self):
         output = "incidence"
@@ -474,7 +482,7 @@ class DocumentedAustModel(DocumentedProcess):
                 ]
             )
             self.model.add_importation_flow(
-                "seed_{strain}",
+                f"seed_{strain}",
                 voc_seed_func,
                 "latent",
                 dest_strata={"strain": strain},
