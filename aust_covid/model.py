@@ -89,6 +89,7 @@ class DocumentedAustModel(DocumentedProcess):
         "latent",
         "infectious",
         "recovered",
+        "waned",
     ]
     age_strata = list(range(0, 75, 5))
     strain_strata = {
@@ -98,7 +99,8 @@ class DocumentedAustModel(DocumentedProcess):
     }
     infection_processes = [
         "infection", 
-        "reinfection",
+        "early_reinfection",
+        "late_reinfection",
     ]
 
     def __init__(
@@ -190,8 +192,15 @@ class DocumentedAustModel(DocumentedProcess):
                 "with the rate of transition calculated as the reciprocal of the infectious period. "
             self.add_element_to_doc("General model construction", TextElement(description))
 
-    def add_reinfection_to_model(self):
-        process = "reinfection"
+    def add_waning_to_model(self):
+        process = "waning"
+        origin = "recovered"
+        destination = "waned"
+
+        self.model.add_transition_flow(process, 1.0 / Parameter("high_immunity_period"), origin, destination)
+
+    def add_early_reinfection_to_model(self):
+        process = "early_reinfection"
         origin = "recovered"
         destination = "latent"
         for dest_strain in self.strain_strata:
@@ -219,6 +228,13 @@ class DocumentedAustModel(DocumentedProcess):
                 "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
                 "as it is for those recovered from past BA.2 infection. "
             self.add_element_to_doc("General model construction", TextElement(description))
+
+    def add_late_reinfection_to_model(self):
+        process = "late_reinfection"
+        origin = "waned"
+        destination = "latent"
+
+        self.model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
 
     def add_incidence_output_to_model(self):
         output = "incidence"
@@ -493,6 +509,7 @@ def build_aust_model(
     aust_model.add_infection_to_model()
     aust_model.add_progression_to_model()
     aust_model.add_recovery_to_model()
+    aust_model.add_waning_to_model()
 
     # Age stratification
     raw_matrix = aust_model.build_polymod_britain_matrix()
@@ -504,7 +521,8 @@ def build_aust_model(
     aust_model.seed_vocs()
 
     # Reinfection (must come after strain stratification)
-    aust_model.add_reinfection_to_model()
+    aust_model.add_early_reinfection_to_model()
+    aust_model.add_late_reinfection_to_model()
 
     # Outputs (must come after infection and reinfection)
     aust_model.add_incidence_output_to_model()
