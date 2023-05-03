@@ -199,12 +199,12 @@ class DocumentedAustModel(DocumentedProcess):
 
         self.model.add_transition_flow(process, 1.0 / Parameter("high_immunity_period"), origin, destination)
 
-    def add_early_reinfection_to_model(self):
-        process = "early_reinfection"
-        origin = "recovered"
-        destination = "latent"
+    def add_reinfection_to_model(self):
         for dest_strain in self.strain_strata:
             for source_strain in self.strain_strata:
+                process = "early_reinfection"
+                origin = "recovered"
+                destination = "latent"
                 if int(dest_strain[-1]) > int(source_strain[-1]): 
                     self.model.add_infection_frequency_flow(
                         process, 
@@ -214,27 +214,8 @@ class DocumentedAustModel(DocumentedProcess):
                         source_strata={"strain": source_strain},
                         dest_strata={"strain": dest_strain},
                     )
-        
-        if self.add_documentation:
-            description = f"The {process} moves people from the {origin} " \
-                f"compartment to the {destination} compartment, " \
-                "under the frequency-dependent transmission assumption. " \
-                "Reinfection with a later sub-variant is only possible " \
-                "for persons who have recovered from an earlier sub-variant. " \
-                "That is, BA.2 reinfection is possible for persons previously infected with " \
-                "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
-                "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
-                "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
-                "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
-                "as it is for those recovered from past BA.2 infection. "
-            self.add_element_to_doc("General model construction", TextElement(description))
-
-    def add_late_reinfection_to_model(self):
-        process = "late_reinfection"
-        origin = "waned"
-        destination = "latent"
-        for dest_strain in self.strain_strata:
-            for source_strain in self.strain_strata:
+                process = "late_reinfection"
+                origin = "waned"
                 self.model.add_infection_frequency_flow(
                     process, 
                     Parameter("contact_rate"), 
@@ -243,6 +224,20 @@ class DocumentedAustModel(DocumentedProcess):
                     source_strata={"strain": source_strain},
                     dest_strata={"strain": dest_strain},
                 )
+
+        # if self.add_documentation:
+        #     description = f"The {process} moves people from the {origin} " \
+        #         f"compartment to the {destination} compartment, " \
+        #         "under the frequency-dependent transmission assumption. " \
+        #         "Reinfection with a later sub-variant is only possible " \
+        #         "for persons who have recovered from an earlier sub-variant. " \
+        #         "That is, BA.2 reinfection is possible for persons previously infected with " \
+        #         "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
+        #         "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
+        #         "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
+        #         "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
+        #         "as it is for those recovered from past BA.2 infection. "
+        #     self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_incidence_output_to_model(self):
         output = "incidence"
@@ -529,8 +524,7 @@ def build_aust_model(
     aust_model.seed_vocs()
 
     # Reinfection (must come after strain stratification)
-    aust_model.add_early_reinfection_to_model()
-    aust_model.add_late_reinfection_to_model()
+    aust_model.add_reinfection_to_model()
 
     # Outputs (must come after infection and reinfection)
     aust_model.add_incidence_output_to_model()
