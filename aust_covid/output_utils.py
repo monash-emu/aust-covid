@@ -5,6 +5,8 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 
+from estival.model import BayesianCompartmentalModel
+
 
 def convert_idata_to_df(
     idata: az.data.inference_data.InferenceData, 
@@ -24,7 +26,7 @@ def convert_idata_to_df(
 
 def run_samples_through_model(
     samples_df: pd.DataFrame, 
-    model: pm.model.Model,
+    model: BayesianCompartmentalModel,
 ) -> pd.DataFrame:
     """
     Run parameters dataframe in format created by convert_idata_to_df
