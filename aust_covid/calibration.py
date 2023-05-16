@@ -137,11 +137,11 @@ class DocumentedCalibration(DocumentedProcess):
         self.end = end
         self.model = build_aust_model(start, end, None, add_documentation=False)
        
-    def graph_param_progression(self, uncertainty_outputs):
+    def graph_param_progression(self):
         """
         Plot progression of parameters over model iterations with posterior density plots.
         """
-        trace_plot = az.plot_trace(uncertainty_outputs, figsize=(16, 3.0 * len(uncertainty_outputs.posterior)), compact=False, legend=True)
+        trace_plot = az.plot_trace(self.uncertainty_outputs, figsize=(16, 3.0 * len(self.uncertainty_outputs.posterior)), compact=False, legend=True)
         for i_prior, prior_name in enumerate(self.priors):
             for i_col, column in enumerate(["posterior", "trace"]):
                 ax = trace_plot[i_prior][i_col]
@@ -153,11 +153,25 @@ class DocumentedCalibration(DocumentedProcess):
         plt.savefig(SUPPLEMENT_PATH / location)
         self.add_element_to_doc("Calibration", FigElement(location))
 
+    def graph_param_posterior(self):
+        """
+        Plot posterior distribution of parameters.
+        """
+        posterior_plot = az.plot_posterior(data=self.uncertainty_outputs)
+        for i_prior, prior_name in enumerate(self.priors):
+            for i_col, column in enumerate(["posterior", "trace"]):
+                ax = posterior_plot[i_prior][i_col]
+                ax.set_title(f"{self.descriptions[prior_name.name]}, {column}", fontsize=20)
+                for axis in [ax.xaxis, ax.yaxis]:
+                    axis.set_tick_params(labelsize=15)
+        location = "posterior.jpg"
+        plt.savefig(SUPPLEMENT_PATH / location)
+        self.add_element_to_doc("Calibration", FigElement(location))
+
     def add_calib_table_to_doc(self):
         """
         Report calibration input choices in table.
         """
-
         text = "Input parameters varied through calibration with uncertainty distribution parameters and support. \n"
         self.add_element_to_doc("Calibration", TextElement(text))
 
@@ -176,7 +190,6 @@ class DocumentedCalibration(DocumentedProcess):
         """
         Report results of calibration analysis.
         """
-
         calib_summary = az.summary(self.uncertainty_outputs)
         headers = ["Para-meter", "Mean (SD)", "3-97% high-density interval", "MCSE mean (SD)", "ESS bulk", "ESS tail", "R_hat"]
         rows = []
@@ -193,7 +206,6 @@ class DocumentedCalibration(DocumentedProcess):
         """
         Describe all the parameters used in the model, regardless of whether 
         """
-        
         text = "Parameter interpretation, with value (for parameters not included in calibration algorithm) and summary of evidence. \n"
         self.add_element_to_doc("Parameterisation", TextElement(text))
 
@@ -204,39 +216,3 @@ class DocumentedCalibration(DocumentedProcess):
             param_value_text = get_fixed_param_value_text(param, self.params, self.units, self.prior_names)
             rows.append([self.descriptions[param], param_value_text, NoEscape(self.evidence[param])])
         self.add_element_to_doc("Calibration", TableElement(col_widths, headers, rows))
-
-    def get_sample_outputs(
-            self, 
-            n_samples: int, 
-        ):
-        """
-        Get a selection of the model runs obtained during calibration in the notebook.
-
-        Args:
-            n_samples: Number of samples to choose
-
-        Returns:
-            The outputs from consecutive runs
-        """
-
-        # How many parameter samples to run through again (suppress warnings if 100+)
-        samples = sorted(sample(range(self.burn_in, self.iterations - 200), n_samples))
-
-        # Sample parameters from accepted runs
-        sample_params = pd.DataFrame(
-            {p.name: self.uncertainty_outputs.posterior[p.name][0, samples].to_numpy() for p in self.priors},
-            index=samples,
-        )
-
-        # Get model outputs for sampled parameters
-        sample_outputs = pd.DataFrame(
-            index=self.model.get_derived_outputs_df().index, 
-            columns=samples,
-        )
-        params = copy.deepcopy(self.params)
-        for i_param_set in samples:
-            params.update(sample_params.loc[i_param_set, :].to_dict())
-            self.model.run(parameters=params)
-            sample_outputs[i_param_set] = self.model.get_derived_outputs_df()["notifications"]
-        
-        return sample_outputs
