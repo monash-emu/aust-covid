@@ -4,8 +4,6 @@ from pylatex.utils import NoEscape
 import arviz as az
 import matplotlib.pyplot as plt
 from pathlib import Path
-from random import sample
-import copy
 from datetime import datetime
 
 from aust_covid.doc_utils import DocumentedProcess, FigElement, TextElement, TableElement
@@ -157,13 +155,7 @@ class DocumentedCalibration(DocumentedProcess):
         """
         Plot posterior distribution of parameters.
         """
-        posterior_plot = az.plot_posterior(data=self.uncertainty_outputs)
-        for i_prior, prior_name in enumerate(self.priors):
-            for i_col, column in enumerate(["posterior", "trace"]):
-                ax = posterior_plot[i_prior][i_col]
-                ax.set_title(f"{self.descriptions[prior_name.name]}, {column}", fontsize=20)
-                for axis in [ax.xaxis, ax.yaxis]:
-                    axis.set_tick_params(labelsize=15)
+        az.plot_posterior(data=self.uncertainty_outputs)
         location = "posterior.jpg"
         plt.savefig(SUPPLEMENT_PATH / location)
         self.add_element_to_doc("Calibration", FigElement(location))
