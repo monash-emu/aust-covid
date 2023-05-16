@@ -105,11 +105,9 @@ class DocumentedCalibration(DocumentedProcess):
         Most of this should be general enough to use for any summer calibration.
 
         Args:
+            model: The calibration "model" rather than just the summer2 epi model
+            outputs: The arviz-structured calibration results data
             priors: The prior objects
-            targets: The targets to fit to
-            iterations: The number of iterations to run
-            burn_in: The number of iterations to discard as burn-in
-            model_func: The function to build the model
             parameters: The base parameter requests before updating through calibration
             descriptions: Strings to describe the parameters properly
             units: Strings for the units of each parameter
@@ -155,6 +153,9 @@ class DocumentedCalibration(DocumentedProcess):
         self.add_element_to_doc("Calibration", FigElement(location))
 
     def graph_sampled_outputs(self, n_samples, output):
+        """
+        Plot sample model runs from the calibration algorithm.
+        """
         sampled_idata = az.extract(self.uncertainty_outputs, num_samples=n_samples)  # Sample from the inference data
         sampled_df = convert_idata_to_df(sampled_idata, self.prior_names)
         sample_model_results = run_samples_through_model(sampled_df, self.bayesian_model, output)
