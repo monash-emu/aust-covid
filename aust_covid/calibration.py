@@ -1,14 +1,14 @@
-import pandas as pd
 import pylatex as pl
 from pylatex.utils import NoEscape
 import arviz as az
 import matplotlib.pyplot as plt
 from pathlib import Path
 from datetime import datetime
+import plotly.graph_objects as go
 
 from aust_covid.doc_utils import DocumentedProcess, FigElement, TextElement, TableElement
 from aust_covid.model import build_aust_model
-from estival.calibration.mcmc.adaptive import AdaptiveChain
+from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, round_sigfig, plot_from_model_runs_df
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
@@ -159,6 +159,25 @@ class DocumentedCalibration(DocumentedProcess):
         location = "posterior.jpg"
         plt.savefig(SUPPLEMENT_PATH / location)
         self.add_element_to_doc("Calibration", FigElement(location))
+
+    def graph_sampled_outputs(self, model, data, n_samples):
+        # Sample from the inference data
+        sampled_idata = az.extract(self.uncertainty_outputs, num_samples=n_samples)
+        sampled_df = convert_idata_to_df(sampled_idata, self.prior_names)
+        sample_model_results = run_samples_through_model(sampled_df, model)
+        fig = plot_from_model_runs_df(sample_model_results, sampled_df, self.prior_names)
+        fig.add_trace(
+            go.Scatter(
+                x=data.index, 
+                y=data, 
+                marker=dict(color="black"), 
+                name="non-WA cases", 
+                mode="markers",
+            ),
+        )
+        filename = "calibration_fit.jpg"
+        fig.write_image(SUPPLEMENT_PATH / filename)
+        self.add_element_to_doc("Age stratification", FigElement(filename))
 
     def add_calib_table_to_doc(self):
         """
