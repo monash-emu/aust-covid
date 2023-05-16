@@ -6,6 +6,8 @@ from pathlib import Path
 from datetime import datetime
 import plotly.graph_objects as go
 
+from estival.model import BayesianCompartmentalModel
+
 from aust_covid.doc_utils import DocumentedProcess, FigElement, TextElement, TableElement
 from aust_covid.model import build_aust_model
 from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, round_sigfig, plot_from_model_runs_df
@@ -86,12 +88,9 @@ def get_prior_dist_support(
 class DocumentedCalibration(DocumentedProcess):
     def __init__(
         self, 
-        outputs,
+        model: BayesianCompartmentalModel,
+        outputs: az.data.inference_data.InferenceData,
         priors: list, 
-        targets: list, 
-        iterations: int, 
-        burn_in: int, 
-        model_func: callable,
         parameters: dict,
         descriptions: dict, 
         units: dict, 
@@ -120,19 +119,14 @@ class DocumentedCalibration(DocumentedProcess):
             doc: The TeX document to populate
         """
         super().__init__(doc, True)
+        self.bayesian_model = model
         self.uncertainty_outputs = outputs
-        self.iterations = iterations
-        self.burn_in = burn_in
-        self.model_func = model_func
         self.priors = priors
         self.prior_names = [priors[i_prior].name for i_prior in range(len(priors))]
-        self.targets = targets
         self.params = parameters
         self.descriptions = descriptions
         self.units = units
         self.evidence = evidence
-        self.start = start
-        self.end = end
         self.model = build_aust_model(start, end, None, add_documentation=False)
        
     def graph_param_progression(self):
@@ -140,10 +134,10 @@ class DocumentedCalibration(DocumentedProcess):
         Plot progression of parameters over model iterations with posterior density plots.
         """
         trace_plot = az.plot_trace(self.uncertainty_outputs, figsize=(16, 3.0 * len(self.uncertainty_outputs.posterior)), compact=False, legend=True)
-        for i_prior, prior_name in enumerate(self.priors):
+        for i_prior, prior in enumerate(self.priors):
             for i_col, column in enumerate(["posterior", "trace"]):
                 ax = trace_plot[i_prior][i_col]
-                ax.set_title(f"{self.descriptions[prior_name.name]}, {column}", fontsize=20)
+                ax.set_title(f"{self.descriptions[prior.name]}, {column}", fontsize=20)
                 for axis in [ax.xaxis, ax.yaxis]:
                     axis.set_tick_params(labelsize=15)
 
@@ -160,24 +154,24 @@ class DocumentedCalibration(DocumentedProcess):
         plt.savefig(SUPPLEMENT_PATH / location)
         self.add_element_to_doc("Calibration", FigElement(location))
 
-    def graph_sampled_outputs(self, model, data, n_samples):
-        # Sample from the inference data
-        sampled_idata = az.extract(self.uncertainty_outputs, num_samples=n_samples)
+    def graph_sampled_outputs(self, n_samples, output):
+        sampled_idata = az.extract(self.uncertainty_outputs, num_samples=n_samples)  # Sample from the inference data
         sampled_df = convert_idata_to_df(sampled_idata, self.prior_names)
-        sample_model_results = run_samples_through_model(sampled_df, model)
+        sample_model_results = run_samples_through_model(sampled_df, self.bayesian_model, output)
+        data = self.bayesian_model.targets[output].data
         fig = plot_from_model_runs_df(sample_model_results, sampled_df, self.prior_names)
         fig.add_trace(
             go.Scatter(
                 x=data.index, 
                 y=data, 
                 marker=dict(color="black"), 
-                name="non-WA cases", 
+                name=output, 
                 mode="markers",
             ),
         )
         filename = "calibration_fit.jpg"
         fig.write_image(SUPPLEMENT_PATH / filename)
-        self.add_element_to_doc("Age stratification", FigElement(filename))
+        self.add_element_to_doc("Calibration", FigElement(filename))
 
     def add_calib_table_to_doc(self):
         """
@@ -212,6 +206,7 @@ class DocumentedCalibration(DocumentedProcess):
             mcse = f"{summary_row['mcse_mean']} ({summary_row['mcse_sd']})"
             rows.append([name, mean_sd, hdi, mcse] + [str(metric) for metric in summary_row[6:]])
         self.add_element_to_doc("Calibration", TableElement("p{1.3cm} " * 7, headers, rows))
+        return calib_summary
             
     def add_param_table_to_doc(self):
         """

@@ -1,6 +1,5 @@
 import pandas as pd
 import arviz as az
-import pymc as pm
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
@@ -27,6 +26,7 @@ def convert_idata_to_df(
 def run_samples_through_model(
     samples_df: pd.DataFrame, 
     model: BayesianCompartmentalModel,
+    output: str,
 ) -> pd.DataFrame:
     """
     Run parameters dataframe in format created by convert_idata_to_df
@@ -38,7 +38,7 @@ def run_samples_through_model(
     """
     sres = pd.DataFrame(index=model.model._get_ref_idx(), columns=samples_df.index)
     for (chain, draw), params in samples_df.iterrows():
-        sres[(chain,draw)] = model.run(params.to_dict()).derived_outputs["notifications"]
+        sres[(chain,draw)] = model.run(params.to_dict()).derived_outputs[output]
     return sres
 
 
