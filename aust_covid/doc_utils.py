@@ -99,10 +99,21 @@ class TableElement(DocElement):
         doc.append(LineBreak())
 
 
-def add_element_to_document(element, section_name, doc_sections):
+def add_element_to_document(section_name, element, doc_sections):
     if section_name not in doc_sections:
         doc_sections[section_name] = []
     doc_sections[section_name].append(element)
+
+
+def compile_doc(doc_sections, doc):
+    """
+    Apply all the document elements to the document,
+    looping through each section and using each element's emit_latex method.
+    """
+    for section in doc_sections:
+        with doc.create(Section(section)):
+            for element in doc_sections[section]:
+                element.emit_latex(doc)
 
 
 class DocumentedProcess:

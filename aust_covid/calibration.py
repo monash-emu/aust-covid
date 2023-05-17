@@ -1,9 +1,7 @@
-import pylatex as pl
 from pylatex.utils import NoEscape
 import arviz as az
 import matplotlib.pyplot as plt
 from pathlib import Path
-from datetime import datetime
 import plotly.graph_objects as go
 
 from aust_covid.doc_utils import add_element_to_document
@@ -83,7 +81,12 @@ def get_prior_dist_support(
     return " to ".join([str(i) for i in prior.bounds()])
 
 
-def graph_param_progression(uncertainty_outputs, priors, descriptions, doc_sections):
+def graph_param_progression(
+    uncertainty_outputs, 
+    priors, 
+    descriptions, 
+    doc_sections,
+):
     """
     Plot progression of parameters over model iterations with posterior density plots.
     """
@@ -100,7 +103,11 @@ def graph_param_progression(uncertainty_outputs, priors, descriptions, doc_secti
     add_element_to_document("Calibration", FigElement(location), doc_sections)
 
 
-def add_calib_table_to_doc(priors, param_descriptions, doc_sections):
+def add_calib_table_to_doc(
+    priors, 
+    param_descriptions, 
+    doc_sections,
+):
     """
     Report calibration input choices in table.
     """
@@ -119,7 +126,10 @@ def add_calib_table_to_doc(priors, param_descriptions, doc_sections):
     add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
 
 
-def graph_param_posterior(uncertainty_outputs, doc_sections):
+def graph_param_posterior(
+    uncertainty_outputs, 
+    doc_sections,
+):
     """
     Plot posterior distribution of parameters.
     """
@@ -129,11 +139,19 @@ def graph_param_posterior(uncertainty_outputs, doc_sections):
     add_element_to_document("Calibration", FigElement(location), doc_sections)
 
 
-def add_param_table_to_doc(bayesian_model, parameters, param_descriptions, param_evidence, param_units, priors, doc_sections):
+def add_param_table_to_doc(
+    bayesian_model, 
+    parameters, 
+    param_descriptions, 
+    param_evidence, 
+    param_units, 
+    priors, 
+    doc_sections,
+):
     """
     Describe all the parameters used in the model, regardless of whether 
     """
-    prior_names = [priors[i_prior].name for i_prior in range(len(priors))]
+    prior_names = [p.name for p in priors]
 
     text = "Parameter interpretation, with value (for parameters not included in calibration algorithm) and summary of evidence. \n"
     add_element_to_document("Parameterisation", TextElement(text), doc_sections)
@@ -147,7 +165,11 @@ def add_param_table_to_doc(bayesian_model, parameters, param_descriptions, param
     add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
 
 
-def table_param_results(uncertainty_outputs, param_descriptions, doc_sections):
+def table_param_results(
+    uncertainty_outputs, 
+    param_descriptions, 
+    doc_sections,
+):
     """
     Report results of calibration analysis.
     """
@@ -165,11 +187,18 @@ def table_param_results(uncertainty_outputs, param_descriptions, doc_sections):
     return calib_summary
 
 
-def graph_sampled_outputs(uncertainty_outputs, n_samples, output, bayesian_model, priors, doc_sections):
+def graph_sampled_outputs(
+    uncertainty_outputs, 
+    n_samples, 
+    output, 
+    bayesian_model, 
+    priors, 
+    doc_sections,
+):
     """
     Plot sample model runs from the calibration algorithm.
     """
-    prior_names = [priors[i_prior].name for i_prior in range(len(priors))]
+    prior_names = [p.name for p in priors]
     sampled_idata = az.extract(uncertainty_outputs, num_samples=n_samples)  # Sample from the inference data
     sampled_df = convert_idata_to_df(sampled_idata, prior_names)
     sample_model_results = run_samples_through_model(sampled_df, bayesian_model, output)
