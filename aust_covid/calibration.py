@@ -6,11 +6,9 @@ from pathlib import Path
 from datetime import datetime
 import plotly.graph_objects as go
 
-from estival.model import BayesianCompartmentalModel
-
-from aust_covid.doc_utils import DocumentedProcess, FigElement, TextElement, TableElement
-from aust_covid.model import build_aust_model
-from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, round_sigfig, plot_from_model_runs_df
+from aust_covid.doc_utils import add_element_to_document
+from aust_covid.doc_utils import FigElement, TextElement, TableElement
+from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, plot_from_model_runs_df
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
@@ -85,7 +83,7 @@ def get_prior_dist_support(
     return " to ".join([str(i) for i in prior.bounds()])
 
 
-def graph_param_progression(uncertainty_outputs, priors, descriptions):
+def graph_param_progression(uncertainty_outputs, priors, descriptions, doc_sections):
     """
     Plot progression of parameters over model iterations with posterior density plots.
     """
@@ -99,129 +97,93 @@ def graph_param_progression(uncertainty_outputs, priors, descriptions):
 
     location = "progression.jpg"
     plt.savefig(SUPPLEMENT_PATH / location)
-    # self.add_element_to_doc("Calibration", FigElement(location))
+    add_element_to_document("Calibration", FigElement(location), doc_sections)
 
 
+def add_calib_table_to_doc(priors, param_descriptions, doc_sections):
+    """
+    Report calibration input choices in table.
+    """
+    text = "Input parameters varied through calibration with uncertainty distribution parameters and support. \n"
+    add_element_to_document("Calibration", TextElement(text), doc_sections)
 
-class DocumentedCalibration(DocumentedProcess):
-    def __init__(
-        self, 
-        model: BayesianCompartmentalModel,
-        outputs: az.data.inference_data.InferenceData,
-        priors: list, 
-        parameters: dict,
-        descriptions: dict, 
-        units: dict, 
-        evidence: dict, 
-        start: datetime,
-        end: datetime,
-        doc: pl.Document=None,
-    ):
-        """
-        Supports calibration of a summer model,
-        with documentation to TeX document as the processes proceed.
-        Most of this should be general enough to use for any summer calibration.
+    headers = ["Name", "Distribution", "Distribution parameters", "Support"]
+    col_widths = "p{2.7cm} " * 4
+    rows = []
+    for prior in priors:
+        prior_desc = param_descriptions[prior.name]
+        dist_type = get_prior_dist_type(prior)
+        dist_params = get_prior_dist_param_str(prior)
+        dist_range = get_prior_dist_support(prior)
+        rows.append([prior_desc, dist_type, dist_params, dist_range])
+    add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
 
-        Args:
-            model: The calibration "model" rather than just the summer2 epi model
-            outputs: The arviz-structured calibration results data
-            priors: The prior objects
-            parameters: The base parameter requests before updating through calibration
-            descriptions: Strings to describe the parameters properly
-            units: Strings for the units of each parameter
-            evidence: Strings with a more detailed description of the evidence for each parameter
-            start: Starting date for simulation
-            end: Finish date for simulation
-            doc: The TeX document to populate
-        """
-        super().__init__(doc, True)
-        self.bayesian_model = model
-        self.uncertainty_outputs = outputs
-        self.priors = priors
-        self.prior_names = [priors[i_prior].name for i_prior in range(len(priors))]
-        self.params = parameters
-        self.descriptions = descriptions
-        self.units = units
-        self.evidence = evidence
-        self.model = build_aust_model(start, end, None, add_documentation=False)
-       
-    def graph_param_posterior(self):
-        """
-        Plot posterior distribution of parameters.
-        """
-        az.plot_posterior(data=self.uncertainty_outputs)
-        location = "posterior.jpg"
-        plt.savefig(SUPPLEMENT_PATH / location)
-        self.add_element_to_doc("Calibration", FigElement(location))
 
-    def graph_sampled_outputs(self, n_samples, output):
-        """
-        Plot sample model runs from the calibration algorithm.
-        """
-        sampled_idata = az.extract(self.uncertainty_outputs, num_samples=n_samples)  # Sample from the inference data
-        sampled_df = convert_idata_to_df(sampled_idata, self.prior_names)
-        sample_model_results = run_samples_through_model(sampled_df, self.bayesian_model, output)
-        data = self.bayesian_model.targets[output].data
-        fig = plot_from_model_runs_df(sample_model_results, sampled_df, self.prior_names)
-        fig.add_trace(
-            go.Scatter(
-                x=data.index, 
-                y=data, 
-                marker=dict(color="black"), 
-                name=output, 
-                mode="markers",
-            ),
-        )
-        filename = "calibration_fit.jpg"
-        fig.write_image(SUPPLEMENT_PATH / filename)
-        self.add_element_to_doc("Calibration", FigElement(filename))
+def graph_param_posterior(uncertainty_outputs, doc_sections):
+    """
+    Plot posterior distribution of parameters.
+    """
+    az.plot_posterior(data=uncertainty_outputs)
+    location = "posterior.jpg"
+    plt.savefig(SUPPLEMENT_PATH / location)
+    add_element_to_document("Calibration", FigElement(location), doc_sections)
 
-    def add_calib_table_to_doc(self):
-        """
-        Report calibration input choices in table.
-        """
-        text = "Input parameters varied through calibration with uncertainty distribution parameters and support. \n"
-        self.add_element_to_doc("Calibration", TextElement(text))
 
-        headers = ["Name", "Distribution", "Distribution parameters", "Support"]
-        col_widths = "p{2.7cm} " * 4
-        rows = []
-        for prior in self.priors:
-            prior_desc = self.descriptions[prior.name]
-            dist_type = get_prior_dist_type(prior)
-            dist_params = get_prior_dist_param_str(prior)
-            dist_range = get_prior_dist_support(prior)
-            rows.append([prior_desc, dist_type, dist_params, dist_range])
-        self.add_element_to_doc("Calibration", TableElement(col_widths, headers, rows))
+def add_param_table_to_doc(bayesian_model, parameters, param_descriptions, param_evidence, param_units, priors, doc_sections):
+    """
+    Describe all the parameters used in the model, regardless of whether 
+    """
+    prior_names = [priors[i_prior].name for i_prior in range(len(priors))]
 
-    def table_param_results(self):
-        """
-        Report results of calibration analysis.
-        """
-        calib_summary = az.summary(self.uncertainty_outputs)
-        headers = ["Para-meter", "Mean (SD)", "3-97% high-density interval", "MCSE mean (SD)", "ESS bulk", "ESS tail", "R_hat"]
-        rows = []
-        for param in calib_summary.index:
-            summary_row = calib_summary.loc[param]
-            name = self.descriptions[param]
-            mean_sd = f"{summary_row['mean']} ({summary_row['sd']})"
-            hdi = f"{summary_row['hdi_3%']} to {summary_row['hdi_97%']}"
-            mcse = f"{summary_row['mcse_mean']} ({summary_row['mcse_sd']})"
-            rows.append([name, mean_sd, hdi, mcse] + [str(metric) for metric in summary_row[6:]])
-        self.add_element_to_doc("Calibration", TableElement("p{1.3cm} " * 7, headers, rows))
-        return calib_summary
-            
-    def add_param_table_to_doc(self):
-        """
-        Describe all the parameters used in the model, regardless of whether 
-        """
-        text = "Parameter interpretation, with value (for parameters not included in calibration algorithm) and summary of evidence. \n"
-        self.add_element_to_doc("Parameterisation", TextElement(text))
+    text = "Parameter interpretation, with value (for parameters not included in calibration algorithm) and summary of evidence. \n"
+    add_element_to_document("Parameterisation", TextElement(text), doc_sections)
 
-        headers = ["Name", "Value", "Evidence"]
-        col_widths = "p{2.7cm} " * 2 + "p{5.8cm}"
-        rows = []
-        for param in self.model.get_input_parameters():
-            param_value_text = get_fixed_param_value_text(param, self.params, self.units, self.prior_names)
-            rows.append([self.descriptions[param], param_value_text, NoEscape(self.evidence[param])])
-        self.add_element_to_doc("Calibration", TableElement(col_widths, headers, rows))
+    headers = ["Name", "Value", "Evidence"]
+    col_widths = "p{2.7cm} " * 2 + "p{5.8cm}"
+    rows = []
+    for param in bayesian_model.get_input_parameters():
+        param_value_text = get_fixed_param_value_text(param, parameters, param_units, prior_names)
+        rows.append([param_descriptions[param], param_value_text, NoEscape(param_evidence[param])])
+    add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
+
+
+def table_param_results(uncertainty_outputs, param_descriptions, doc_sections):
+    """
+    Report results of calibration analysis.
+    """
+    calib_summary = az.summary(uncertainty_outputs)
+    headers = ["Para-meter", "Mean (SD)", "3-97% high-density interval", "MCSE mean (SD)", "ESS bulk", "ESS tail", "R_hat"]
+    rows = []
+    for param in calib_summary.index:
+        summary_row = calib_summary.loc[param]
+        name = param_descriptions[param]
+        mean_sd = f"{summary_row['mean']} ({summary_row['sd']})"
+        hdi = f"{summary_row['hdi_3%']} to {summary_row['hdi_97%']}"
+        mcse = f"{summary_row['mcse_mean']} ({summary_row['mcse_sd']})"
+        rows.append([name, mean_sd, hdi, mcse] + [str(metric) for metric in summary_row[6:]])
+    add_element_to_document("Calibration", TableElement("p{1.3cm} " * 7, headers, rows), doc_sections)
+    return calib_summary
+
+
+def graph_sampled_outputs(uncertainty_outputs, n_samples, output, bayesian_model, priors, doc_sections):
+    """
+    Plot sample model runs from the calibration algorithm.
+    """
+    prior_names = [priors[i_prior].name for i_prior in range(len(priors))]
+    sampled_idata = az.extract(uncertainty_outputs, num_samples=n_samples)  # Sample from the inference data
+    sampled_df = convert_idata_to_df(sampled_idata, prior_names)
+    sample_model_results = run_samples_through_model(sampled_df, bayesian_model, output)
+    data = bayesian_model.targets[output].data
+    fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names)
+    fig.add_trace(
+        go.Scatter(
+            x=data.index, 
+            y=data, 
+            marker=dict(color="black"), 
+            name=output, 
+            mode="markers",
+        ),
+    )
+    filename = "calibration_fit.jpg"
+    fig.write_image(SUPPLEMENT_PATH / filename)
+    add_element_to_document("Calibration", FigElement(filename), doc_sections)

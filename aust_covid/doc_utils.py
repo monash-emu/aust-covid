@@ -99,6 +99,12 @@ class TableElement(DocElement):
         doc.append(LineBreak())
 
 
+def add_element_to_document(element, section_name, doc_sections):
+    if section_name not in doc_sections:
+        doc_sections[section_name] = []
+    doc_sections[section_name].append(element)
+
+
 class DocumentedProcess:
 
     def __init__(self, doc, add_documentation):
