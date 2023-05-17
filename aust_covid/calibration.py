@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import plotly.graph_objects as go
 
+from estival.model import BayesianCompartmentalModel
+
 from aust_covid.doc_utils import add_element_to_document
 from aust_covid.doc_utils import FigElement, TextElement, TableElement
 from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, plot_from_model_runs_df
@@ -82,25 +84,98 @@ def get_prior_dist_support(
 
 
 def graph_param_progression(
-    uncertainty_outputs, 
-    priors, 
-    descriptions, 
-    doc_sections,
+    uncertainty_outputs: az.data.inference_data.InferenceData, 
+    priors: list, 
+    descriptions: dict, 
+    doc_sections: dict,
 ):
     """
     Plot progression of parameters over model iterations with posterior density plots.
+
+    Args:
+        uncertainty_outputs: Formatted outputs from calibration
+        priors: Prior objects being used in calibration
+        descriptions: Parameter descriptions
+        doc_sections: Container of elements to be added to document
     """
-    trace_plot = az.plot_trace(uncertainty_outputs, figsize=(16, 3.0 * len(uncertainty_outputs.posterior)), compact=False, legend=True)
+    trace_plot = az.plot_trace(uncertainty_outputs, figsize=(16, 3 * len(uncertainty_outputs.posterior)), compact=False, legend=True)
     for i_prior, prior in enumerate(priors):
         for i_col, column in enumerate(["posterior", "trace"]):
             ax = trace_plot[i_prior][i_col]
             ax.set_title(f"{descriptions[prior.name]}, {column}", fontsize=20)
             for axis in [ax.xaxis, ax.yaxis]:
                 axis.set_tick_params(labelsize=15)
-
     location = "progression.jpg"
     plt.savefig(SUPPLEMENT_PATH / location)
     add_element_to_document("Calibration", FigElement(location), doc_sections)
+
+
+def graph_param_posterior(
+    uncertainty_outputs: az.data.inference_data.InferenceData, 
+    doc_sections: dict,
+):
+    """
+    Plot posterior distribution of parameters.
+
+    Args:
+        uncertainty_outputs: Formatted outputs from calibration
+        doc_sections: Container of elements to be added to document
+    """
+    az.plot_posterior(uncertainty_outputs)
+    location = "posterior.jpg"
+    plt.savefig(SUPPLEMENT_PATH / location)
+    add_element_to_document("Calibration", FigElement(location), doc_sections)
+
+
+def graph_sampled_outputs(
+    uncertainty_outputs: az.data.inference_data.InferenceData, 
+    n_samples: int, 
+    output: str, 
+    bayesian_model: BayesianCompartmentalModel, 
+    doc_sections: dict,
+):
+    """
+    Plot sample model runs from the calibration algorithm.
+
+    Args:
+        uncertainty_outputs: Formatted outputs from calibration
+        n_samples: Number of times to sample from calibration data
+        output: The output of interest
+        bayesian_model: The calibration model (that contains the epi model, priors and targets)
+        doc_sections: Container of elements to be added to document
+    """
+    prior_names = bayesian_model.priors.keys()
+    sampled_idata = az.extract(uncertainty_outputs, num_samples=n_samples)  # Sample from the inference data
+    sampled_df = convert_idata_to_df(sampled_idata, prior_names)
+    sample_model_results = run_samples_through_model(sampled_df, bayesian_model, output)  # Run through epi model
+    target_data = bayesian_model.targets[output].data
+    fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names)
+    fig.add_trace(go.Scatter(x=target_data.index, y=target_data, marker=dict(color="black"), name=output, mode="markers"))
+    filename = "calibration_fit.jpg"
+    fig.write_image(SUPPLEMENT_PATH / filename)
+    add_element_to_document("Calibration", FigElement(filename), doc_sections)
+
+
+def add_param_table_to_doc(
+    bayesian_model, 
+    parameters, 
+    param_descriptions, 
+    param_evidence, 
+    param_units, 
+    doc_sections,
+):
+    """
+    Describe all the parameters used in the model, regardless of whether 
+    """
+    text = "Parameter interpretation, with value (for parameters not included in calibration algorithm) and summary of evidence. \n"
+    add_element_to_document("Parameterisation", TextElement(text), doc_sections)
+    headers = ["Name", "Value", "Evidence"]
+    col_widths = "p{2.7cm} " * 2 + "p{5.8cm}"
+    rows = []
+    for param in bayesian_model.model.get_input_parameters():
+        param_value_text = get_fixed_param_value_text(param, parameters, param_units, bayesian_model.priors.keys())
+        rows.append([param_descriptions[param], param_value_text, NoEscape(param_evidence[param])])
+    add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
 
 
 def add_calib_table_to_doc(
@@ -126,45 +201,6 @@ def add_calib_table_to_doc(
     add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
 
 
-def graph_param_posterior(
-    uncertainty_outputs, 
-    doc_sections,
-):
-    """
-    Plot posterior distribution of parameters.
-    """
-    az.plot_posterior(data=uncertainty_outputs)
-    location = "posterior.jpg"
-    plt.savefig(SUPPLEMENT_PATH / location)
-    add_element_to_document("Calibration", FigElement(location), doc_sections)
-
-
-def add_param_table_to_doc(
-    bayesian_model, 
-    parameters, 
-    param_descriptions, 
-    param_evidence, 
-    param_units, 
-    priors, 
-    doc_sections,
-):
-    """
-    Describe all the parameters used in the model, regardless of whether 
-    """
-    prior_names = [p.name for p in priors]
-
-    text = "Parameter interpretation, with value (for parameters not included in calibration algorithm) and summary of evidence. \n"
-    add_element_to_document("Parameterisation", TextElement(text), doc_sections)
-
-    headers = ["Name", "Value", "Evidence"]
-    col_widths = "p{2.7cm} " * 2 + "p{5.8cm}"
-    rows = []
-    for param in bayesian_model.get_input_parameters():
-        param_value_text = get_fixed_param_value_text(param, parameters, param_units, prior_names)
-        rows.append([param_descriptions[param], param_value_text, NoEscape(param_evidence[param])])
-    add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
-
-
 def table_param_results(
     uncertainty_outputs, 
     param_descriptions, 
@@ -185,34 +221,3 @@ def table_param_results(
         rows.append([name, mean_sd, hdi, mcse] + [str(metric) for metric in summary_row[6:]])
     add_element_to_document("Calibration", TableElement("p{1.3cm} " * 7, headers, rows), doc_sections)
     return calib_summary
-
-
-def graph_sampled_outputs(
-    uncertainty_outputs, 
-    n_samples, 
-    output, 
-    bayesian_model, 
-    priors, 
-    doc_sections,
-):
-    """
-    Plot sample model runs from the calibration algorithm.
-    """
-    prior_names = [p.name for p in priors]
-    sampled_idata = az.extract(uncertainty_outputs, num_samples=n_samples)  # Sample from the inference data
-    sampled_df = convert_idata_to_df(sampled_idata, prior_names)
-    sample_model_results = run_samples_through_model(sampled_df, bayesian_model, output)
-    data = bayesian_model.targets[output].data
-    fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names)
-    fig.add_trace(
-        go.Scatter(
-            x=data.index, 
-            y=data, 
-            marker=dict(color="black"), 
-            name=output, 
-            mode="markers",
-        ),
-    )
-    filename = "calibration_fit.jpg"
-    fig.write_image(SUPPLEMENT_PATH / filename)
-    add_element_to_document("Calibration", FigElement(filename), doc_sections)
