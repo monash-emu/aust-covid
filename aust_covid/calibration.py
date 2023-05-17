@@ -85,6 +85,24 @@ def get_prior_dist_support(
     return " to ".join([str(i) for i in prior.bounds()])
 
 
+def graph_param_progression(uncertainty_outputs, priors, descriptions):
+    """
+    Plot progression of parameters over model iterations with posterior density plots.
+    """
+    trace_plot = az.plot_trace(uncertainty_outputs, figsize=(16, 3.0 * len(uncertainty_outputs.posterior)), compact=False, legend=True)
+    for i_prior, prior in enumerate(priors):
+        for i_col, column in enumerate(["posterior", "trace"]):
+            ax = trace_plot[i_prior][i_col]
+            ax.set_title(f"{descriptions[prior.name]}, {column}", fontsize=20)
+            for axis in [ax.xaxis, ax.yaxis]:
+                axis.set_tick_params(labelsize=15)
+
+    location = "progression.jpg"
+    plt.savefig(SUPPLEMENT_PATH / location)
+    # self.add_element_to_doc("Calibration", FigElement(location))
+
+
+
 class DocumentedCalibration(DocumentedProcess):
     def __init__(
         self, 
@@ -127,22 +145,6 @@ class DocumentedCalibration(DocumentedProcess):
         self.evidence = evidence
         self.model = build_aust_model(start, end, None, add_documentation=False)
        
-    def graph_param_progression(self):
-        """
-        Plot progression of parameters over model iterations with posterior density plots.
-        """
-        trace_plot = az.plot_trace(self.uncertainty_outputs, figsize=(16, 3.0 * len(self.uncertainty_outputs.posterior)), compact=False, legend=True)
-        for i_prior, prior in enumerate(self.priors):
-            for i_col, column in enumerate(["posterior", "trace"]):
-                ax = trace_plot[i_prior][i_col]
-                ax.set_title(f"{self.descriptions[prior.name]}, {column}", fontsize=20)
-                for axis in [ax.xaxis, ax.yaxis]:
-                    axis.set_tick_params(labelsize=15)
-
-        location = "progression.jpg"
-        plt.savefig(SUPPLEMENT_PATH / location)
-        self.add_element_to_doc("Calibration", FigElement(location))
-
     def graph_param_posterior(self):
         """
         Plot posterior distribution of parameters.
