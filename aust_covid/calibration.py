@@ -85,7 +85,6 @@ def get_prior_dist_support(
 
 def graph_param_progression(
     uncertainty_outputs: az.data.inference_data.InferenceData, 
-    priors: list, 
     descriptions: dict, 
     doc_sections: dict,
 ):
@@ -94,15 +93,14 @@ def graph_param_progression(
 
     Args:
         uncertainty_outputs: Formatted outputs from calibration
-        priors: Prior objects being used in calibration
         descriptions: Parameter descriptions
         doc_sections: Container of elements to be added to document
     """
     trace_plot = az.plot_trace(uncertainty_outputs, figsize=(16, 3 * len(uncertainty_outputs.posterior)), compact=False, legend=True)
-    for i_prior, prior in enumerate(priors):
+    for i_prior, prior in enumerate(uncertainty_outputs.posterior.data_vars):
         for i_col, column in enumerate(["posterior", "trace"]):
             ax = trace_plot[i_prior][i_col]
-            ax.set_title(f"{descriptions[prior.name]}, {column}", fontsize=20)
+            ax.set_title(f"{descriptions[prior]}, {column}", fontsize=20)
             for axis in [ax.xaxis, ax.yaxis]:
                 axis.set_tick_params(labelsize=15)
     location = "progression.jpg"
