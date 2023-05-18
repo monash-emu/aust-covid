@@ -1,5 +1,6 @@
 supplement/*
 notebook/*
+output/*
 *.pyc
 *ipynb_checkpoints*
 *.egg-info

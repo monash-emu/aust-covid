@@ -103,15 +103,21 @@ class TableElement(DocElement):
         doc.append(LineBreak())
 
 
-def save_plot_add_to_doc(plot, name, working_doc):
-
-    plot.savefig(SUPPLEMENT_PATH / name)
-    add_element_to_document("Calibration", FigElement(name), working_doc)
-
 def add_element_to_document(section_name, element, doc_sections):
     if section_name not in doc_sections:
         doc_sections[section_name] = []
     doc_sections[section_name].append(element)
+
+
+def save_pyplot_add_to_doc(plot, name, section_name, working_doc):
+    plot.savefig(SUPPLEMENT_PATH / name)
+    add_element_to_document(section_name, FigElement(name), working_doc)
+
+
+def save_plotly_add_to_doc(plot, name, section_name, working_doc):
+    plot.write_image(SUPPLEMENT_PATH / name)
+    add_element_to_document(section_name, FigElement(name), working_doc)
+
 
 
 def compile_doc(doc_sections, doc):

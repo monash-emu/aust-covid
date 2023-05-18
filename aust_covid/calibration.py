@@ -125,7 +125,6 @@ def graph_sampled_outputs(
     n_samples: int, 
     output: str, 
     bayesian_model: BayesianCompartmentalModel, 
-    doc_sections: dict,
 ):
     """
     Plot sample model runs from the calibration algorithm.
@@ -144,9 +143,7 @@ def graph_sampled_outputs(
     target_data = bayesian_model.targets[output].data
     fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names)
     fig.add_trace(go.Scatter(x=target_data.index, y=target_data, marker=dict(color="black"), name=output, mode="markers"))
-    filename = "calibration_fit.jpg"
-    fig.write_image(SUPPLEMENT_PATH / filename)
-    add_element_to_document("Calibration", FigElement(filename), doc_sections)
+    return fig
 
 
 def add_param_table_to_doc(
