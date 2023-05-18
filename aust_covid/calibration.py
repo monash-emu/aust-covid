@@ -103,9 +103,7 @@ def graph_param_progression(
             ax.set_title(f"{descriptions[prior]}, {column}", fontsize=20)
             for axis in [ax.xaxis, ax.yaxis]:
                 axis.set_tick_params(labelsize=15)
-    location = "progression.jpg"
-    plt.savefig(SUPPLEMENT_PATH / location)
-    add_element_to_document("Calibration", FigElement(location), doc_sections)
+    return trace_plot[0, 0].figure
 
 
 def graph_param_posterior(
