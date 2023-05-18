@@ -86,7 +86,6 @@ def get_prior_dist_support(
 def graph_param_progression(
     uncertainty_outputs: az.data.inference_data.InferenceData, 
     descriptions: dict, 
-    doc_sections: dict,
 ):
     """
     Plot progression of parameters over model iterations with posterior density plots.
@@ -94,7 +93,6 @@ def graph_param_progression(
     Args:
         uncertainty_outputs: Formatted outputs from calibration
         descriptions: Parameter descriptions
-        doc_sections: Container of elements to be added to document
     """
     trace_plot = az.plot_trace(uncertainty_outputs, figsize=(16, 3 * len(uncertainty_outputs.posterior)), compact=False, legend=True)
     for i_prior, prior in enumerate(uncertainty_outputs.posterior.data_vars):
