@@ -107,7 +107,7 @@ def save_plot_add_to_doc(plot, name, working_doc):
 
     plot.savefig(SUPPLEMENT_PATH / name)
     add_element_to_document("Calibration", FigElement(name), working_doc)
-    working_doc
+    return working_doc
 
 def add_element_to_document(section_name, element, doc_sections):
     if section_name not in doc_sections:
