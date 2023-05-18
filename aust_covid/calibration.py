@@ -1,6 +1,6 @@
 from pylatex.utils import NoEscape
 import arviz as az
-import matplotlib.pyplot as plt
+import arviz.labels as azl
 from pathlib import Path
 import plotly.graph_objects as go
 
@@ -94,13 +94,13 @@ def graph_param_progression(
         uncertainty_outputs: Formatted outputs from calibration
         descriptions: Parameter descriptions
     """
-    trace_plot = az.plot_trace(uncertainty_outputs, figsize=(16, 3 * len(uncertainty_outputs.posterior)), compact=False, legend=True)
-    for i_prior, prior in enumerate(uncertainty_outputs.posterior.data_vars):
-        for i_col, column in enumerate(["posterior", "trace"]):
-            ax = trace_plot[i_prior][i_col]
-            ax.set_title(f"{descriptions[prior]}, {column}", fontsize=20)
-            for axis in [ax.xaxis, ax.yaxis]:
-                axis.set_tick_params(labelsize=15)
+    trace_plot = az.plot_trace(
+        uncertainty_outputs, 
+        figsize=(16, 3 * len(uncertainty_outputs.posterior)), 
+        compact=False, 
+        legend=True,
+        labeller=azl.MapLabeller(var_name_map=descriptions),
+    )
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
     return trace_fig
