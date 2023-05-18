@@ -1,7 +1,11 @@
+from pathlib import Path
 import pylatex as pl
 from pylatex import LineBreak
 from pylatex.section import Section
 from pylatex.utils import NoEscape, bold
+
+BASE_PATH = Path(__file__).parent.parent.resolve()
+SUPPLEMENT_PATH = BASE_PATH / "supplement"
 
 
 class DocElement:
@@ -98,6 +102,12 @@ class TableElement(DocElement):
             calibration_table.add_hline()
         doc.append(LineBreak())
 
+
+def save_plot_add_to_doc(plot, name, working_doc):
+
+    plot.savefig(SUPPLEMENT_PATH / name)
+    add_element_to_document("Calibration", FigElement(name), working_doc)
+    working_doc
 
 def add_element_to_document(section_name, element, doc_sections):
     if section_name not in doc_sections:

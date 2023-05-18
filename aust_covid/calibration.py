@@ -110,19 +110,14 @@ def graph_param_progression(
 
 def graph_param_posterior(
     uncertainty_outputs: az.data.inference_data.InferenceData, 
-    doc_sections: dict,
 ):
     """
     Plot posterior distribution of parameters.
 
     Args:
         uncertainty_outputs: Formatted outputs from calibration
-        doc_sections: Container of elements to be added to document
     """
-    az.plot_posterior(uncertainty_outputs)
-    location = "posterior.jpg"
-    plt.savefig(SUPPLEMENT_PATH / location)
-    add_element_to_document("Calibration", FigElement(location), doc_sections)
+    return az.plot_posterior(uncertainty_outputs)[0, 0].figure
 
 
 def graph_sampled_outputs(
