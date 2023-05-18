@@ -101,7 +101,9 @@ def graph_param_progression(
             ax.set_title(f"{descriptions[prior]}, {column}", fontsize=20)
             for axis in [ax.xaxis, ax.yaxis]:
                 axis.set_tick_params(labelsize=15)
-    return trace_plot[0, 0].figure
+    trace_fig = trace_plot[0, 0].figure
+    trace_fig.tight_layout()
+    return trace_fig
 
 
 def graph_param_posterior(
