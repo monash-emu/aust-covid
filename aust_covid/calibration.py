@@ -125,6 +125,7 @@ def graph_sampled_outputs(
     n_samples: int, 
     output: str, 
     bayesian_model: BayesianCompartmentalModel, 
+    target_data,
 ):
     """
     Plot sample model runs from the calibration algorithm.
@@ -140,7 +141,6 @@ def graph_sampled_outputs(
     sampled_idata = az.extract(uncertainty_outputs, num_samples=n_samples)  # Sample from the inference data
     sampled_df = convert_idata_to_df(sampled_idata, prior_names)
     sample_model_results = run_samples_through_model(sampled_df, bayesian_model, output)  # Run through epi model
-    target_data = bayesian_model.targets[output].data
     fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names)
     fig.add_trace(go.Scatter(x=target_data.index, y=target_data, marker=dict(color="black"), name=output, mode="markers"))
     return fig
