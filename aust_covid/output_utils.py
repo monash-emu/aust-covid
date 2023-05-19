@@ -3,6 +3,7 @@ import arviz as az
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
+import datetime
 
 from estival.model import BayesianCompartmentalModel
 
@@ -61,6 +62,8 @@ def plot_from_model_runs_df(
     model_results: pd.DataFrame, 
     sampled_df: pd.DataFrame,
     param_names: list,
+    start_date: datetime.datetime,
+    end_date: datetime.datetime,
 ) -> go.Figure:
     """
     Create interactive plot of model outputs by draw and chain
@@ -78,4 +81,13 @@ def plot_from_model_runs_df(
         for p in param_names:
             melted.loc[(melted["chain"]==chain) & (melted["draw"] == draw), p] = round_sigfig(params[p], 3)
         
-    return px.line(melted, y="notifications", color="chain", line_group="draw", hover_data=melted.columns)
+    plot = px.line(
+        melted, 
+        y="notifications", 
+        color="chain", 
+        line_group="draw", 
+        hover_data=melted.columns,
+        labels={"index": ""},
+    )
+    plot.update_xaxes(range=(start_date, end_date))
+    return plot

@@ -1,13 +1,15 @@
 from pylatex.utils import NoEscape
 import arviz as az
-import arviz.labels as azl
+from arviz.labels import MapLabeller
 from pathlib import Path
+import pandas as pd
+import datetime
 import plotly.graph_objects as go
 
 from estival.model import BayesianCompartmentalModel
 
 from aust_covid.doc_utils import add_element_to_document
-from aust_covid.doc_utils import FigElement, TextElement, TableElement
+from aust_covid.doc_utils import TextElement, TableElement
 from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, plot_from_model_runs_df
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
@@ -99,7 +101,7 @@ def graph_param_progression(
         figsize=(16, 3 * len(uncertainty_outputs.posterior)), 
         compact=False, 
         legend=True,
-        labeller=azl.MapLabeller(var_name_map=descriptions),
+        labeller=MapLabeller(var_name_map=descriptions),
     )
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
@@ -108,14 +110,24 @@ def graph_param_progression(
 
 def graph_param_posterior(
     uncertainty_outputs: az.data.inference_data.InferenceData, 
+    descriptions: dict, 
+    grid_request: tuple=None,
 ):
     """
     Plot posterior distribution of parameters.
 
     Args:
         uncertainty_outputs: Formatted outputs from calibration
+        descriptions: Parameter descriptions
+        grid_request: How the subplots should be arranged
     """
-    return az.plot_posterior(uncertainty_outputs)[0, 0].figure
+    posterior_plot = az.plot_posterior(
+        uncertainty_outputs,
+        labeller=MapLabeller(var_name_map=descriptions),
+        grid=grid_request,
+    )
+    posterior_plot = posterior_plot[0, 0].figure
+    return posterior_plot
 
 
 def graph_sampled_outputs(
@@ -123,7 +135,9 @@ def graph_sampled_outputs(
     n_samples: int, 
     output: str, 
     bayesian_model: BayesianCompartmentalModel, 
-    target_data,
+    target_data: pd.Series,
+    start_date: datetime.datetime,
+    end_date: datetime.datetime,
 ):
     """
     Plot sample model runs from the calibration algorithm.
@@ -133,13 +147,13 @@ def graph_sampled_outputs(
         n_samples: Number of times to sample from calibration data
         output: The output of interest
         bayesian_model: The calibration model (that contains the epi model, priors and targets)
-        doc_sections: Container of elements to be added to document
+        target_data: Comparison data to plot against
     """
     prior_names = bayesian_model.priors.keys()
     sampled_idata = az.extract(uncertainty_outputs, num_samples=n_samples)  # Sample from the inference data
     sampled_df = convert_idata_to_df(sampled_idata, prior_names)
     sample_model_results = run_samples_through_model(sampled_df, bayesian_model, output)  # Run through epi model
-    fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names)
+    fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names, start_date, end_date)
     fig.add_trace(go.Scatter(x=target_data.index, y=target_data, marker=dict(color="black"), name=output, mode="markers"))
     return fig
 
