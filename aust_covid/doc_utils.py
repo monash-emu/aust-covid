@@ -103,6 +103,31 @@ class TableElement(DocElement):
         doc.append(LineBreak())
 
 
+class PandasTableElement(DocElement):
+    
+    def __init__(self, col_widths, table):
+        self.col_widths = col_widths
+        self.table = table
+
+    def emit_latex(self, doc):
+        with doc.create(pl.Tabular(self.col_widths)) as calibration_table:
+            calibration_table.add_hline()
+            for row in self.table.index:
+                row_content = [row] + [str(i) for i in self.table.loc[row]]
+                calibration_table.add_row(row_content)
+                calibration_table.add_hline()
+        doc.append(LineBreak())
+
+        # with doc.create(pl.Tabular(self.col_widths)) as calibration_table:
+        #     calibration_table.add_hline()
+        #     calibration_table.add_row([bold(i) for i in self.headers])
+        #     for row in self.rows:
+        #         calibration_table.add_hline()
+        #         calibration_table.add_row(row)
+        #     calibration_table.add_hline()
+        # doc.append(LineBreak())
+
+
 def add_element_to_document(section_name, element, doc_sections):
     if section_name not in doc_sections:
         doc_sections[section_name] = []

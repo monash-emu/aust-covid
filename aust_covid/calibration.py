@@ -221,14 +221,14 @@ def tabulate_param_results(
     Returns:
         Calibration results table in standard format
     """
-    summary_results = az.summary(idata)
-    summary_results.index = [param_descriptions[p.name] for p in priors]
+    results_table = az.summary(idata)
+    results_table.index = [param_descriptions[p.name] for p in priors]
     for col_to_round in ["mean", "hdi_3%", "hdi_97%"]:
-        summary_results[col_to_round] = summary_results.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
-    summary_results["hdi"] = summary_results.apply(lambda x: f"{x['hdi_3%']} to {x['hdi_97%']}", axis=1)    
-    summary_results = summary_results.drop(["mcse_mean", "mcse_sd", "hdi_3%", "hdi_97%"], axis=1)
-    summary_results.columns = ["Mean", "Standard deviation", "ESS bulk", "ESS tail", "R_hat", "High-density interval"]
-    return summary_results
+        results_table[col_to_round] = results_table.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
+    results_table["hdi"] = results_table.apply(lambda x: f"{x['hdi_3%']} to {x['hdi_97%']}", axis=1)    
+    results_table = results_table.drop(["mcse_mean", "mcse_sd", "hdi_3%", "hdi_97%"], axis=1)
+    results_table.columns = ["Mean", "Standard deviation", "ESS bulk", "ESS tail", "R_hat", "High-density interval"]
+    return results_table
 
 
 def table_param_results(
