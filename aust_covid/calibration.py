@@ -87,7 +87,7 @@ def get_prior_dist_support(
 
 
 def graph_param_progression(
-    uncertainty_outputs: az.data.inference_data.InferenceData, 
+    idata: az.data.inference_data.InferenceData, 
     descriptions: dict, 
 ):
     """
@@ -99,8 +99,8 @@ def graph_param_progression(
     """
     mpl.rcParams["axes.titlesize"] = 25
     trace_plot = az.plot_trace(
-        uncertainty_outputs, 
-        figsize=(16, 3 * len(uncertainty_outputs.posterior)), 
+        idata, 
+        figsize=(16, 3 * len(idata.posterior)), 
         compact=False, 
         legend=True,
         labeller=MapLabeller(var_name_map=descriptions),
@@ -111,7 +111,7 @@ def graph_param_progression(
 
 
 def graph_param_posterior(
-    uncertainty_outputs: az.data.inference_data.InferenceData, 
+    idata: az.data.inference_data.InferenceData, 
     descriptions: dict, 
     grid_request: tuple=None,
 ):
@@ -124,7 +124,7 @@ def graph_param_posterior(
         grid_request: How the subplots should be arranged
     """
     posterior_plot = az.plot_posterior(
-        uncertainty_outputs,
+        idata,
         labeller=MapLabeller(var_name_map=descriptions),
         grid=grid_request,
     )
@@ -133,7 +133,7 @@ def graph_param_posterior(
 
 
 def graph_sampled_outputs(
-    uncertainty_outputs: az.data.inference_data.InferenceData, 
+    idata: az.data.inference_data.InferenceData, 
     n_samples: int, 
     output: str, 
     bayesian_model: BayesianCompartmentalModel, 
@@ -145,14 +145,14 @@ def graph_sampled_outputs(
     Plot sample model runs from the calibration algorithm.
 
     Args:
-        uncertainty_outputs: Formatted outputs from calibration
+        uncertainty_outputs: Outputs from calibration
         n_samples: Number of times to sample from calibration data
         output: The output of interest
         bayesian_model: The calibration model (that contains the epi model, priors and targets)
         target_data: Comparison data to plot against
     """
     prior_names = bayesian_model.priors.keys()
-    sampled_idata = az.extract(uncertainty_outputs, num_samples=n_samples)  # Sample from the inference data
+    sampled_idata = az.extract(idata, num_samples=n_samples)  # Sample from the inference data
     sampled_df = convert_idata_to_df(sampled_idata, prior_names)
     sample_model_results = run_samples_through_model(sampled_df, bayesian_model, output)  # Run through epi model
     fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names, start_date, end_date)
@@ -205,8 +205,23 @@ def add_calib_table_to_doc(
     add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
 
 
-def tabulate_param_results(uncertainty_outputs, priors, param_descriptions):
-    summary_results = az.summary(uncertainty_outputs)
+def tabulate_param_results(
+    idata: az.data.inference_data.InferenceData, 
+    priors: list, 
+    param_descriptions: dict,
+) -> pd.DataFrame:
+    """
+    Get tabular outputs from calibration inference object and standardise formatting.
+
+    Args:
+        uncertainty_outputs: Outputs from calibration
+        priors: Model priors
+        param_descriptions: Short names for parameters used in model
+
+    Returns:
+        Calibration results table in standard format
+    """
+    summary_results = az.summary(idata)
     summary_results.index = [param_descriptions[p.name] for p in priors]
     for col_to_round in ["mean", "hdi_3%", "hdi_97%"]:
         summary_results[col_to_round] = summary_results.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
