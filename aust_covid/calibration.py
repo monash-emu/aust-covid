@@ -5,12 +5,13 @@ from pathlib import Path
 import pandas as pd
 import datetime
 import plotly.graph_objects as go
+import matplotlib as mpl
 
 from estival.model import BayesianCompartmentalModel
 
 from aust_covid.doc_utils import add_element_to_document
 from aust_covid.doc_utils import TextElement, TableElement
-from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, plot_from_model_runs_df
+from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, plot_from_model_runs_df, round_sigfig
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
@@ -83,9 +84,6 @@ def get_prior_dist_support(
         The bounds to the prior's distribution joined together
     """
     return " to ".join([str(i) for i in prior.bounds()])
-
-
-import matplotlib as mpl
 
 
 def graph_param_progression(
@@ -207,6 +205,17 @@ def add_calib_table_to_doc(
     add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
 
 
+def tabulate_param_results(uncertainty_outputs, priors, param_descriptions):
+    summary_results = az.summary(uncertainty_outputs)
+    summary_results.index = [param_descriptions[p.name] for p in priors]
+    for col_to_round in ["mean", "hdi_3%", "hdi_97%"]:
+        summary_results[col_to_round] = summary_results.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
+    summary_results["hdi"] = summary_results.apply(lambda x: f"{x['hdi_3%']} to {x['hdi_97%']}", axis=1)    
+    summary_results = summary_results.drop(["mcse_mean", "mcse_sd", "hdi_3%", "hdi_97%"], axis=1)
+    summary_results.columns = ["Mean", "Standard deviation", "ESS bulk", "ESS tail", "R_hat", "High-density interval"]
+    return summary_results
+
+
 def table_param_results(
     uncertainty_outputs, 
     param_descriptions, 
@@ -216,7 +225,7 @@ def table_param_results(
     Report results of calibration analysis.
     """
     calib_summary = az.summary(uncertainty_outputs)
-    headers = ["Para-meter", "Mean (SD)", "3-97% high-density interval", "MCSE mean (SD)", "ESS bulk", "ESS tail", "R_hat"]
+    headers = ["Parameter", "Mean (SD)", "3-97% high-density interval", "MCSE mean (SD)", "ESS bulk", "ESS tail", "R_hat"]
     rows = []
     for param in calib_summary.index:
         summary_row = calib_summary.loc[param]
