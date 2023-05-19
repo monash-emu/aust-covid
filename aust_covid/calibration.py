@@ -85,17 +85,21 @@ def get_prior_dist_support(
     return " to ".join([str(i) for i in prior.bounds()])
 
 
+import matplotlib as mpl
+
+
 def graph_param_progression(
     uncertainty_outputs: az.data.inference_data.InferenceData, 
     descriptions: dict, 
 ):
     """
     Plot progression of parameters over model iterations with posterior density plots.
-
+    
     Args:
         uncertainty_outputs: Formatted outputs from calibration
         descriptions: Parameter descriptions
     """
+    mpl.rcParams["axes.titlesize"] = 25
     trace_plot = az.plot_trace(
         uncertainty_outputs, 
         figsize=(16, 3 * len(uncertainty_outputs.posterior)), 

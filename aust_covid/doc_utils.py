@@ -109,14 +109,14 @@ def add_element_to_document(section_name, element, doc_sections):
     doc_sections[section_name].append(element)
 
 
-def save_pyplot_add_to_doc(plot, plot_name, section_name, working_doc):
+def save_pyplot_add_to_doc(plot, plot_name, section_name, working_doc, caption=""):
     plot.savefig(SUPPLEMENT_PATH / f"{plot_name}.jpg")
-    add_element_to_document(section_name, FigElement(plot_name), working_doc)
+    add_element_to_document(section_name, FigElement(plot_name, caption=caption), working_doc)
 
 
-def save_plotly_add_to_doc(plot, plot_name, section_name, working_doc):
+def save_plotly_add_to_doc(plot, plot_name, section_name, working_doc, caption=""):
     plot.write_image(SUPPLEMENT_PATH / f"{plot_name}.jpg")
-    add_element_to_document(section_name, FigElement(plot_name), working_doc)
+    add_element_to_document(section_name, FigElement(plot_name, caption=caption), working_doc)
 
 
 
