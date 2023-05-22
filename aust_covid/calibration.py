@@ -1,16 +1,15 @@
-import pandas as pd
-import pylatex as pl
 from pylatex.utils import NoEscape
 import arviz as az
-import matplotlib.pyplot as plt
+from arviz.labels import MapLabeller
 from pathlib import Path
-from random import sample
-import copy
-from datetime import datetime
+import pandas as pd
+import datetime
+import plotly.graph_objects as go
+import matplotlib as mpl
 
-from aust_covid.doc_utils import DocumentedProcess, FigElement, TextElement, TableElement
-from aust_covid.model import build_aust_model
-from estival.calibration.mcmc.adaptive import AdaptiveChain
+from estival.model import BayesianCompartmentalModel
+
+from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, plot_from_model_runs_df, round_sigfig
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
@@ -35,6 +34,7 @@ def get_fixed_param_value_text(
         prior_names: The names of the parameters used in calibration
         decimal_places: How many places to round the value to
         calibrated_string: The text to use if the parameter is calibrated
+
     Return:
         Description of the parameter value
     """
@@ -85,167 +85,117 @@ def get_prior_dist_support(
     return " to ".join([str(i) for i in prior.bounds()])
 
 
-class DocumentedCalibration(DocumentedProcess):
-    def __init__(
-        self, 
-        priors: list, 
-        targets: list, 
-        iterations: int, 
-        burn_in: int, 
-        model_func: callable,
-        parameters: dict,
-        descriptions: dict, 
-        units: dict, 
-        evidence: dict, 
-        start: datetime,
-        end: datetime,
-        doc: pl.Document=None,
-    ):
-        """
-        Supports calibration of a summer model,
-        with documentation to TeX document as the processes proceed.
-        Most of this should be general enough to use for any summer calibration.
-
-        Args:
-            priors: The prior objects
-            targets: The targets to fit to
-            iterations: The number of iterations to run
-            burn_in: The number of iterations to discard as burn-in
-            model_func: The function to build the model
-            parameters: The base parameter requests before updating through calibration
-            descriptions: Strings to describe the parameters properly
-            units: Strings for the units of each parameter
-            evidence: Strings with a more detailed description of the evidence for each parameter
-            start: Starting date for simulation
-            end: Finish date for simulation
-            doc: The TeX document to populate
-        """
-        super().__init__(doc, True)
-        self.iterations = iterations
-        self.burn_in = burn_in
-        self.model_func = model_func
-        self.priors = priors
-        self.prior_names = [priors[i_prior].name for i_prior in range(len(priors))]
-        self.targets = targets
-        self.params = parameters
-        self.descriptions = descriptions
-        self.units = units
-        self.evidence = evidence
-        self.start = start
-        self.end = end
-        self.model = build_aust_model(start, end, None, add_documentation=False)
-        
-    def get_analysis(self):
-        """
-        Run the uncertainty analysis and get outputs in arviz format.
-        """
-        uncertainty_analysis = AdaptiveChain(
-            self.model_func, self.params, self.priors, self.targets, self.params,
-            build_model_kwargs={"start_date": self.start, "end_date": self.end, "doc": None},
-        )
-        uncertainty_analysis.run(max_iter=self.iterations)
-        self.uncertainty_outputs = uncertainty_analysis.to_arviz(self.burn_in)
+def graph_param_progression(
+    idata: az.data.inference_data.InferenceData, 
+    descriptions: dict, 
+):
+    """
+    Plot progression of parameters over model iterations with posterior density plots.
     
-    def graph_param_progression(self):
-        """
-        Plot progression of parameters over model iterations with posterior density plots.
-        """
-        axes = az.plot_trace(self.uncertainty_outputs, figsize=(16, 12))
-        for i_prior, prior_name in enumerate(self.prior_names):
-            for i_col, column in enumerate(["posterior", "trace"]):
-                ax = axes[i_prior][i_col]
-                ax.set_title(f"{self.descriptions[prior_name]}, {column}", fontsize=20)
-                for axis in [ax.xaxis, ax.yaxis]:
-                    axis.set_tick_params(labelsize=15)
-        location = "progression.jpg"
-        plt.savefig(SUPPLEMENT_PATH / location)
-        caption = "Parameter posteriors and progression."
-        self.add_element_to_doc("Calibration", FigElement(location, caption=caption))
+    Args:
+        uncertainty_outputs: Formatted outputs from calibration
+        descriptions: Parameter descriptions
+    """
+    mpl.rcParams["axes.titlesize"] = 25
+    trace_plot = az.plot_trace(
+        idata, 
+        figsize=(16, 3 * len(idata.posterior)), 
+        compact=False, 
+        legend=True,
+        labeller=MapLabeller(var_name_map=descriptions),
+    )
+    trace_fig = trace_plot[0, 0].figure
+    trace_fig.tight_layout()
+    return trace_fig
 
-    def add_calib_table_to_doc(self):
-        """
-        Report calibration input choices in table.
-        """
 
-        text = "Input parameters varied through calibration with uncertainty distribution parameters and support. \n"
-        self.add_element_to_doc("Calibration", TextElement(text))
+def graph_param_posterior(
+    idata: az.data.inference_data.InferenceData, 
+    descriptions: dict, 
+    grid_request: tuple=None,
+):
+    """
+    Plot posterior distribution of parameters.
 
-        headers = ["Name", "Distribution", "Distribution parameters", "Support"]
-        col_widths = "p{2.7cm} " * 4
-        rows = []
-        for prior in self.priors:
-            prior_desc = self.descriptions[prior.name]
-            dist_type = get_prior_dist_type(prior)
-            dist_params = get_prior_dist_param_str(prior)
-            dist_range = get_prior_dist_support(prior)
-            rows.append([prior_desc, dist_type, dist_params, dist_range])
-        self.add_element_to_doc("Calibration", TableElement(col_widths, headers, rows))
+    Args:
+        uncertainty_outputs: Formatted outputs from calibration
+        descriptions: Parameter descriptions
+        grid_request: How the subplots should be arranged
+    """
+    posterior_plot = az.plot_posterior(
+        idata,
+        labeller=MapLabeller(var_name_map=descriptions),
+        grid=grid_request,
+    )
+    posterior_plot = posterior_plot[0, 0].figure
+    return posterior_plot
 
-    def table_param_results(self):
-        """
-        Report results of calibration analysis.
-        """
 
-        calib_summary = az.summary(self.uncertainty_outputs)
-        headers = ["Para-meter", "Mean (SD)", "3-97% high-density interval", "MCSE mean (SD)", "ESS bulk", "ESS tail", "R_hat"]
-        rows = []
-        for param in calib_summary.index:
-            summary_row = calib_summary.loc[param]
-            name = self.descriptions[param]
-            mean_sd = f"{summary_row['mean']} ({summary_row['sd']})"
-            hdi = f"{summary_row['hdi_3%']} to {summary_row['hdi_97%']}"
-            mcse = f"{summary_row['mcse_mean']} ({summary_row['mcse_sd']})"
-            rows.append([name, mean_sd, hdi, mcse] + [str(metric) for metric in summary_row[6:]])
-        self.add_element_to_doc("Calibration", TableElement("p{1.3cm} " * 7, headers, rows))
-            
-    def add_param_table_to_doc(self):
-        """
-        Describe all the parameters used in the model, regardless of whether 
-        """
-        
-        text = "Parameter interpretation, with value (for parameters not included in calibration algorithm) and summary of evidence. \n"
-        self.add_element_to_doc("Parameterisation", TextElement(text))
+def graph_sampled_outputs(
+    idata: az.data.inference_data.InferenceData, 
+    n_samples: int, 
+    output: str, 
+    bayesian_model: BayesianCompartmentalModel, 
+    target_data: pd.Series,
+    start_date: datetime.datetime,
+    end_date: datetime.datetime,
+):
+    """
+    Plot sample model runs from the calibration algorithm.
 
-        headers = ["Name", "Value", "Evidence"]
-        col_widths = "p{2.7cm} " * 2 + "p{5.8cm}"
-        rows = []
-        for param in self.model.get_input_parameters():
-            param_value_text = get_fixed_param_value_text(param, self.params, self.units, self.prior_names)
-            rows.append([self.descriptions[param], param_value_text, NoEscape(self.evidence[param])])
-        self.add_element_to_doc("Calibration", TableElement(col_widths, headers, rows))
+    Args:
+        uncertainty_outputs: Outputs from calibration
+        n_samples: Number of times to sample from calibration data
+        output: The output of interest
+        bayesian_model: The calibration model (that contains the epi model, priors and targets)
+        target_data: Comparison data to plot against
+    """
+    prior_names = bayesian_model.priors.keys()
+    sampled_idata = az.extract(idata, num_samples=n_samples)  # Sample from the inference data
+    sampled_df = convert_idata_to_df(sampled_idata, prior_names)
+    sample_model_results = run_samples_through_model(sampled_df, bayesian_model, output)  # Run through epi model
+    fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names, start_date, end_date)
+    fig.add_trace(go.Scatter(x=target_data.index, y=target_data, marker=dict(color="black"), name=output, mode="markers"))
+    return fig
 
-    def get_sample_outputs(
-            self, 
-            n_samples: int, 
-        ):
-        """
-        Get a selection of the model runs obtained during calibration in the notebook.
 
-        Args:
-            n_samples: Number of samples to choose
+def tabulate_parameters(parameters, param_units, priors, param_descriptions, param_evidence):
+    values_column = [get_fixed_param_value_text(i, parameters, param_units, priors) for i in parameters]
+    evidence_column = [NoEscape(param_evidence[i]) for i in parameters]
+    names_column = [param_descriptions[i] for i in parameters]
+    return pd.DataFrame({"Value": values_column, "Evidence": evidence_column}, index=names_column)
 
-        Returns:
-            The outputs from consecutive runs
-        """
 
-        # How many parameter samples to run through again (suppress warnings if 100+)
-        samples = sorted(sample(range(self.burn_in, self.iterations - 200), n_samples))
+def tabulate_priors(priors, descriptions):
 
-        # Sample parameters from accepted runs
-        sample_params = pd.DataFrame(
-            {p.name: self.uncertainty_outputs.posterior[p.name][0, samples].to_numpy() for p in self.priors},
-            index=samples,
-        )
+    names = [descriptions[i.name] for i in priors]
+    distributions = [get_prior_dist_type(i) for i in priors]
+    parameters = [get_prior_dist_param_str(i) for i in priors]
+    support = [get_prior_dist_support(i) for i in priors]
+    return pd.DataFrame({"Distribution": distributions, "Parameters": parameters, "Support": support}, index=names)
 
-        # Get model outputs for sampled parameters
-        sample_outputs = pd.DataFrame(
-            index=self.model.get_derived_outputs_df().index, 
-            columns=samples,
-        )
-        params = copy.deepcopy(self.params)
-        for i_param_set in samples:
-            params.update(sample_params.loc[i_param_set, :].to_dict())
-            self.model.run(parameters=params)
-            sample_outputs[i_param_set] = self.model.get_derived_outputs_df()["notifications"]
-        
-        return sample_outputs
+
+def tabulate_param_results(
+    idata: az.data.inference_data.InferenceData, 
+    priors: list, 
+    param_descriptions: dict,
+) -> pd.DataFrame:
+    """
+    Get tabular outputs from calibration inference object and standardise formatting.
+
+    Args:
+        uncertainty_outputs: Outputs from calibration
+        priors: Model priors
+        param_descriptions: Short names for parameters used in model
+
+    Returns:
+        Calibration results table in standard format
+    """
+    results_table = az.summary(idata)
+    results_table.index = [param_descriptions[p.name] for p in priors]
+    for col_to_round in ["mean", "hdi_3%", "hdi_97%"]:
+        results_table[col_to_round] = results_table.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
+    results_table["hdi"] = results_table.apply(lambda x: f"{x['hdi_3%']} to {x['hdi_97%']}", axis=1)    
+    results_table = results_table.drop(["mcse_mean", "mcse_sd", "hdi_3%", "hdi_97%"], axis=1)
+    results_table.columns = ["Mean", "Standard deviation", "ESS bulk", "ESS tail", "R_hat", "High-density interval"]
+    return results_table

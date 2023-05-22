@@ -1,9 +1,9 @@
 import pandas as pd
 import arviz as az
-import pymc as pm
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
+import datetime
 
 from estival.model import BayesianCompartmentalModel
 
@@ -27,6 +27,7 @@ def convert_idata_to_df(
 def run_samples_through_model(
     samples_df: pd.DataFrame, 
     model: BayesianCompartmentalModel,
+    output: str,
 ) -> pd.DataFrame:
     """
     Run parameters dataframe in format created by convert_idata_to_df
@@ -38,7 +39,7 @@ def run_samples_through_model(
     """
     sres = pd.DataFrame(index=model.model._get_ref_idx(), columns=samples_df.index)
     for (chain, draw), params in samples_df.iterrows():
-        sres[(chain,draw)] = model.run(params.to_dict()).derived_outputs["notifications"]
+        sres[(chain,draw)] = model.run(params.to_dict()).derived_outputs[output]
     return sres
 
 
@@ -61,6 +62,8 @@ def plot_from_model_runs_df(
     model_results: pd.DataFrame, 
     sampled_df: pd.DataFrame,
     param_names: list,
+    start_date: datetime.datetime,
+    end_date: datetime.datetime,
 ) -> go.Figure:
     """
     Create interactive plot of model outputs by draw and chain
@@ -78,4 +81,13 @@ def plot_from_model_runs_df(
         for p in param_names:
             melted.loc[(melted["chain"]==chain) & (melted["draw"] == draw), p] = round_sigfig(params[p], 3)
         
-    return px.line(melted, y="notifications", color="chain", line_group="draw", hover_data=melted.columns)
+    plot = px.line(
+        melted, 
+        y="notifications", 
+        color="chain", 
+        line_group="draw", 
+        hover_data=melted.columns,
+        labels={"index": ""},
+    )
+    plot.update_xaxes(range=(start_date, end_date))
+    return plot
