@@ -7,6 +7,9 @@ from pylatex.utils import NoEscape, bold
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
 
+def escape_refs(text):
+    return NoEscape(text) if "\cite{" in text else text
+
 
 class DocElement:
     """
@@ -33,7 +36,7 @@ class TextElement(DocElement):
         Args:
             text: The text to write
         """
-        self.text = NoEscape(text) if "\cite{" in text else text
+        self.text = escape_refs(text)
 
     def emit_latex(
             self, 
@@ -87,18 +90,18 @@ class FigElement(DocElement):
 
 class TableElement(DocElement):
     
-    def __init__(self, col_widths, table):
+    def __init__(self, col_widths, input_table):
         self.col_widths = col_widths
-        self.table = table
+        self.table = input_table
 
     def emit_latex(self, doc):
         with doc.create(pl.Tabular(self.col_widths)) as output_table:
             headers = [""] + list(self.table.columns)
             output_table.add_row(headers)
             output_table.add_hline()
-            for row in self.table.index:
-                row_content = [row] + [str(i) for i in self.table.loc[row]]
-                output_table.add_row(row_content)
+            for index in self.table.index:
+                content = [index] + [escape_refs(str(element)) for element in self.table.loc[index]]
+                output_table.add_row(content)
                 output_table.add_hline()
         doc.append(LineBreak())
 
@@ -117,7 +120,6 @@ def save_pyplot_add_to_doc(plot, plot_name, section_name, working_doc, caption="
 def save_plotly_add_to_doc(plot, plot_name, section_name, working_doc, caption=""):
     plot.write_image(SUPPLEMENT_PATH / f"{plot_name}.jpg")
     add_element_to_document(section_name, FigElement(plot_name, caption=caption), working_doc)
-
 
 
 def compile_doc(doc_sections, doc):
