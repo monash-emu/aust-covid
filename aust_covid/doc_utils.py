@@ -2,7 +2,7 @@ from pathlib import Path
 import pylatex as pl
 from pylatex import LineBreak
 from pylatex.section import Section
-from pylatex.utils import NoEscape, bold
+from pylatex.utils import NoEscape
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
@@ -112,13 +112,13 @@ def add_element_to_document(section_name, element, doc_sections):
     doc_sections[section_name].append(element)
 
 
-def save_pyplot_add_to_doc(plot, plot_name, section_name, working_doc, caption=""):
-    plot.savefig(SUPPLEMENT_PATH / f"{plot_name}.jpg")
+def save_pyplot_add_to_doc(plot, plot_name, section_name, working_doc, caption="", dpi=250):
+    plot.savefig(SUPPLEMENT_PATH / f"{plot_name}.jpg", dpi=dpi)
     add_element_to_document(section_name, FigElement(plot_name, caption=caption), working_doc)
 
 
-def save_plotly_add_to_doc(plot, plot_name, section_name, working_doc, caption=""):
-    plot.write_image(SUPPLEMENT_PATH / f"{plot_name}.jpg")
+def save_plotly_add_to_doc(plot, plot_name, section_name, working_doc, caption="", scale=4.0):
+    plot.write_image(SUPPLEMENT_PATH / f"{plot_name}.jpg", scale=scale)
     add_element_to_document(section_name, FigElement(plot_name, caption=caption), working_doc)
 
 
