@@ -21,7 +21,7 @@ def load_pop_data() -> tuple:
     return data, sheet_name
 
 
-def load_uk_pop_data():
+def load_uk_pop_data() -> pd.Series:
     """
     Get the UK census data. Data are in raw form,
     except that renaming the sheet to omit a space (from "Sheet 1")
