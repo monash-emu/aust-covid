@@ -3,16 +3,31 @@ import arviz as az
 from arviz.labels import MapLabeller
 from pathlib import Path
 import pandas as pd
+import numpy as np
 import datetime
 import plotly.graph_objects as go
+import plotly.express as px
 import matplotlib as mpl
 
 from estival.model import BayesianCompartmentalModel
 
-from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, plot_from_model_runs_df, round_sigfig
-
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
+
+
+def round_sigfig(
+    value: float, 
+    sig_figs: int
+) -> float:
+    """
+    Round a number to a certain number of significant figures, 
+    rather than decimal places.
+    
+    Args:
+        value: Number to round
+        sig_figs: Number of significant figures to round to
+    """
+    return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1))
 
 
 def get_fixed_param_value_text(
@@ -35,7 +50,7 @@ def get_fixed_param_value_text(
         decimal_places: How many places to round the value to
         calibrated_string: The text to use if the parameter is calibrated
 
-    Return:
+    Returns:
         Description of the parameter value
     """
     return calibrated_string if param in prior_names else f"{round(parameters[param], decimal_places)} {param_units[param]}"
@@ -49,7 +64,7 @@ def get_prior_dist_type(
     
     Args:
         The prior object
-    Return:
+    Returns:
         Description of the distribution
     """
     dist_type = str(prior.__class__).replace(">", "").replace("'", "").split(".")[-1].replace("Prior", "")
@@ -65,7 +80,8 @@ def get_prior_dist_param_str(
     
     Args:
         prior: The prior object
-    Return:
+
+    Returns:
         The parameters to the prior's distribution joined together
     """
     return " ".join([f"{param}: {round(prior.distri_params[param], 3)}" for param in prior.distri_params])
@@ -79,22 +95,67 @@ def get_prior_dist_support(
     
     Args:
         prior: The prior object
-    Return:        
+
+    Returns:        
         The bounds to the prior's distribution joined together
     """
     return " to ".join([str(i) for i in prior.bounds()])
 
 
-def graph_param_progression(
+def convert_idata_to_df(
+    idata: az.data.inference_data.InferenceData, 
+    param_names: list,
+) -> pd.DataFrame:
+    """
+    Convert arviz inference data to dataframe organised
+    by draw and chain through multi-indexing.
+    
+    Args:
+        idata: arviz inference data
+        param_names: String names of the model parameters
+    
+    Returns:
+        Sorted inference data pertaining to the requested parameters only
+    """
+    sampled_idata_df = idata.to_dataframe()[param_names]
+    return sampled_idata_df.sort_index(level="draw").sort_index(level="chain")
+
+
+def run_samples_through_model(
+    samples_df: pd.DataFrame, 
+    model: BayesianCompartmentalModel,
+    output: str,
+) -> pd.DataFrame:
+    """
+    Run parameters dataframe in format created by convert_idata_to_df
+    through epidemiological model to get outputs of interest.
+    
+    Args:
+        samples_df: Parameters to run through in format generated from convert_idata_to_df
+        model: Model to run them through
+
+    Returns:
+        Results pertaining to output of interest after running requests through model
+    """
+    sres = pd.DataFrame(index=model.model._get_ref_idx(), columns=samples_df.index)
+    for (chain, draw), params in samples_df.iterrows():
+        sres[(chain,draw)] = model.run(params.to_dict()).derived_outputs[output]
+    return sres
+
+
+def plot_param_progression(
     idata: az.data.inference_data.InferenceData, 
     descriptions: dict, 
-):
+) -> mpl.figure.Figure:
     """
     Plot progression of parameters over model iterations with posterior density plots.
     
     Args:
         uncertainty_outputs: Formatted outputs from calibration
         descriptions: Parameter descriptions
+    
+    Returns:
+        Formatted figure object created from arviz plotting command
     """
     mpl.rcParams["axes.titlesize"] = 25
     trace_plot = az.plot_trace(
@@ -109,11 +170,11 @@ def graph_param_progression(
     return trace_fig
 
 
-def graph_param_posterior(
+def plot_param_posterior(
     idata: az.data.inference_data.InferenceData, 
     descriptions: dict, 
     grid_request: tuple=None,
-):
+) -> mpl.figure.Figure:
     """
     Plot posterior distribution of parameters.
 
@@ -121,6 +182,9 @@ def graph_param_posterior(
         uncertainty_outputs: Formatted outputs from calibration
         descriptions: Parameter descriptions
         grid_request: How the subplots should be arranged
+            
+    Returns:
+        Formatted figure object created from arviz plotting command
     """
     posterior_plot = az.plot_posterior(
         idata,
@@ -131,7 +195,45 @@ def graph_param_posterior(
     return posterior_plot
 
 
-def graph_sampled_outputs(
+def plot_from_model_runs_df(
+    model_results: pd.DataFrame, 
+    sampled_df: pd.DataFrame,
+    param_names: list,
+    start_date: datetime.datetime,
+    end_date: datetime.datetime,
+) -> go.Figure:
+    """
+    Create interactive plot of model outputs by draw and chain
+    from standard data structures.
+    
+    Args:
+        model_results: Model outputs generated from run_samples_through_model
+        sampled_df: Inference data converted to dataframe in output format of convert_idata_to_df
+    
+    Returns:
+        Figure of sampled model outputs
+    """
+    melted = model_results.melt(ignore_index=False)
+    melted.columns = ["chain", "draw", "notifications"]
+
+    # Add parameter values from sampled dataframe to plotting 
+    for (chain, draw), params in sampled_df.iterrows():
+        for p in param_names:
+            melted.loc[(melted["chain"]==chain) & (melted["draw"] == draw), p] = round_sigfig(params[p], 3)
+        
+    plot = px.line(
+        melted, 
+        y="notifications", 
+        color="chain", 
+        line_group="draw", 
+        hover_data=melted.columns,
+        labels={"index": ""},
+    )
+    plot.update_xaxes(range=(start_date, end_date))
+    return plot
+
+
+def plot_sampled_outputs(
     idata: az.data.inference_data.InferenceData, 
     n_samples: int, 
     output: str, 
@@ -139,7 +241,7 @@ def graph_sampled_outputs(
     target_data: pd.Series,
     start_date: datetime.datetime,
     end_date: datetime.datetime,
-):
+) -> go.Figure:
     """
     Plot sample model runs from the calibration algorithm.
 
@@ -149,6 +251,9 @@ def graph_sampled_outputs(
         output: The output of interest
         bayesian_model: The calibration model (that contains the epi model, priors and targets)
         target_data: Comparison data to plot against
+    
+    Returns:
+        Figure of sampled model runs with targets overlaid
     """
     prior_names = bayesian_model.priors.keys()
     sampled_idata = az.extract(idata, num_samples=n_samples)  # Sample from the inference data
@@ -159,15 +264,48 @@ def graph_sampled_outputs(
     return fig
 
 
-def tabulate_parameters(parameters, param_units, priors, param_descriptions, param_evidence):
+def tabulate_parameters(
+    parameters: dict, 
+    param_units: dict, 
+    priors: list, 
+    descriptions: dict, 
+    param_evidence: dict,
+) -> pd.DataFrame:
+    """
+    Create table of all parameters being consumed by model,
+    with the values being used and evidence to support them.
+
+    Args:
+        parameters: All parameter values, even if calibrated
+        param_units: Parameter units
+        priors: Priors for use in calibration algorithm
+        param_descriptions: Reader-digestible parameter names
+        param_evidence: Description of evidence used to justify choice
+
+    Returns:
+        Formatted table combining the information listed above
+    """
     values_column = [get_fixed_param_value_text(i, parameters, param_units, priors) for i in parameters]
     evidence_column = [NoEscape(param_evidence[i]) for i in parameters]
-    names_column = [param_descriptions[i] for i in parameters]
+    names_column = [descriptions[i] for i in parameters]
     return pd.DataFrame({"Value": values_column, "Evidence": evidence_column}, index=names_column)
 
 
-def tabulate_priors(priors, descriptions):
+def tabulate_priors(
+    priors: list, 
+    descriptions: dict, 
+) -> pd.DataFrame:
+    """
+    Create table of all priors used in calibration algorithm,
+    including distribution names, distribution parameters and support.
 
+    Args:
+        priors: Priors for use in calibration algorithm
+        param_descriptions: Reader-digestible parameter names
+
+    Returns:
+        Formatted table combining the information listed above
+    """
     names = [descriptions[i.name] for i in priors]
     distributions = [get_prior_dist_type(i) for i in priors]
     parameters = [get_prior_dist_param_str(i) for i in priors]
@@ -178,7 +316,7 @@ def tabulate_priors(priors, descriptions):
 def tabulate_param_results(
     idata: az.data.inference_data.InferenceData, 
     priors: list, 
-    param_descriptions: dict,
+    descriptions: dict,
 ) -> pd.DataFrame:
     """
     Get tabular outputs from calibration inference object and standardise formatting.
@@ -192,7 +330,7 @@ def tabulate_param_results(
         Calibration results table in standard format
     """
     results_table = az.summary(idata)
-    results_table.index = [param_descriptions[p.name] for p in priors]
+    results_table.index = [descriptions[p.name] for p in priors]
     for col_to_round in ["mean", "hdi_3%", "hdi_97%"]:
         results_table[col_to_round] = results_table.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
     results_table["hdi"] = results_table.apply(lambda x: f"{x['hdi_3%']} to {x['hdi_97%']}", axis=1)    
