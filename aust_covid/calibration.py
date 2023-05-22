@@ -9,8 +9,6 @@ import matplotlib as mpl
 
 from estival.model import BayesianCompartmentalModel
 
-from aust_covid.doc_utils import add_element_to_document
-from aust_covid.doc_utils import TextElement, TableElement
 from aust_covid.output_utils import convert_idata_to_df, run_samples_through_model, plot_from_model_runs_df, round_sigfig
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
@@ -36,6 +34,7 @@ def get_fixed_param_value_text(
         prior_names: The names of the parameters used in calibration
         decimal_places: How many places to round the value to
         calibrated_string: The text to use if the parameter is calibrated
+
     Return:
         Description of the parameter value
     """
@@ -160,49 +159,20 @@ def graph_sampled_outputs(
     return fig
 
 
-def add_param_table_to_doc(
-    bayesian_model, 
-    parameters, 
-    param_descriptions, 
-    param_evidence, 
-    param_units, 
-    doc_sections,
-):
-    """
-    Describe all the parameters used in the model, regardless of whether 
-    """
-    text = "Parameter interpretation, with value (for parameters not included in calibration algorithm) and summary of evidence. \n"
-    add_element_to_document("Parameterisation", TextElement(text), doc_sections)
-    headers = ["Name", "Value", "Evidence"]
-    col_widths = "p{2.7cm} " * 2 + "p{5.8cm}"
-    rows = []
-    for param in bayesian_model.model.get_input_parameters():
-        param_value_text = get_fixed_param_value_text(param, parameters, param_units, bayesian_model.priors.keys())
-        rows.append([param_descriptions[param], param_value_text, NoEscape(param_evidence[param])])
-    add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
+def tabulate_parameters(parameters, param_units, priors, param_descriptions, param_evidence):
+    values_column = [get_fixed_param_value_text(i, parameters, param_units, priors) for i in parameters]
+    evidence_column = [NoEscape(param_evidence[i]) for i in parameters]
+    names_column = [param_descriptions[i] for i in parameters]
+    return pd.DataFrame({"Value": values_column, "Evidence": evidence_column}, index=names_column)
 
 
-def add_calib_table_to_doc(
-    priors, 
-    param_descriptions, 
-    doc_sections,
-):
-    """
-    Report calibration input choices in table.
-    """
-    text = "Input parameters varied through calibration with uncertainty distribution parameters and support. \n"
-    add_element_to_document("Calibration", TextElement(text), doc_sections)
+def tabulate_priors(priors, descriptions):
 
-    headers = ["Name", "Distribution", "Distribution parameters", "Support"]
-    col_widths = "p{2.7cm} " * 4
-    rows = []
-    for prior in priors:
-        prior_desc = param_descriptions[prior.name]
-        dist_type = get_prior_dist_type(prior)
-        dist_params = get_prior_dist_param_str(prior)
-        dist_range = get_prior_dist_support(prior)
-        rows.append([prior_desc, dist_type, dist_params, dist_range])
-    add_element_to_document("Calibration", TableElement(col_widths, headers, rows), doc_sections)
+    names = [descriptions[i.name] for i in priors]
+    distributions = [get_prior_dist_type(i) for i in priors]
+    parameters = [get_prior_dist_param_str(i) for i in priors]
+    support = [get_prior_dist_support(i) for i in priors]
+    return pd.DataFrame({"Distribution": distributions, "Parameters": parameters, "Support": support}, index=names)
 
 
 def tabulate_param_results(
@@ -229,25 +199,3 @@ def tabulate_param_results(
     results_table = results_table.drop(["mcse_mean", "mcse_sd", "hdi_3%", "hdi_97%"], axis=1)
     results_table.columns = ["Mean", "Standard deviation", "ESS bulk", "ESS tail", "R_hat", "High-density interval"]
     return results_table
-
-
-def table_param_results(
-    uncertainty_outputs, 
-    param_descriptions, 
-    doc_sections,
-):
-    """
-    Report results of calibration analysis.
-    """
-    calib_summary = az.summary(uncertainty_outputs)
-    headers = ["Parameter", "Mean (SD)", "3-97% high-density interval", "MCSE mean (SD)", "ESS bulk", "ESS tail", "R_hat"]
-    rows = []
-    for param in calib_summary.index:
-        summary_row = calib_summary.loc[param]
-        name = param_descriptions[param]
-        mean_sd = f"{summary_row['mean']} ({summary_row['sd']})"
-        hdi = f"{summary_row['hdi_3%']} to {summary_row['hdi_97%']}"
-        mcse = f"{summary_row['mcse_mean']} ({summary_row['mcse_sd']})"
-        rows.append([name, mean_sd, hdi, mcse] + [str(metric) for metric in summary_row[6:]])
-    add_element_to_document("Calibration", TableElement("p{1.3cm} " * 7, headers, rows), doc_sections)
-    return calib_summary

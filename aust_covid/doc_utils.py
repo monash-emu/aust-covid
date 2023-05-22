@@ -87,45 +87,20 @@ class FigElement(DocElement):
 
 class TableElement(DocElement):
     
-    def __init__(self, col_widths, headers, rows):
-        self.col_widths = col_widths
-        self.headers = headers
-        self.rows = rows
-
-    def emit_latex(self, doc):
-        with doc.create(pl.Tabular(self.col_widths)) as calibration_table:
-            calibration_table.add_hline()
-            calibration_table.add_row([bold(i) for i in self.headers])
-            for row in self.rows:
-                calibration_table.add_hline()
-                calibration_table.add_row(row)
-            calibration_table.add_hline()
-        doc.append(LineBreak())
-
-
-class PandasTableElement(DocElement):
-    
     def __init__(self, col_widths, table):
         self.col_widths = col_widths
         self.table = table
 
     def emit_latex(self, doc):
-        with doc.create(pl.Tabular(self.col_widths)) as calibration_table:
-            calibration_table.add_hline()
+        with doc.create(pl.Tabular(self.col_widths)) as output_table:
+            headers = [""] + list(self.table.columns)
+            output_table.add_row(headers)
+            output_table.add_hline()
             for row in self.table.index:
                 row_content = [row] + [str(i) for i in self.table.loc[row]]
-                calibration_table.add_row(row_content)
-                calibration_table.add_hline()
+                output_table.add_row(row_content)
+                output_table.add_hline()
         doc.append(LineBreak())
-
-        # with doc.create(pl.Tabular(self.col_widths)) as calibration_table:
-        #     calibration_table.add_hline()
-        #     calibration_table.add_row([bold(i) for i in self.headers])
-        #     for row in self.rows:
-        #         calibration_table.add_hline()
-        #         calibration_table.add_row(row)
-        #     calibration_table.add_hline()
-        # doc.append(LineBreak())
 
 
 def add_element_to_document(section_name, element, doc_sections):
