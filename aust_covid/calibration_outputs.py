@@ -50,7 +50,7 @@ def get_fixed_param_value_text(
         decimal_places: How many places to round the value to
         calibrated_string: The text to use if the parameter is calibrated
 
-    Return:
+    Returns:
         Description of the parameter value
     """
     return calibrated_string if param in prior_names else f"{round(parameters[param], decimal_places)} {param_units[param]}"
@@ -64,7 +64,7 @@ def get_prior_dist_type(
     
     Args:
         The prior object
-    Return:
+    Returns:
         Description of the distribution
     """
     dist_type = str(prior.__class__).replace(">", "").replace("'", "").split(".")[-1].replace("Prior", "")
@@ -80,7 +80,7 @@ def get_prior_dist_param_str(
     
     Args:
         prior: The prior object
-    Return:
+    Returns:
         The parameters to the prior's distribution joined together
     """
     return " ".join([f"{param}: {round(prior.distri_params[param], 3)}" for param in prior.distri_params])
@@ -94,7 +94,7 @@ def get_prior_dist_support(
     
     Args:
         prior: The prior object
-    Return:        
+    Returns:        
         The bounds to the prior's distribution joined together
     """
     return " to ".join([str(i) for i in prior.bounds()])
@@ -135,7 +135,7 @@ def run_samples_through_model(
     return sres
 
 
-def graph_param_progression(
+def plot_param_progression(
     idata: az.data.inference_data.InferenceData, 
     descriptions: dict, 
 ):
@@ -159,7 +159,7 @@ def graph_param_progression(
     return trace_fig
 
 
-def graph_param_posterior(
+def plot_param_posterior(
     idata: az.data.inference_data.InferenceData, 
     descriptions: dict, 
     grid_request: tuple=None,
@@ -181,7 +181,7 @@ def graph_param_posterior(
     return posterior_plot
 
 
-def graph_sampled_outputs(
+def plot_sampled_outputs(
     idata: az.data.inference_data.InferenceData, 
     n_samples: int, 
     output: str, 
