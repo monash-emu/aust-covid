@@ -106,16 +106,10 @@ def build_base_model(
         infectious_compartments=[infectious_compartment],
         ref_date=ref_date,
     )
-
     description = f"The base model consists of {len(compartments)} states, " \
         f"representing the following states: {', '.join(compartments)}. " \
         f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
-        f"The model is run from {str(start_date.date())} to {str(end_date.date())}. " \
-        f"The base model consists of {len(compartments)} states, " \
-        f"representing the following states: {', '.join(compartments)}. " \
-        f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
         f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
-
     return model, description
 
 
@@ -132,83 +126,127 @@ def get_pop_data() -> tuple:
 
 
 def set_model_starting_conditions(
-    model,
+    model: CompartmentalModel,
     pop_data: pd.DataFrame,
-    add_documentation: bool=False
-):
+) -> str:
+    """
+    Args:
+        model: Working compartmental model
+        pop_data: Data on the Australian population
+
+    Returns:
+        Description of data being used
+    """
     total_pop = pop_data["Australia"].sum()
     model.set_initial_population({"susceptible": total_pop})
-    
-    if add_documentation:
-        description = f"The simulation starts with {str(round(total_pop / 1e6, 3))} million susceptible persons only, " \
-            "with infectious persons introduced later through strain seeding as described below. "
-        # add_element_to_doc("General model construction", TextElement(description))
+    return f"The simulation starts with {str(round(total_pop / 1e6, 3))} million susceptible persons only, " \
+        "with infectious persons introduced later through strain seeding as described below. "
 
 
 def add_infection_to_model(
-    model,
-    add_documentation: bool=False
-):
+    model: CompartmentalModel,
+) -> str:
+    """
+    Args:
+        model: Working compartmental model
+
+    Returns:
+        Description of process added
+    """
     process = "infection"
     origin = "susceptible"
     destination = "latent"
     model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
-    
-    if add_documentation:
-        description = f"The {process} process moves people from the {origin} " \
-            f"compartment to the {destination} compartment, " \
-            "under the frequency-dependent transmission assumption. "
-        # add_element_to_doc("General model construction", TextElement(description))
+    return f"The {process} process moves people from the {origin} " \
+        f"compartment to the {destination} compartment, " \
+        "under the frequency-dependent transmission assumption. "
 
 
 def add_progression_to_model(
-    model,
-    add_documentation: bool=False
-):
+    model: CompartmentalModel,
+) -> str:
     process = "progression"
     origin = "latent"
     destination = "infectious"
     model.add_transition_flow(process, 1.0 / Parameter("latent_period"), origin, destination)
-
-    if add_documentation:
-        description = f"The {process} process moves " \
-            f"people directly from the {origin} state to the {destination} compartment, " \
-            "with the rate of transition calculated as the reciprocal of the latent period. "
-        # add_element_to_doc("General model construction", TextElement(description))
+    return f"The {process} process moves " \
+        f"people directly from the {origin} state to the {destination} compartment, " \
+        "with the rate of transition calculated as the reciprocal of the latent period. "
 
 
 def add_recovery_to_model(
-    model,
-    add_documentation: bool=False
-):
+    model: CompartmentalModel,
+) -> str:
     process = "recovery"
     origin = "infectious"
     destination = "recovered"
     model.add_transition_flow(process, 1.0 / Parameter("infectious_period"), origin, destination)
-
-    if add_documentation:
-        description = f"The {process} process moves " \
-            f"people directly from the {origin} state to the {destination} compartment, " \
-            "with the rate of transition calculated as the reciprocal of the infectious period. "
-        # add_element_to_doc("General model construction", TextElement(description))
+    return f"The {process} process moves " \
+        f"people directly from the {origin} state to the {destination} compartment, " \
+        "with the rate of transition calculated as the reciprocal of the infectious period. "
 
 
 def add_waning_to_model(
-    model,
-    add_documentation: bool=False
-):
+    model: CompartmentalModel,
+) -> str:
     process = "waning"
     origin = "recovered"
     destination = "waned"
     model.add_transition_flow(process, 1.0 / Parameter("natural_immunity_period"), origin, destination)
+    return "A waned compartment is included in the model " \
+        "to represent persons who no longer have immunity from past natural immunity. " \
+        f"Modelled individuals transition from the {origin} compartment to the " \
+        f"{destination} compartment at a rate equal to the reciprocal of the " \
+        "requested period of time spent with natural immunity. "
 
-    if add_documentation:
-        description = "A waned compartment is included in the model " \
-            "to represent persons who no longer have immunity from past natural immunity. " \
-            f"Modelled individuals transition from the {origin} compartment to the " \
-            f"{destination} compartment at a rate equal to the reciprocal of the " \
-            "requested period of time spent with natural immunity. "
-        # add_element_to_doc("General model construction", TextElement(description))
+
+def build_polymod_britain_matrix(
+    age_strata,
+) -> np.array:
+    """
+    Args:
+        age_strata: Cut-off points between simulated age brackets
+
+    Returns:
+        15 by 15 matrix with daily contact rates for age groups
+    """
+
+    values = [
+        [1.92, 0.65, 0.41, 0.24, 0.46, 0.73, 0.67, 0.83, 0.24, 0.22, 0.36, 0.20, 0.20, 0.26, 0.13],
+        [0.95, 6.64, 1.09, 0.73, 0.61, 0.75, 0.95, 1.39, 0.90, 0.16, 0.30, 0.22, 0.50, 0.48, 0.20],
+        [0.48, 1.31, 6.85, 1.52, 0.27, 0.31, 0.48, 0.76, 1.00, 0.69, 0.32, 0.44, 0.27, 0.41, 0.33],
+        [0.33, 0.34, 1.03, 6.71, 1.58, 0.73, 0.42, 0.56, 0.85, 1.16, 0.70, 0.30, 0.20, 0.48, 0.63],
+        [0.45, 0.30, 0.22, 0.93, 2.59, 1.49, 0.75, 0.63, 0.77, 0.87, 0.88, 0.61, 0.53, 0.37, 0.33],
+        [0.79, 0.66, 0.44, 0.74, 1.29, 1.83, 0.97, 0.71, 0.74, 0.85, 0.88, 0.87, 0.67, 0.74, 0.33],
+        [0.97, 1.07, 0.62, 0.50, 0.88, 1.19, 1.67, 0.89, 1.02, 0.91, 0.92, 0.61, 0.76, 0.63, 0.27],
+        [1.02, 0.98, 1.26, 1.09, 0.76, 0.95, 1.53, 1.50, 1.32, 1.09, 0.83, 0.69, 1.02, 0.96, 0.20],
+        [0.55, 1.00, 1.14, 0.94, 0.73, 0.88, 0.82, 1.23, 1.35, 1.27, 0.89, 0.67, 0.94, 0.81, 0.80],
+        [0.29, 0.54, 0.57, 0.77, 0.97, 0.93, 0.57, 0.80, 1.32, 1.87, 0.61, 0.80, 0.61, 0.59, 0.57],
+        [0.33, 0.38, 0.40, 0.41, 0.44, 0.85, 0.60, 0.61, 0.71, 0.95, 0.74, 1.06, 0.59, 0.56, 0.57],
+        [0.31, 0.21, 0.25, 0.33, 0.39, 0.53, 0.68, 0.53, 0.55, 0.51, 0.82, 1.17, 0.85, 0.85, 0.33],
+        [0.26, 0.25, 0.19, 0.24, 0.19, 0.34, 0.40, 0.39, 0.47, 0.55, 0.41, 0.78, 0.65, 0.85, 0.57],
+        [0.09, 0.11, 0.12, 0.20, 0.19, 0.22, 0.13, 0.30, 0.23, 0.13, 0.21, 0.28, 0.36, 0.70, 0.60],
+        [0.14, 0.15, 0.21, 0.10, 0.24, 0.17, 0.15, 0.41, 0.50, 0.71, 0.53, 0.76, 0.47, 0.74, 1.47],
+    ]
+
+    matrix = np.array(values).T  # Transpose
+
+    description = "We took unadjusted estimates for interpersonal rates of contact by age " \
+        "from the United Kingdom data provided by Mossong et al.'s POLYMOD study \cite{mossong2008}. " \
+        "The data were obtained from https://doi.org/10.1371/journal.pmed.0050074.st005 " \
+        "on 12th February 2023 (downloaded in their native docx format). " \
+        "The matrix is transposed because summer assumes that rows represent infectees " \
+        "and columns represent infectors, whereas the POLYMOD data are labelled " \
+        "`age of contact' for the rows and `age group of participant' for the columns. "
+    
+    filename = "raw_matrix.jpg"
+    matrix_fig = px.imshow(matrix, x=age_strata, y=age_strata)
+    matrix_fig.write_image(SUPPLEMENT_PATH / filename)
+    caption = "Raw matrices from Great Britain POLYMOD. Values are contacts per person per day. "
+
+    return matrix, description
+
+
 
 
 def add_reinfection_to_model(
@@ -259,53 +297,6 @@ def add_reinfection_to_model(
             "As for the first infection process, " \
             "all reinfection processes transition people to the model's latent compartment. "
         # add_element_to_doc("General model construction", TextElement(description))
-
-
-def build_polymod_britain_matrix(
-    add_documentation: bool=False
-) -> np.array:
-    """
-    Returns:
-        15 by 15 matrix with daily contact rates for age groups
-    """
-
-    values = [
-        [1.92, 0.65, 0.41, 0.24, 0.46, 0.73, 0.67, 0.83, 0.24, 0.22, 0.36, 0.20, 0.20, 0.26, 0.13],
-        [0.95, 6.64, 1.09, 0.73, 0.61, 0.75, 0.95, 1.39, 0.90, 0.16, 0.30, 0.22, 0.50, 0.48, 0.20],
-        [0.48, 1.31, 6.85, 1.52, 0.27, 0.31, 0.48, 0.76, 1.00, 0.69, 0.32, 0.44, 0.27, 0.41, 0.33],
-        [0.33, 0.34, 1.03, 6.71, 1.58, 0.73, 0.42, 0.56, 0.85, 1.16, 0.70, 0.30, 0.20, 0.48, 0.63],
-        [0.45, 0.30, 0.22, 0.93, 2.59, 1.49, 0.75, 0.63, 0.77, 0.87, 0.88, 0.61, 0.53, 0.37, 0.33],
-        [0.79, 0.66, 0.44, 0.74, 1.29, 1.83, 0.97, 0.71, 0.74, 0.85, 0.88, 0.87, 0.67, 0.74, 0.33],
-        [0.97, 1.07, 0.62, 0.50, 0.88, 1.19, 1.67, 0.89, 1.02, 0.91, 0.92, 0.61, 0.76, 0.63, 0.27],
-        [1.02, 0.98, 1.26, 1.09, 0.76, 0.95, 1.53, 1.50, 1.32, 1.09, 0.83, 0.69, 1.02, 0.96, 0.20],
-        [0.55, 1.00, 1.14, 0.94, 0.73, 0.88, 0.82, 1.23, 1.35, 1.27, 0.89, 0.67, 0.94, 0.81, 0.80],
-        [0.29, 0.54, 0.57, 0.77, 0.97, 0.93, 0.57, 0.80, 1.32, 1.87, 0.61, 0.80, 0.61, 0.59, 0.57],
-        [0.33, 0.38, 0.40, 0.41, 0.44, 0.85, 0.60, 0.61, 0.71, 0.95, 0.74, 1.06, 0.59, 0.56, 0.57],
-        [0.31, 0.21, 0.25, 0.33, 0.39, 0.53, 0.68, 0.53, 0.55, 0.51, 0.82, 1.17, 0.85, 0.85, 0.33],
-        [0.26, 0.25, 0.19, 0.24, 0.19, 0.34, 0.40, 0.39, 0.47, 0.55, 0.41, 0.78, 0.65, 0.85, 0.57],
-        [0.09, 0.11, 0.12, 0.20, 0.19, 0.22, 0.13, 0.30, 0.23, 0.13, 0.21, 0.28, 0.36, 0.70, 0.60],
-        [0.14, 0.15, 0.21, 0.10, 0.24, 0.17, 0.15, 0.41, 0.50, 0.71, 0.53, 0.76, 0.47, 0.74, 1.47],
-    ]
-
-    matrix = np.array(values).T  # Transpose
-
-    if add_documentation:
-        description = "We took unadjusted estimates for interpersonal rates of contact by age " \
-            "from the United Kingdom data provided by Mossong et al.'s POLYMOD study \cite{mossong2008}. " \
-            "The data were obtained from https://doi.org/10.1371/journal.pmed.0050074.st005 " \
-            "on 12th February 2023 (downloaded in their native docx format). " \
-            "The matrix is transposed because summer assumes that rows represent infectees " \
-            "and columns represent infectors, whereas the POLYMOD data are labelled " \
-            "`age of contact' for the rows and `age group of participant' for the columns. "
-        # add_element_to_doc("General model construction", TextElement(description))
-        
-        filename = "raw_matrix.jpg"
-        matrix_fig = px.imshow(matrix, x=self.age_strata, y=self.age_strata)
-        matrix_fig.write_image(SUPPLEMENT_PATH / filename)
-        caption = "Raw matrices from Great Britain POLYMOD. Values are contacts per person per day. "
-        # add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
-
-    return matrix
 
 
 def adapt_gb_matrix_to_aust(
