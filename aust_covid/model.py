@@ -10,7 +10,6 @@ from jax import scipy as jsp
 from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time, Data
 
-from aust_covid.doc_utils import TextElement, FigElement
 from aust_covid.inputs import load_pop_data, load_uk_pop_data
 
 
@@ -81,12 +80,22 @@ in the documentation is best description of the code's function.
 
 
 def build_base_model(
-    ref_date,
-    compartments,
+    ref_date: datetime,
+    compartments: list,
     start_date: datetime,
     end_date: datetime,
-    add_documentation: bool=False,
-):
+) -> tuple:
+    """
+    Args:
+        ref_date: Arbitrary reference date
+        compartments: Starting unstratified compartments
+        start_date: Start date for analysis
+        end_date: End date for analysis
+
+    Returns:
+        Simple model starting point for extension through the following functions
+        with text description of the process.
+    """
     infectious_compartment = "infectious"
     model = CompartmentalModel(
         times=(
@@ -98,33 +107,28 @@ def build_base_model(
         ref_date=ref_date,
     )
 
-    if add_documentation:
-        description = f"The base model consists of {len(compartments)} states, " \
-            f"representing the following states: {', '.join(compartments)}. " \
-            f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
-            f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
-        # add_element_to_doc("General model construction", TextElement(description))
-        description = f"The base model consists of {len(compartments)} states, " \
-            f"representing the following states: {', '.join(compartments)}. " \
-            f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
-            f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
-        # add_element_to_doc("General model construction", TextElement(description))
+    description = f"The base model consists of {len(compartments)} states, " \
+        f"representing the following states: {', '.join(compartments)}. " \
+        f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
+        f"The model is run from {str(start_date.date())} to {str(end_date.date())}. " \
+        f"The base model consists of {len(compartments)} states, " \
+        f"representing the following states: {', '.join(compartments)}. " \
+        f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
+        f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
 
-    return model
+    return model, description
 
 
-def get_pop_data(
-    add_documentation: bool=False
-) -> pd.DataFrame:
+def get_pop_data() -> tuple:
+    """
+    Returns:
+        Dataframe containing all Australian population data we may need
+        with description.
+    """
     pop_data, sheet_name = load_pop_data()
-
-    if add_documentation:
-        description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded "
-        description2 = "from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. "
-        # add_element_to_doc("General model construction", TextElement(description))
-        # add_element_to_doc("General model construction", TextElement(description2))
-
-    return pop_data
+    description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded "
+    description2 = "from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. "
+    return pop_data, description + description2
 
 
 def set_model_starting_conditions(
