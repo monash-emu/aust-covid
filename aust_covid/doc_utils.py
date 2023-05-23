@@ -200,37 +200,3 @@ def compile_doc(
         with doc.create(Section(section)):
             for element in doc_sections[section]:
                 element.emit_latex(doc)
-
-
-class DocumentedProcess:
-
-    def __init__(self, doc, add_documentation):
-        self.doc = doc
-        self.add_documentation = add_documentation
-        self.doc_sections = {}
-
-    def add_element_to_doc(
-        self, 
-        section_name: str, 
-        element: DocElement,
-    ):
-        """
-        Add a new element to the list of elements to be included in a document section.
-
-        Args:
-            section_name: Name of the section to add to
-            element: The object to include in the section
-        """
-        if section_name not in self.doc_sections:
-            self.doc_sections[section_name] = []
-        self.doc_sections[section_name].append(element)
-
-    def compile_doc(self):
-        """
-        Apply all the document elements to the document,
-        looping through each section and using each element's emit_latex method.
-        """
-        for section in self.doc_sections:
-            with self.doc.create(Section(section)):
-                for element in self.doc_sections[section]:
-                    element.emit_latex(self.doc)

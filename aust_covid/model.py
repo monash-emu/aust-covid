@@ -10,7 +10,7 @@ from jax import scipy as jsp
 from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time, Data
 
-from aust_covid.doc_utils import TextElement, FigElement, DocumentedProcess
+from aust_covid.doc_utils import TextElement, FigElement
 from aust_covid.inputs import load_pop_data, load_uk_pop_data
 
 
