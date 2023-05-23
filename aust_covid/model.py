@@ -102,7 +102,6 @@ def build_base_model(
 
 
 def get_pop_data(
-    
     add_documentation: bool=False
 ) -> pd.DataFrame:
     pop_data, sheet_name = load_pop_data()
