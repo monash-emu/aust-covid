@@ -73,6 +73,13 @@ def build_gamma_dens_interval_func(shape, mean, model_times):
     return Function(jnp.gradient, [cdf_values])
 
 
+"""
+Model is constructed through sequentially calling the following functions.
+Rather than docstrings for each, the text string to be included 
+in the documentation is best description of the code's function.
+"""
+
+
 def build_base_model(
     ref_date,
     compartments,
@@ -92,6 +99,11 @@ def build_base_model(
     )
 
     if add_documentation:
+        description = f"The base model consists of {len(compartments)} states, " \
+            f"representing the following states: {', '.join(compartments)}. " \
+            f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
+            f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
+        # add_element_to_doc("General model construction", TextElement(description))
         description = f"The base model consists of {len(compartments)} states, " \
             f"representing the following states: {', '.join(compartments)}. " \
             f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
@@ -529,27 +541,3 @@ def add_death_output_to_model(
             f"multiplied by an age-specific infection fatality rate for each age bracket. " \
             f"The time series of deaths for each age gorup is then summed to obtain total modelled {output}. "
         # add_element_to_doc("Outputs", TextElement(description))
-
-
-class DocumentedAustModel(DocumentedProcess):
-    """
-    The Australia-specific documented model.
-    Constructed through sequentially calling its methods.
-    Rather than docstrings for each, the text string to be included 
-    in the documentation is best description of the code's function.
-
-    Args:
-        DocumentedProcess: General epidemiological process with documentation
-    """
-
-    def __init__(
-        self, 
-        doc=None, 
-        add_documentation=False,
-    ):
-
-        description = f"The base model consists of {len(self.compartments)} states, " \
-            f"representing the following states: {', '.join(self.compartments)}. " \
-            f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
-            f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
-        self.add_element_to_doc("General model construction", TextElement(description))
