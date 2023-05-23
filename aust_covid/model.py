@@ -73,6 +73,177 @@ def build_gamma_dens_interval_func(shape, mean, model_times):
     return Function(jnp.gradient, [cdf_values])
 
 
+def build_base_model(
+    ref_date,
+    compartments,
+    start_date: datetime,
+    end_date: datetime,
+    add_documentation: bool=False,
+):
+    infectious_compartment = "infectious"
+    model = CompartmentalModel(
+        times=(
+            (start_date - ref_date).days, 
+            (end_date - ref_date).days,
+        ),
+        compartments=compartments,
+        infectious_compartments=[infectious_compartment],
+        ref_date=ref_date,
+    )
+
+    if add_documentation:
+        description = f"The base model consists of {len(compartments)} states, " \
+            f"representing the following states: {', '.join(compartments)}. " \
+            f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
+            f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
+        # add_element_to_doc("General model construction", TextElement(description))
+
+    return model
+
+
+def get_pop_data(
+    
+    add_documentation: bool=False
+) -> pd.DataFrame:
+    pop_data, sheet_name = load_pop_data()
+
+    if add_documentation:
+        description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded "
+        description2 = "from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. "
+        # add_element_to_doc("General model construction", TextElement(description))
+        # add_element_to_doc("General model construction", TextElement(description2))
+
+    return pop_data
+
+
+def set_model_starting_conditions(
+    model,
+    pop_data: pd.DataFrame,
+    add_documentation: bool=False
+):
+    total_pop = pop_data["Australia"].sum()
+    model.set_initial_population({"susceptible": total_pop})
+    
+    if add_documentation:
+        description = f"The simulation starts with {str(round(total_pop / 1e6, 3))} million susceptible persons only, " \
+            "with infectious persons introduced later through strain seeding as described below. "
+        # add_element_to_doc("General model construction", TextElement(description))
+
+
+def add_infection_to_model(
+    model,
+    add_documentation: bool=False
+):
+    process = "infection"
+    origin = "susceptible"
+    destination = "latent"
+    model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
+    
+    if add_documentation:
+        description = f"The {process} process moves people from the {origin} " \
+            f"compartment to the {destination} compartment, " \
+            "under the frequency-dependent transmission assumption. "
+        # add_element_to_doc("General model construction", TextElement(description))
+
+def add_progression_to_model(
+    model,
+    add_documentation: bool=False
+):
+    process = "progression"
+    origin = "latent"
+    destination = "infectious"
+    model.add_transition_flow(process, 1.0 / Parameter("latent_period"), origin, destination)
+
+    if add_documentation:
+        description = f"The {process} process moves " \
+            f"people directly from the {origin} state to the {destination} compartment, " \
+            "with the rate of transition calculated as the reciprocal of the latent period. "
+        # add_element_to_doc("General model construction", TextElement(description))
+
+def add_recovery_to_model(
+    model,
+    add_documentation: bool=False
+):
+    process = "recovery"
+    origin = "infectious"
+    destination = "recovered"
+    model.add_transition_flow(process, 1.0 / Parameter("infectious_period"), origin, destination)
+
+    if add_documentation:
+        description = f"The {process} process moves " \
+            f"people directly from the {origin} state to the {destination} compartment, " \
+            "with the rate of transition calculated as the reciprocal of the infectious period. "
+        # add_element_to_doc("General model construction", TextElement(description))
+
+
+def add_waning_to_model(
+    model,
+    add_documentation: bool=False
+):
+    process = "waning"
+    origin = "recovered"
+    destination = "waned"
+    model.add_transition_flow(process, 1.0 / Parameter("natural_immunity_period"), origin, destination)
+
+    if add_documentation:
+        description = "A waned compartment is included in the model " \
+            "to represent persons who no longer have immunity from past natural immunity. " \
+            f"Modelled individuals transition from the {origin} compartment to the " \
+            f"{destination} compartment at a rate equal to the reciprocal of the " \
+            "requested period of time spent with natural immunity. "
+        # add_element_to_doc("General model construction", TextElement(description))
+
+
+def add_reinfection_to_model(
+    model,
+    strain_strata,
+    add_documentation: bool=False
+):
+    for dest_strain in strain_strata:
+        for source_strain in strain_strata:
+            process = "early_reinfection"
+            origin = "recovered"
+            destination = "latent"
+            if int(dest_strain[-1]) > int(source_strain[-1]): 
+                model.add_infection_frequency_flow(
+                    process, 
+                    Parameter("contact_rate") * Parameter(f"{dest_strain}_escape"),
+                    origin, 
+                    destination,
+                    source_strata={"strain": source_strain},
+                    dest_strata={"strain": dest_strain},
+                )
+            process = "late_reinfection"
+            origin = "waned"
+            model.add_infection_frequency_flow(
+                process, 
+                Parameter("contact_rate"), 
+                origin, 
+                destination,
+                source_strata={"strain": source_strain},
+                dest_strata={"strain": dest_strain},
+            )
+
+    if add_documentation:
+        description = "Reinfection is possible from both the recovered " \
+            "and waned compartments, with these processes termed " \
+            "`early' and `late' reinfection respectively. " \
+            "In the case of early reinfection, this is only possible " \
+            "for persons who have recovered from an earlier circulating sub-variant. " \
+            "That is, BA.2 early reinfection is possible for persons previously infected with " \
+            "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
+            "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
+            "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
+            "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
+            "as it is for those recovered from past BA.2 infection. " \
+            "For late reinfection, all natural immunity is lost for persons in the waned compartment, " \
+            "such that the rate of reinfection for these persons is the same as the rate of infection " \
+            "for fully susceptible persons. " \
+            "As for the first infection process, " \
+            "all reinfection processes transition people to the model's latent compartment. "
+        # add_element_to_doc("General model construction", TextElement(description))
+
+
 class DocumentedAustModel(DocumentedProcess):
     """
     The Australia-specific documented model.
@@ -110,101 +281,11 @@ class DocumentedAustModel(DocumentedProcess):
     ):
         super().__init__(doc, add_documentation)
 
-    def build_base_model(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-    ):
-        infectious_compartment = "infectious"
-        self.model = CompartmentalModel(
-            times=(
-                (start_date - self.ref_date).days, 
-                (end_date - self.ref_date).days,
-            ),
-            compartments=self.compartments,
-            infectious_compartments=[infectious_compartment],
-            ref_date=self.ref_date,
-        )
-
-        if self.add_documentation:
-            description = f"The base model consists of {len(self.compartments)} states, " \
-                f"representing the following states: {', '.join(self.compartments)}. " \
-                f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
-                f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
-            self.add_element_to_doc("General model construction", TextElement(description))
-
-    def get_pop_data(self):
-        pop_data, sheet_name = load_pop_data()
-
-        if self.add_documentation:
-            description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded "
-            description2 = "from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. "
-            self.add_element_to_doc("General model construction", TextElement(description))
-            self.add_element_to_doc("General model construction", TextElement(description2))
-
-        return pop_data
-
-    def set_model_starting_conditions(
-        self, 
-        pop_data: pd.DataFrame,
-    ):
-        total_pop = pop_data["Australia"].sum()
-        self.model.set_initial_population({"susceptible": total_pop})
-        
-        if self.add_documentation:
-            description = f"The simulation starts with {str(round(total_pop / 1e6, 3))} million susceptible persons only, " \
-                "with infectious persons introduced later through strain seeding as described below. "
-            self.add_element_to_doc("General model construction", TextElement(description))
-
-    def add_infection_to_model(self):
-        process = "infection"
-        origin = "susceptible"
-        destination = "latent"
-        self.model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
-        
-        if self.add_documentation:
-            description = f"The {process} process moves people from the {origin} " \
-                f"compartment to the {destination} compartment, " \
-                "under the frequency-dependent transmission assumption. "
-            self.add_element_to_doc("General model construction", TextElement(description))
-
-    def add_progression_to_model(self):
-        process = "progression"
-        origin = "latent"
-        destination = "infectious"
-        self.model.add_transition_flow(process, 1.0 / Parameter("latent_period"), origin, destination)
-
-        if self.add_documentation:
-            description = f"The {process} process moves " \
-                f"people directly from the {origin} state to the {destination} compartment, " \
-                "with the rate of transition calculated as the reciprocal of the latent period. "
-            self.add_element_to_doc("General model construction", TextElement(description))
-
-    def add_recovery_to_model(self):
-        process = "recovery"
-        origin = "infectious"
-        destination = "recovered"
-        self.model.add_transition_flow(process, 1.0 / Parameter("infectious_period"), origin, destination)
-
-        if self.add_documentation:
-            description = f"The {process} process moves " \
-                f"people directly from the {origin} state to the {destination} compartment, " \
-                "with the rate of transition calculated as the reciprocal of the infectious period. "
-            self.add_element_to_doc("General model construction", TextElement(description))
-
-    def add_waning_to_model(self):
-        process = "waning"
-        origin = "recovered"
-        destination = "waned"
-        self.model.add_transition_flow(process, 1.0 / Parameter("natural_immunity_period"), origin, destination)
-
-        if self.add_documentation:
-            description = "A waned compartment is included in the model " \
-                "to represent persons who no longer have immunity from past natural immunity. " \
-                f"Modelled individuals transition from the {origin} compartment to the " \
-                f"{destination} compartment at a rate equal to the reciprocal of the " \
-                "requested period of time spent with natural immunity. "
-            self.add_element_to_doc("General model construction", TextElement(description))
+        description = f"The base model consists of {len(self.compartments)} states, " \
+            f"representing the following states: {', '.join(self.compartments)}. " \
+            f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
+            f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
+        self.add_element_to_doc("General model construction", TextElement(description))
 
     def add_reinfection_to_model(self):
         for dest_strain in self.strain_strata:
