@@ -247,56 +247,6 @@ def build_polymod_britain_matrix(
     return matrix, description
 
 
-def add_reinfection(
-    model,
-    strain_strata,
-    add_documentation: bool=False
-):
-    for dest_strain in strain_strata:
-        for source_strain in strain_strata:
-            process = "early_reinfection"
-            origin = "recovered"
-            destination = "latent"
-            if int(dest_strain[-1]) > int(source_strain[-1]): 
-                model.add_infection_frequency_flow(
-                    process, 
-                    Parameter("contact_rate") * Parameter(f"{dest_strain}_escape"),
-                    origin, 
-                    destination,
-                    source_strata={"strain": source_strain},
-                    dest_strata={"strain": dest_strain},
-                )
-            process = "late_reinfection"
-            origin = "waned"
-            model.add_infection_frequency_flow(
-                process, 
-                Parameter("contact_rate"), 
-                origin, 
-                destination,
-                source_strata={"strain": source_strain},
-                dest_strata={"strain": dest_strain},
-            )
-
-    if add_documentation:
-        description = "Reinfection is possible from both the recovered " \
-            "and waned compartments, with these processes termed " \
-            "`early' and `late' reinfection respectively. " \
-            "In the case of early reinfection, this is only possible " \
-            "for persons who have recovered from an earlier circulating sub-variant. " \
-            "That is, BA.2 early reinfection is possible for persons previously infected with " \
-            "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
-            "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
-            "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
-            "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
-            "as it is for those recovered from past BA.2 infection. " \
-            "For late reinfection, all natural immunity is lost for persons in the waned compartment, " \
-            "such that the rate of reinfection for these persons is the same as the rate of infection " \
-            "for fully susceptible persons. " \
-            "As for the first infection process, " \
-            "all reinfection processes transition people to the model's latent compartment. "
-        # add_element_to_doc("General model construction", TextElement(description))
-
-
 def adapt_gb_matrix_to_aust(
     age_strata: list,
     unadjusted_matrix: np.array, 
@@ -367,26 +317,6 @@ def adapt_gb_matrix_to_aust(
 
     aust_age_props.index = aust_age_props.index.astype(str)
     return adjusted_matrix, aust_age_props, description
-
-
-def add_incidence_output(
-    model,
-    infection_processes,
-    add_documentation: bool=False
-):
-    output = "incidence"
-    for process in infection_processes:
-        model.request_output_for_flow(f"{process}_onset", process, save_results=False)
-    model.request_function_output(
-        output,
-        func=sum([DerivedOutput(f"{process}_onset") for process in infection_processes])
-    )
-
-    if add_documentation:
-        description = f"Modelled {output} is calculated as " \
-            f"the absolute rate of {infection_processes[0]} or {infection_processes[1]} " \
-            "in the community. "
-        # add_element_to_doc("Outputs", TextElement(description))
 
 
 def add_age_stratification(
@@ -466,6 +396,76 @@ def seed_vocs(
             "a step function that allows the introduction of a constant rate of new infectious " \
             "persons into the system over a fixed seeding duration. "
         # add_element_to_doc("Strain stratification", TextElement(description))
+
+
+def add_reinfection(
+    model,
+    strain_strata,
+    add_documentation: bool=False
+):
+    for dest_strain in strain_strata:
+        for source_strain in strain_strata:
+            process = "early_reinfection"
+            origin = "recovered"
+            destination = "latent"
+            if int(dest_strain[-1]) > int(source_strain[-1]): 
+                model.add_infection_frequency_flow(
+                    process, 
+                    Parameter("contact_rate") * Parameter(f"{dest_strain}_escape"),
+                    origin, 
+                    destination,
+                    source_strata={"strain": source_strain},
+                    dest_strata={"strain": dest_strain},
+                )
+            process = "late_reinfection"
+            origin = "waned"
+            model.add_infection_frequency_flow(
+                process, 
+                Parameter("contact_rate"), 
+                origin, 
+                destination,
+                source_strata={"strain": source_strain},
+                dest_strata={"strain": dest_strain},
+            )
+
+    if add_documentation:
+        description = "Reinfection is possible from both the recovered " \
+            "and waned compartments, with these processes termed " \
+            "`early' and `late' reinfection respectively. " \
+            "In the case of early reinfection, this is only possible " \
+            "for persons who have recovered from an earlier circulating sub-variant. " \
+            "That is, BA.2 early reinfection is possible for persons previously infected with " \
+            "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
+            "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
+            "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
+            "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
+            "as it is for those recovered from past BA.2 infection. " \
+            "For late reinfection, all natural immunity is lost for persons in the waned compartment, " \
+            "such that the rate of reinfection for these persons is the same as the rate of infection " \
+            "for fully susceptible persons. " \
+            "As for the first infection process, " \
+            "all reinfection processes transition people to the model's latent compartment. "
+        # add_element_to_doc("General model construction", TextElement(description))
+
+
+def add_incidence_output(
+    model,
+    infection_processes,
+    add_documentation: bool=False
+):
+    output = "incidence"
+    for process in infection_processes:
+        model.request_output_for_flow(f"{process}_onset", process, save_results=False)
+    model.request_function_output(
+        output,
+        func=sum([DerivedOutput(f"{process}_onset") for process in infection_processes])
+    )
+
+    if add_documentation:
+        description = f"Modelled {output} is calculated as " \
+            f"the absolute rate of {infection_processes[0]} or {infection_processes[1]} " \
+            "in the community. "
+        # add_element_to_doc("Outputs", TextElement(description))
 
 
 def add_notifications_output(
