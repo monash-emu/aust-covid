@@ -320,34 +320,28 @@ def adapt_gb_matrix_to_aust(
 
 
 def add_age_stratification(
-    model,
-    compartments,
-    age_strata,
+    compartments: list,
+    age_strata: list,
     pop_splits: pd.Series,
     matrix: np.array,
-    add_documentation: bool=False
-):
+) -> tuple:
     """
     Args:
         pop_splits: The proportion of the population to assign to each age group
         matrix: The mixing matrix to apply
     """
-
     age_strat = Stratification("agegroup", age_strata, compartments)
     assert len(pop_splits) == len(age_strata), "Different number of age group sizes from age strata request"
     age_strat.set_population_split(pop_splits.to_dict())
     age_strat.set_mixing_matrix(matrix)
-    model.stratify_with(age_strat)
-
-    if add_documentation:
-        description = "We stratified all compartments of the base model " \
-            "into sequential age brackets in five year " \
-            "bands from age 0 to 4 through to age 65 to 69 " \
-            "with a final age band to represent those aged 70 and above. " \
-            "These age brackets were chosen to match those used by the POLYMOD survey. " \
-            "The population distribution by age group was informed by the data from the Australian " \
-            "Bureau of Statistics introduced previously. "
-        # add_element_to_doc("Age stratification", TextElement(description))
+    description = "We stratified all compartments of the base model " \
+        "into sequential age brackets in five year " \
+        "bands from age 0 to 4 through to age 65 to 69 " \
+        "with a final age band to represent those aged 70 and above. " \
+        "These age brackets were chosen to match those used by the POLYMOD survey. " \
+        "The population distribution by age group was informed by the data from the Australian " \
+        "Bureau of Statistics introduced previously. "
+    return age_strat, description
 
 
 def get_strain_stratification(
