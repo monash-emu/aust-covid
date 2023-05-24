@@ -298,10 +298,9 @@ def add_reinfection(
 
 
 def adapt_gb_matrix_to_aust(
-    age_strata,
+    age_strata: list,
     unadjusted_matrix: np.array, 
     pop_data: pd.DataFrame,
-    add_documentation: bool=False
 ) -> tuple:
     """
     Args:
@@ -334,46 +333,40 @@ def adapt_gb_matrix_to_aust(
     aust_uk_ratios = aust_age_props / uk_age_props
     adjusted_matrix = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
     
-    if add_documentation:
-        description = "Matrices were adjusted to account for the differences in the age distribution of the " \
-            "Australian population distribution in 2022 compared to the population of Great Britain in 2000. " \
-            "The matrices were adjusted by taking the dot product of the unadjusted matrices and the diagonal matrix " \
-            "containing the vector of the ratios between the proportion of the British and Australian populations " \
-            "within each age bracket as its diagonal elements. " \
-            "To align with the methodology of the POLYMOD study \cite{mossong2008} " \
-            "we sourced the 2001 UK census population for those living in the UK at the time of the census " \
-            "from the Eurostat database (https://ec.europa.eu/eurostat). "
-        # add_element_to_doc("Age stratification", TextElement(description))
+    description = "Matrices were adjusted to account for the differences in the age distribution of the " \
+        "Australian population distribution in 2022 compared to the population of Great Britain in 2000. " \
+        "The matrices were adjusted by taking the dot product of the unadjusted matrices and the diagonal matrix " \
+        "containing the vector of the ratios between the proportion of the British and Australian populations " \
+        "within each age bracket as its diagonal elements. " \
+        "To align with the methodology of the POLYMOD study \cite{mossong2008} " \
+        "we sourced the 2001 UK census population for those living in the UK at the time of the census " \
+        "from the Eurostat database (https://ec.europa.eu/eurostat). "
 
-        filename = "input_population.jpg"
-        pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
-        pop_fig.update_layout(showlegend=False)
-        pop_fig.write_image(SUPPLEMENT_PATH / filename)
-        caption = "Population sizes by age group obtained from Australia Bureau of Statistics."
-        # add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
+    filename = "input_population.jpg"
+    pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
+    pop_fig.update_layout(showlegend=False)
+    pop_fig.write_image(SUPPLEMENT_PATH / filename)
+    caption = "Population sizes by age group obtained from Australia Bureau of Statistics."
 
-        filename = "modelled_population.jpg"
-        modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
-        modelled_pop_fig.update_layout(showlegend=False)
-        modelled_pop_fig.write_image(SUPPLEMENT_PATH / filename)
-        caption = "Population sizes by age group included in the model."
-        # add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
+    filename = "modelled_population.jpg"
+    modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
+    modelled_pop_fig.update_layout(showlegend=False)
+    modelled_pop_fig.write_image(SUPPLEMENT_PATH / filename)
+    caption = "Population sizes by age group included in the model."
 
-        filename = "matrix_ref_pop.jpg"
-        uk_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
-        uk_pop_fig.update_layout(showlegend=False)
-        uk_pop_fig.write_image(SUPPLEMENT_PATH / filename)
-        caption = "United Kingdom population sizes."
-        # add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
+    filename = "matrix_ref_pop.jpg"
+    uk_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
+    uk_pop_fig.update_layout(showlegend=False)
+    uk_pop_fig.write_image(SUPPLEMENT_PATH / filename)
+    caption = "United Kingdom population sizes."
 
-        filename = "adjusted_matrix.jpg"
-        matrix_plotly_fig = px.imshow(unadjusted_matrix, x=self.age_strata, y=self.age_strata)
-        matrix_plotly_fig.write_image(SUPPLEMENT_PATH / filename)
-        caption = "Matrices adjusted to Australian population. Values are contacts per person per day. "
-        # add_element_to_doc("Age stratification", FigElement(filename, caption=caption))
+    filename = "adjusted_matrix.jpg"
+    matrix_plotly_fig = px.imshow(unadjusted_matrix, x=age_strata, y=age_strata)
+    matrix_plotly_fig.write_image(SUPPLEMENT_PATH / filename)
+    caption = "Matrices adjusted to Australian population. Values are contacts per person per day. "
 
     aust_age_props.index = aust_age_props.index.astype(str)
-    return adjusted_matrix, aust_age_props
+    return adjusted_matrix, aust_age_props, description
 
 
 def add_incidence_output(
