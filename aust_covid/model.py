@@ -125,7 +125,7 @@ def get_pop_data() -> tuple:
     return pop_data, description + description2
 
 
-def set_model_starting_conditions(
+def set_starting_conditions(
     model: CompartmentalModel,
     pop_data: pd.DataFrame,
 ) -> str:
@@ -143,7 +143,7 @@ def set_model_starting_conditions(
         "with infectious persons introduced later through strain seeding as described below. "
 
 
-def add_infection_to_model(
+def add_infection(
     model: CompartmentalModel,
 ) -> str:
     """
@@ -162,7 +162,7 @@ def add_infection_to_model(
         "under the frequency-dependent transmission assumption. "
 
 
-def add_progression_to_model(
+def add_progression(
     model: CompartmentalModel,
 ) -> str:
     process = "progression"
@@ -174,7 +174,7 @@ def add_progression_to_model(
         "with the rate of transition calculated as the reciprocal of the latent period. "
 
 
-def add_recovery_to_model(
+def add_recovery(
     model: CompartmentalModel,
 ) -> str:
     process = "recovery"
@@ -186,7 +186,7 @@ def add_recovery_to_model(
         "with the rate of transition calculated as the reciprocal of the infectious period. "
 
 
-def add_waning_to_model(
+def add_waning(
     model: CompartmentalModel,
 ) -> str:
     process = "waning"
@@ -247,9 +247,7 @@ def build_polymod_britain_matrix(
     return matrix, description
 
 
-
-
-def add_reinfection_to_model(
+def add_reinfection(
     model,
     strain_strata,
     add_documentation: bool=False
@@ -378,7 +376,7 @@ def adapt_gb_matrix_to_aust(
     return adjusted_matrix, aust_age_props
 
 
-def add_incidence_output_to_model(
+def add_incidence_output(
     model,
     infection_processes,
     add_documentation: bool=False
@@ -398,7 +396,7 @@ def add_incidence_output_to_model(
         # add_element_to_doc("Outputs", TextElement(description))
 
 
-def add_age_stratification_to_model(
+def add_age_stratification(
     model,
     compartments,
     age_strata,
@@ -477,7 +475,7 @@ def seed_vocs(
         # add_element_to_doc("Strain stratification", TextElement(description))
 
 
-def add_notifications_output_to_model(
+def add_notifications_output(
     model,
     add_documentation: bool=False
 ):
@@ -513,7 +511,7 @@ def track_age_specific_incidence(
         )
 
 
-def add_death_output_to_model(
+def add_death_output(
     model,
     add_documentation: bool=False
 ):
