@@ -345,21 +345,16 @@ def add_age_stratification(
 
 
 def get_strain_stratification(
-    compartments,
+    compartments: list,
     strain_strata,
-    add_documentation: bool=False
-) -> StrainStratification:
+) -> tuple:
     strain_strings = list(strain_strata.keys())
     compartments_to_stratify = [comp for comp in compartments if comp != "susceptible"]
     strain_strat = StrainStratification("strain", strain_strings, compartments_to_stratify)
-
-    if add_documentation:
-        description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}. " \
-            f"including compartments to represent strains: {', '.join(strain_strata.values())}. " \
-            f"This was implemented using summer's `{StrainStratification.__name__}' class. "
-        # add_element_to_doc("Strain stratification", TextElement(description))
-
-    return strain_strat
+    description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}. " \
+        f"including compartments to represent strains: {', '.join(strain_strata.values())}. " \
+        f"This was implemented using summer's `{StrainStratification.__name__}' class. "
+    return strain_strat, description
 
 
 def seed_vocs(
