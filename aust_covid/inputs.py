@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+import yaml
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 DATA_PATH = BASE_PATH / "data"
@@ -41,3 +42,13 @@ def load_uk_pop_data() -> pd.Series:
     data.index.name = "age_group"
     data.columns = ["uk_pops"]
     return data["uk_pops"]
+
+
+class ParametersInfo:
+    def __init__(self, names, data_path, data_type):
+        self.names = names
+        with open(data_path, "r") as param_file:
+            self.info = yaml.safe_load(param_file)[data_type]
+        if self.names != self.info.keys():
+            raise ValueError("Incorrect keys for data")
+        
