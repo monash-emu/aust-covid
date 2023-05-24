@@ -358,9 +358,8 @@ def get_strain_stratification(
 
 
 def seed_vocs(
-    model,
-    add_documentation: bool=False
-):
+    model: CompartmentalModel,
+) -> str:
     strains = model.stratifications["strain"].strata
     for strain in strains:
         voc_seed_func = Function(
@@ -379,19 +378,15 @@ def seed_vocs(
             dest_strata={"strain": strain},
             split_imports=True,
         )
-
-    if add_documentation:
-        description = f"Each strain (including the starting {strains[0]} strain) is seeded through " \
-            "a step function that allows the introduction of a constant rate of new infectious " \
-            "persons into the system over a fixed seeding duration. "
-        # add_element_to_doc("Strain stratification", TextElement(description))
+    return f"Each strain (including the starting {strains[0]} strain) is seeded through " \
+        "a step function that allows the introduction of a constant rate of new infectious " \
+        "persons into the system over a fixed seeding duration. "
 
 
 def add_reinfection(
-    model,
-    strain_strata,
-    add_documentation: bool=False
-):
+    model: CompartmentalModel,
+    strain_strata: list,
+) -> str:
     for dest_strain in strain_strata:
         for source_strain in strain_strata:
             process = "early_reinfection"
@@ -417,66 +412,54 @@ def add_reinfection(
                 dest_strata={"strain": dest_strain},
             )
 
-    if add_documentation:
-        description = "Reinfection is possible from both the recovered " \
-            "and waned compartments, with these processes termed " \
-            "`early' and `late' reinfection respectively. " \
-            "In the case of early reinfection, this is only possible " \
-            "for persons who have recovered from an earlier circulating sub-variant. " \
-            "That is, BA.2 early reinfection is possible for persons previously infected with " \
-            "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
-            "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
-            "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
-            "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
-            "as it is for those recovered from past BA.2 infection. " \
-            "For late reinfection, all natural immunity is lost for persons in the waned compartment, " \
-            "such that the rate of reinfection for these persons is the same as the rate of infection " \
-            "for fully susceptible persons. " \
-            "As for the first infection process, " \
-            "all reinfection processes transition people to the model's latent compartment. "
-        # add_element_to_doc("General model construction", TextElement(description))
+    return "Reinfection is possible from both the recovered " \
+        "and waned compartments, with these processes termed " \
+        "`early' and `late' reinfection respectively. " \
+        "In the case of early reinfection, this is only possible " \
+        "for persons who have recovered from an earlier circulating sub-variant. " \
+        "That is, BA.2 early reinfection is possible for persons previously infected with " \
+        "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
+        "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
+        "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
+        "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
+        "as it is for those recovered from past BA.2 infection. " \
+        "For late reinfection, all natural immunity is lost for persons in the waned compartment, " \
+        "such that the rate of reinfection for these persons is the same as the rate of infection " \
+        "for fully susceptible persons. " \
+        "As for the first infection process, " \
+        "all reinfection processes transition people to the model's latent compartment. "
 
 
 def add_incidence_output(
-    model,
-    infection_processes,
-    add_documentation: bool=False
-):
+    model: CompartmentalModel,
+    infection_processes: list,
+) -> str:
     output = "incidence"
     for process in infection_processes:
         model.request_output_for_flow(f"{process}_onset", process, save_results=False)
-    model.request_function_output(
-        output,
-        func=sum([DerivedOutput(f"{process}_onset") for process in infection_processes])
-    )
-
-    if add_documentation:
-        description = f"Modelled {output} is calculated as " \
-            f"the absolute rate of {infection_processes[0]} or {infection_processes[1]} " \
-            "in the community. "
-        # add_element_to_doc("Outputs", TextElement(description))
+    total_infection_processes = sum([DerivedOutput(f"{process}_onset") for process in infection_processes])
+    model.request_function_output(output, func=total_infection_processes)
+    return f"Modelled {output} is calculated as " \
+        f"the absolute rate of {infection_processes[0]} or {infection_processes[1]} " \
+        "in the community. "
 
 
 def add_notifications_output(
-    model,
-    add_documentation: bool=False
-):
+    model: CompartmentalModel,
+) -> str:
     output = "notifications"
     output_to_convolve = "incidence"
     delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), model.times)
     notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter("cdr")
     model.request_function_output(name=output, func=notif_dist_rel_inc)
-
-    if add_documentation:
-        description = f"Modelled {output} is calculated as " \
-            f"the {output_to_convolve} rate convolved with a gamma-distributed onset to notification delay, " \
-            f"multiplied by the case detection rate. "
-        # add_element_to_doc("Outputs", TextElement(description))
+    return f"Modelled {output} is calculated as " \
+        f"the {output_to_convolve} rate convolved with a gamma-distributed onset to notification delay, " \
+        f"multiplied by the case detection rate. "
 
 
 def track_age_specific_incidence(
-    model,
-    infection_processes,
+    model: CompartmentalModel,
+    infection_processes: list,
 ):
     for age in model.stratifications["agegroup"].strata:
         for process in infection_processes:
@@ -494,9 +477,8 @@ def track_age_specific_incidence(
 
 
 def add_death_output(
-    model,
-    add_documentation: bool=False
-):
+    model: CompartmentalModel,
+) -> str:
     agegroups = model.stratifications["agegroup"].strata
     for age in agegroups:
         age_output = f"deathsXagegroup_{age}"
@@ -509,10 +491,7 @@ def add_death_output(
         output,
         func=sum([DerivedOutput(f"deathsXagegroup_{age}") for age in agegroups]),
     )
-
-    if add_documentation:
-        description = f"Modelled {output} is calculated from " \
-            f"the age-specific incidence rate convolved with a gamma-distributed onset to death delay, " \
-            f"multiplied by an age-specific infection fatality rate for each age bracket. " \
-            f"The time series of deaths for each age gorup is then summed to obtain total modelled {output}. "
-        # add_element_to_doc("Outputs", TextElement(description))
+    return f"Modelled {output} is calculated from " \
+        f"the age-specific incidence rate convolved with a gamma-distributed onset to death delay, " \
+        f"multiplied by an age-specific infection fatality rate for each age bracket. " \
+        f"The time series of deaths for each age gorup is then summed to obtain total modelled {output}. "
