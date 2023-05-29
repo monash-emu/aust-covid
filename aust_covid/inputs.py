@@ -57,7 +57,10 @@ def load_param_info(
         param_names: The parameters provided
 
     Returns:
-        Dataframe with the parameter information content
+        The parameters info DataFrame contains the following fields:
+            descriptions: A brief reader-digestible name/description for the parameter
+            units: The unit of measurement for the quantity (empty string if dimensionless)
+            evidence: TeX-formatted full description of the evidence underpinning the choice of value
     """
     data_cols = ["descriptions", "units", "evidence"]
     param_keys = param_names.keys()
