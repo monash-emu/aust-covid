@@ -135,7 +135,10 @@ class TableElement(DocElement):
         self.col_widths = col_widths
         self.table = input_table
 
-    def emit_latex(self, doc):
+    def emit_latex(
+            self, 
+            doc: pl.document.Document,
+        ):
         with doc.create(pl.Tabular(self.col_widths)) as output_table:
             headers = [""] + list(self.table.columns)
             output_table.add_row(headers)
