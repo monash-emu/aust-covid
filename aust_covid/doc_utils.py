@@ -5,6 +5,7 @@ from pylatex.section import Section
 from pylatex.utils import NoEscape
 import matplotlib.figure as mpl
 import plotly.graph_objects as go
+import pandas as pd
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
@@ -29,16 +30,28 @@ class DocElement:
     """
     Abstract class for creating a model with accompanying TeX documentation.
     """
-    def __init__():
+    def __init__(self):
         pass
 
-    def emit_latex():
+    def emit_latex(
+            self, 
+            doc: pl.document.Document,
+        ):
+        """
+        Output contents of documentation object to working document.
+
+        Args:
+            doc: Working TeX document
+        """
         pass
 
 
 class TextElement(DocElement):
     """
-    Write text input to TeX document using PyLaTeX commands.
+    Paragraph text documentation object with method for TeX output.
+
+    Args:
+        DocElement: Any documentation object    
     """
     def __init__(
             self, 
@@ -67,7 +80,10 @@ class TextElement(DocElement):
 
 class FigElement(DocElement):
     """
-    Add a figure to a TeX document using PyLaTeX commands.
+    Figure documentation object with method for TeX output.
+
+    Args:
+        DocElement: Any documentation object    
     """
     def __init__(
             self, 
@@ -79,7 +95,7 @@ class FigElement(DocElement):
         Set up object with figure input and other requests.
 
         Args:
-            fig_name: The name of the figure to write
+            fig_name: The label of the figure to write
             caption: Figure caption
             resolution: Resolution to write to
         """
@@ -91,20 +107,31 @@ class FigElement(DocElement):
             self, 
             doc: pl.document.Document,
         ):
-        """
-        Write the figure to the document.
-
-        Args:
-            doc: The PyLaTeX object to add to
-        """
         with doc.create(pl.Figure()) as plot:
             plot.add_image(self.fig_name, width=self.resolution)
             plot.add_caption(self.caption)
 
 
 class TableElement(DocElement):
+    """
+    Table documentation object with method for TeX output.
+
+    Args:
+        DocElement: Any documentation object
+    """
     
-    def __init__(self, col_widths, input_table):
+    def __init__(
+        self, 
+        col_widths: str, 
+        input_table: pd.DataFrame,
+    ):
+        """
+        Set up object with figure input and other requests.
+
+        Args:
+            col_widths: Widths of the table columns within the document
+            input_table: 
+        """
         self.col_widths = col_widths
         self.table = input_table
 
