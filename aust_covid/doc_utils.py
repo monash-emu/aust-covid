@@ -122,8 +122,9 @@ class TableElement(DocElement):
     
     def __init__(
         self, 
-        col_widths: str, 
+        col_requests: str, 
         input_table: pd.DataFrame,
+        table_width: float=10.0,
     ):
         """
         Set up object with figure input and other requests.
@@ -132,7 +133,8 @@ class TableElement(DocElement):
             col_widths: Widths of the table columns within the document
             input_table: 
         """
-        self.col_widths = col_widths
+        width_req_strs = [str(round(col_w * table_width, 1)) for col_w in col_requests]
+        self.col_widths = "p{" + "cm} p{".join(width_req_strs) + "cm}"
         self.table = input_table
 
     def emit_latex(
