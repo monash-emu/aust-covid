@@ -122,18 +122,23 @@ class TableElement(DocElement):
     
     def __init__(
         self, 
-        col_requests: str, 
         input_table: pd.DataFrame,
         table_width: float=10.0,
+        col_requests: list=[], 
     ):
         """
         Set up object with figure input and other requests.
 
         Args:
-            col_widths: Widths of the table columns within the document
-            input_table: 
+            input_table: Table that needs to go into document
+            table_width: Total width of the table on the page
+            col_widths: Requested proportional widths of the columns within the table
         """
-        width_req_strs = [str(round(col_w * table_width, 1)) for col_w in col_requests]
+        if col_requests:
+            width_req_strs = [str(round(col_w * table_width, 1)) for col_w in col_requests]
+        else:
+            n_cols = input_table.shape[1] + 1
+            width_req_strs = [str(round(table_width / n_cols))] * n_cols
         self.col_widths = "p{" + "cm} p{".join(width_req_strs) + "cm}"
         self.table = input_table
 
