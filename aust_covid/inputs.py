@@ -44,11 +44,32 @@ def load_uk_pop_data() -> pd.Series:
     return data["uk_pops"]
 
 
-class ParametersInfo:
-    def __init__(self, names, data_path, data_type):
-        self.names = names
-        with open(data_path, "r") as param_file:
-            self.info = yaml.safe_load(param_file)[data_type]
-        if self.names != self.info.keys():
-            raise ValueError("Incorrect keys for data")
-        
+def load_param_info(
+    data_path: Path, 
+    param_names: dict,
+) -> pd.DataFrame:
+    """
+    Load specific parameter information from 
+    a ridigly formatted yaml file or crash otherwise.
+
+    Args:
+        data_path: Location of the source file
+        param_names: The parameters provided
+
+    Returns:
+        The parameters info DataFrame contains the following fields:
+            descriptions: A brief reader-digestible name/description for the parameter
+            units: The unit of measurement for the quantity (empty string if dimensionless)
+            evidence: TeX-formatted full description of the evidence underpinning the choice of value
+    """
+    data_cols = ["descriptions", "units", "evidence"]
+    param_keys = param_names.keys()
+    out_df = pd.DataFrame(index=param_keys, columns=data_cols)
+    with open(data_path, "r") as param_file:
+        all_data = yaml.safe_load(param_file)
+        for col in data_cols:
+            working_data = all_data[col]
+            if param_keys != working_data.keys():
+                raise ValueError("Incorrect keys for data")
+            out_df[col] = working_data.values()
+    return out_df

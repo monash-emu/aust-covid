@@ -145,7 +145,7 @@ def run_samples_through_model(
 
 def plot_param_progression(
     idata: az.data.inference_data.InferenceData, 
-    descriptions: dict, 
+    param_info: pd.DataFrame, 
 ) -> mpl.figure.Figure:
     """
     Plot progression of parameters over model iterations with posterior density plots.
@@ -163,7 +163,7 @@ def plot_param_progression(
         figsize=(16, 3 * len(idata.posterior)), 
         compact=False, 
         legend=True,
-        labeller=MapLabeller(var_name_map=descriptions),
+        labeller=MapLabeller(var_name_map=param_info["descriptions"]),
     )
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
@@ -172,7 +172,7 @@ def plot_param_progression(
 
 def plot_param_posterior(
     idata: az.data.inference_data.InferenceData, 
-    descriptions: dict, 
+    param_info: pd.DataFrame, 
     grid_request: tuple=None,
 ) -> mpl.figure.Figure:
     """
@@ -188,7 +188,7 @@ def plot_param_posterior(
     """
     posterior_plot = az.plot_posterior(
         idata,
-        labeller=MapLabeller(var_name_map=descriptions),
+        labeller=MapLabeller(var_name_map=param_info["descriptions"]),
         grid=grid_request,
     )
     posterior_plot = posterior_plot[0, 0].figure
@@ -266,10 +266,8 @@ def plot_sampled_outputs(
 
 def tabulate_parameters(
     parameters: dict, 
-    param_units: dict, 
     priors: list, 
-    descriptions: dict, 
-    param_evidence: dict,
+    param_info: pd.DataFrame, 
 ) -> pd.DataFrame:
     """
     Create table of all parameters being consumed by model,
@@ -279,21 +277,20 @@ def tabulate_parameters(
         parameters: All parameter values, even if calibrated
         param_units: Parameter units
         priors: Priors for use in calibration algorithm
-        param_descriptions: Reader-digestible parameter names
-        param_evidence: Description of evidence used to justify choice
+        param_info: 
 
     Returns:
         Formatted table combining the information listed above
     """
-    values_column = [get_fixed_param_value_text(i, parameters, param_units, priors) for i in parameters]
-    evidence_column = [NoEscape(param_evidence[i]) for i in parameters]
-    names_column = [descriptions[i] for i in parameters]
+    values_column = [get_fixed_param_value_text(i, parameters, param_info["units"], priors) for i in parameters]
+    evidence_column = [NoEscape(param_info["evidence"][i]) for i in parameters]
+    names_column = [param_info["descriptions"][i] for i in parameters]
     return pd.DataFrame({"Value": values_column, "Evidence": evidence_column}, index=names_column)
 
 
 def tabulate_priors(
     priors: list, 
-    descriptions: dict, 
+    param_info: pd.DataFrame, 
 ) -> pd.DataFrame:
     """
     Create table of all priors used in calibration algorithm,
@@ -301,12 +298,12 @@ def tabulate_priors(
 
     Args:
         priors: Priors for use in calibration algorithm
-        param_descriptions: Reader-digestible parameter names
+        param_info: 
 
     Returns:
         Formatted table combining the information listed above
     """
-    names = [descriptions[i.name] for i in priors]
+    names = [param_info["descriptions"][i.name] for i in priors]
     distributions = [get_prior_dist_type(i) for i in priors]
     parameters = [get_prior_dist_param_str(i) for i in priors]
     support = [get_prior_dist_support(i) for i in priors]
@@ -316,7 +313,7 @@ def tabulate_priors(
 def tabulate_param_results(
     idata: az.data.inference_data.InferenceData, 
     priors: list, 
-    descriptions: dict,
+    param_info: pd.DataFrame, 
 ) -> pd.DataFrame:
     """
     Get tabular outputs from calibration inference object and standardise formatting.
@@ -330,7 +327,7 @@ def tabulate_param_results(
         Calibration results table in standard format
     """
     results_table = az.summary(idata)
-    results_table.index = [descriptions[p.name] for p in priors]
+    results_table.index = [param_info["descriptions"][p.name] for p in priors]
     for col_to_round in ["mean", "hdi_3%", "hdi_97%"]:
         results_table[col_to_round] = results_table.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
     results_table["hdi"] = results_table.apply(lambda x: f"{x['hdi_3%']} to {x['hdi_97%']}", axis=1)    
