@@ -7,7 +7,7 @@ from pathlib import Path
 from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
-from aust_covid.model_utils import triangle_wave_func, convolve_probability, gamma_cdf, build_gamma_dens_interval_func
+from aust_covid.model_utils import triangle_wave_func, convolve_probability, build_gamma_dens_interval_func
 from aust_covid.inputs import load_pop_data, load_uk_pop_data
 
 
