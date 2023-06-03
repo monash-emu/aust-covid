@@ -384,7 +384,7 @@ def add_incidence_output(
     total_infection_processes = sum([DerivedOutput(f"{process}_onset") for process in infection_processes])
     model.request_function_output(output, func=total_infection_processes)
     return f"Modelled {output} is calculated as " \
-        f"the absolute rate of {infection_processes[0]} or {infection_processes[1]} " \
+        f"the absolute rate of {infection_processes[0].replace('_', '')} or {infection_processes[1].replace('_', '')} " \
         "in the community. "
 
 
