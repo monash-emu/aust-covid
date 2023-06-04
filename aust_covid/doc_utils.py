@@ -135,10 +135,10 @@ class TableElement(DocElement):
             col_widths: Requested proportional widths of the columns within the table
         """
         if col_requests:
-            width_req_strs = [str(round(col_w * table_width, 1)) for col_w in col_requests]
+            width_req_strs = [str(round(col_w * table_width, 2)) for col_w in col_requests]
         else:
             n_cols = input_table.shape[1] + 1
-            width_req_strs = [str(round(table_width / n_cols, 1))] * n_cols
+            width_req_strs = [str(round(table_width / n_cols, 2))] * n_cols
         self.col_widths = "p{" + "cm} p{".join(width_req_strs) + "cm}"
         self.table = input_table
 
