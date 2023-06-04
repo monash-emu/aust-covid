@@ -154,7 +154,7 @@ class TableElement(DocElement):
                 content = [index] + [escape_refs(str(element)) for element in self.table.loc[index]]
                 output_table.add_row(content)
                 output_table.add_hline()
-        doc.append(LineBreak())
+            doc.append(pl.NewPage())
 
 
 def add_element_to_document(
@@ -259,7 +259,7 @@ def compile_doc(
         with doc.create(Section(section)):
             for element in doc_sections[section]:
                 element.emit_latex(doc)
-    doc.append(pl.NewPage())
+            doc.append(pl.NewPage())
     doc.append(pl.Command("printbibliography"))
     doc.generate_tex(str())
     doc.generate_tex(str(SUPPLEMENT_PATH / "supplement"))
