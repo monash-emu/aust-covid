@@ -1,7 +1,8 @@
 from jax import numpy as jnp
 from jax import scipy as jsp
+import numpy as np
 
-from summer2.parameters import Function, Data
+from summer2.parameters import Function, Data, DerivedOutput
 
 
 def triangle_wave_func(
@@ -28,7 +29,21 @@ def triangle_wave_func(
     return jnp.where(time_from_peak < duration * 0.5, peak - time_from_peak * gradient, 0.0)
 
 
-def convolve_probability(source_output, density_kernel):
+def convolve_probability(
+    source_output: DerivedOutput, 
+    density_kernel: Function,
+):
+    """
+    Create function to convolve two processes,
+    currently always a modelled derived output and some empirically based distribution.
+
+    Args:
+        source_output: Model output over time
+        density_kernel: Distribution of delays to the outcome
+
+    Returns:
+        Jaxified function to convolve the two processes
+    """
     return jnp.convolve(source_output, density_kernel)[:len(source_output)]
 
 
@@ -39,7 +54,7 @@ def gamma_cdf(
 ) -> jnp.array:
     """
     The regularised gamma function is the CDF of the gamma distribution
-    (which is referred to by scipy as "gammainc")
+    (which is referred to by scipy as "gammainc").
 
     Args:
         shape: Shape parameter to the desired gamma distribution
@@ -52,7 +67,22 @@ def gamma_cdf(
     return jsp.special.gammainc(shape, x * shape / mean)
 
 
-def build_gamma_dens_interval_func(shape, mean, model_times):
+def build_gamma_dens_interval_func(
+    shape: float, 
+    mean: float, 
+    model_times: np.ndarray,
+) -> Function:
+    """
+    Create a function to return the density of the gamma distribution.
+
+    Args:
+        shape: Shape parameter to gamma distribution
+        mean: Mean of gamma distribution
+        model_times: The evaluation times for the model
+
+    Returns:
+        Jaxified summer2 function of the distribution
+    """
     lags = Data(model_times - model_times[0])
     cdf_values = Function(gamma_cdf, [shape, mean, lags])
     return Function(jnp.gradient, [cdf_values])

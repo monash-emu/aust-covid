@@ -154,7 +154,7 @@ class TableElement(DocElement):
                 content = [index] + [escape_refs(str(element)) for element in self.table.loc[index]]
                 output_table.add_row(content)
                 output_table.add_hline()
-        doc.append(LineBreak())
+            doc.append(pl.NewPage())
 
 
 def add_element_to_document(
@@ -221,6 +221,28 @@ def save_plotly_add_to_doc(
     add_element_to_document(section_name, FigElement(plot_name, caption=caption), working_doc)
 
 
+def generate_doc(
+    title: str, 
+    bib_filename: str,
+) -> pl.document.Document:
+    """
+    Use PyLaTeX to prepare a TeX file representing a document for filling with content later.
+
+    Args:
+        title: The title to go into the document
+        bib_filename: The filename for the .bib BibTeX file to get the references from
+
+    Returns:
+        The document object
+    """
+    doc = pl.Document()
+    doc.preamble.append(pl.Package("biblatex", options=["sorting=none"]))
+    doc.preamble.append(pl.Command("addbibresource", arguments=[f"{bib_filename}.bib"]))
+    doc.preamble.append(pl.Command("title", title))
+    doc.append(NoEscape(r"\maketitle"))
+    return doc
+
+
 def compile_doc(
     doc_sections: dict, 
     doc: pl.document.Document,
@@ -237,3 +259,7 @@ def compile_doc(
         with doc.create(Section(section)):
             for element in doc_sections[section]:
                 element.emit_latex(doc)
+            doc.append(pl.NewPage())
+    doc.append(pl.Command("printbibliography"))
+    doc.generate_tex(str())
+    doc.generate_tex(str(SUPPLEMENT_PATH / "supplement"))
