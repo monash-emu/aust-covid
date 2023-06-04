@@ -146,7 +146,7 @@ class TableElement(DocElement):
             self, 
             doc: pl.document.Document,
         ):
-        with doc.create(pl.Tabular(self.col_widths)) as output_table:
+        with doc.create(pl.LongTable(self.col_widths)) as output_table:
             headers = [""] + list(self.table.columns)
             output_table.add_row(headers)
             output_table.add_hline()
@@ -237,6 +237,7 @@ def generate_doc(
     """
     doc = pl.Document()
     doc.preamble.append(pl.Package("biblatex", options=["sorting=none"]))
+    doc.preamble.append(pl.Package("booktabs"))
     doc.preamble.append(pl.Command("addbibresource", arguments=[f"{bib_filename}.bib"]))
     doc.preamble.append(pl.Command("title", title))
     doc.append(NoEscape(r"\maketitle"))
