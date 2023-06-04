@@ -123,7 +123,7 @@ class TableElement(DocElement):
     def __init__(
         self, 
         input_table: pd.DataFrame,
-        table_width: float=10.0,
+        table_width: float=12.0,
         col_requests: list=[], 
     ):
         """
@@ -135,10 +135,10 @@ class TableElement(DocElement):
             col_widths: Requested proportional widths of the columns within the table
         """
         if col_requests:
-            width_req_strs = [str(round(col_w * table_width, 1)) for col_w in col_requests]
+            width_req_strs = [str(round(col_w * table_width, 2)) for col_w in col_requests]
         else:
             n_cols = input_table.shape[1] + 1
-            width_req_strs = [str(round(table_width / n_cols))] * n_cols
+            width_req_strs = [str(round(table_width / n_cols, 2))] * n_cols
         self.col_widths = "p{" + "cm} p{".join(width_req_strs) + "cm}"
         self.table = input_table
 
@@ -262,5 +262,4 @@ def compile_doc(
                 element.emit_latex(doc)
             doc.append(pl.NewPage())
     doc.append(pl.Command("printbibliography"))
-    doc.generate_tex(str())
     doc.generate_tex(str(SUPPLEMENT_PATH / "supplement"))
