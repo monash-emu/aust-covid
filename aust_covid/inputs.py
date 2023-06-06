@@ -53,9 +53,9 @@ def load_household_impacts_data():
     )
     data.columns = [col.replace(" (%)", "") for col in data.columns]
     index_map = {
-        "A household member has symptoms of cold, flu or COVID-19 (a)": "sympts",
-        "A household member has had a COVID-19 test (b)": "test",
-        "A household member who tested for COVID-19 was positive (c)(d)": "covid",
+        "A household member has symptoms of cold, flu or COVID-19 (a)": "sympt_prop",
+        "A household member has had a COVID-19 test (b)": "test_prop",
+        "A household member who tested for COVID-19 was positive (c)(d)": "covid_prop",
     }
     data = data.rename(index=index_map)
     data = data.transpose()
