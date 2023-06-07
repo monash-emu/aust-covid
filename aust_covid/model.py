@@ -23,6 +23,23 @@ in the documentation is best description of the code's function.
 """
 
 
+def get_param_to_exp_plateau(
+    input_request: float, 
+    output_request: float,
+) -> float:
+    """
+    Get the parameter needed to ensure the function:
+    output = 1 - exp(-param * input)
+    passes through the requested input and output.
+    
+    Args:
+        input_request: Independent variable at known point
+        output_request: Dependent variable at known point
+    """
+    return -np.log(1.0 - output_request) / input_request
+
+
+
 def build_base_model(
     ref_date: datetime,
     compartments: list,
