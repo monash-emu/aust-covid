@@ -44,6 +44,25 @@ def load_uk_pop_data() -> pd.Series:
     return data["uk_pops"]
 
 
+def load_household_impacts_data():
+    "https://www.abs.gov.au/statistics/people/people-and-communities/household-impacts-covid-19-survey/latest-release"
+    data = pd.read_csv(
+        DATA_PATH / "Australian Households, cold-flu-COVID-19 symptoms, tests, and positive cases in the past four weeks, by time of reporting .csv",
+        skiprows=[0] + list(range(5, 12)),
+        index_col=0,
+    )
+    data.columns = [col.replace(" (%)", "") for col in data.columns]
+    index_map = {
+        "A household member has symptoms of cold, flu or COVID-19 (a)": "sympt_prop",
+        "A household member has had a COVID-19 test (b)": "test_prop",
+        "A household member who tested for COVID-19 was positive (c)(d)": "covid_prop",
+    }
+    data = data.rename(index=index_map)
+    data = data.transpose()
+    data.index = pd.to_datetime(data.index, format="%b-%y")
+    return data
+
+
 def load_param_info(
     data_path: Path, 
     param_names: dict,
