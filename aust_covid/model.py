@@ -466,23 +466,3 @@ def track_age_specific_incidence(
             save_results=False,
         )
 
-
-def add_death_output(
-    model: CompartmentalModel,
-) -> str:
-    agegroups = model.stratifications["agegroup"].strata
-    for age in agegroups:
-        age_output = f"deathsXagegroup_{age}"
-        output_to_convolve = f"incidenceXagegroup_{age}"
-        delay = build_gamma_dens_interval_func(Parameter("deaths_shape"), Parameter("deaths_mean"), model.times)
-        death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter(f"ifr_{age}")
-        model.request_function_output(name=age_output, func=death_dist_rel_inc, save_results=False)
-    output = "deaths"
-    model.request_function_output(
-        output,
-        func=sum([DerivedOutput(f"deathsXagegroup_{age}") for age in agegroups]),
-    )
-    return f"Modelled {output} is calculated from " \
-        f"the age-specific incidence rate convolved with a gamma-distributed onset to death delay, " \
-        f"multiplied by an age-specific infection fatality rate for each age bracket. " \
-        f"The time series of deaths for each age gorup is then summed to obtain total modelled {output}. "
