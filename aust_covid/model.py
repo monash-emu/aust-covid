@@ -405,17 +405,47 @@ def add_incidence_output(
         "in the community. "
 
 
+from aust_covid.inputs import load_household_impacts_data
+from summer2.functions.time import get_linear_interpolation_function
+
+
 def add_notifications_output(
     model: CompartmentalModel,
 ) -> str:
-    output = "notifications"
-    output_to_convolve = "incidence"
+    
+    # Get data, using test to symptomatic ratio
+    hh_impact = load_household_impacts_data()
+    hh_test_ratio = hh_impact["test_prop"] / hh_impact["sympt_prop"]
+
+    # Calculate parameter governing relationship between CDR and testing ratio
+    exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter("cdr"))
+
+    # Calculate the CDR values
+    cdr_values = 1.0 - np.exp(0.0 - exp_param * hh_test_ratio.to_numpy())
+
+    # Track case detection rate as an interpolated function of time
+    aust_epoch = model.get_epoch()
+    ratio_interp = get_linear_interpolation_function(
+        jnp.array(aust_epoch.datetime_to_number(hh_test_ratio.index)), 
+        cdr_values,
+    )
+    tracked_ratio_interp = model.request_track_modelled_value("ratio_interp", ratio_interp)
+    
+    # Delay from incidence to notification
     delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), model.times)
-    notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter("cdr")
-    model.request_function_output(name=output, func=notif_dist_rel_inc)
-    return f"Modelled {output} is calculated as " \
-        f"the {output_to_convolve} rate convolved with a gamma-distributed onset to notification delay, " \
-        f"multiplied by the case detection rate. "
+
+    # Final notification output
+    notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput("incidence"), delay]) * tracked_ratio_interp
+    model.request_function_output(name="notifications", func=notif_dist_rel_inc)
+
+    # output = "notifications"
+    # output_to_convolve = "incidence"
+    # delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), model.times)
+    # notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter("cdr")
+    # model.request_function_output(name=output, func=notif_dist_rel_inc)
+    # return f"Modelled {output} is calculated as " \
+    #     f"the {output_to_convolve} rate convolved with a gamma-distributed onset to notification delay, " \
+    #     f"multiplied by the case detection rate. "
 
 
 def track_age_specific_incidence(
