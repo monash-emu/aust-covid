@@ -1,4 +1,5 @@
 from datetime import datetime
+from jax import numpy as jnp
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -36,8 +37,7 @@ def get_param_to_exp_plateau(
         input_request: Independent variable at known point
         output_request: Dependent variable at known point
     """
-    return -np.log(1.0 - output_request) / input_request
-
+    return 0.0 - np.log(1.0 - output_request) / input_request
 
 
 def build_base_model(
