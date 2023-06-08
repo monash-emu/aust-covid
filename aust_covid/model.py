@@ -418,7 +418,7 @@ def add_notifications_output(
     hh_test_ratio = hh_impact["test_prop"] / hh_impact["sympt_prop"]
 
     # Calculate parameter governing relationship between CDR and testing ratio
-    exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter("cdr"))
+    exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter("start_cdr"))
 
     # Calculate the CDR values
     cdr_values = 1.0 - np.exp(0.0 - exp_param * hh_test_ratio.to_numpy())
