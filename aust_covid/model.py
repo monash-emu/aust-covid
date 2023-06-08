@@ -5,12 +5,12 @@ import pandas as pd
 import plotly.express as px
 from pathlib import Path
 
+from summer2.functions.time import get_linear_interpolation_function
 from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
 from aust_covid.model_utils import triangle_wave_func, convolve_probability, build_gamma_dens_interval_func
-from aust_covid.inputs import load_pop_data, load_uk_pop_data
-
+from aust_covid.inputs import load_pop_data, load_uk_pop_data, load_household_impacts_data
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
@@ -403,10 +403,6 @@ def add_incidence_output(
     return f"Modelled {output} is calculated as " \
         f"the absolute rate of {infection_processes[0].replace('_', '')} or {infection_processes[1].replace('_', '')} " \
         "in the community. "
-
-
-from aust_covid.inputs import load_household_impacts_data
-from summer2.functions.time import get_linear_interpolation_function
 
 
 def add_notifications_output(
