@@ -405,6 +405,13 @@ def add_incidence_output(
         "in the community. "
 
 
+def get_cdr_values(
+    param: float, 
+    test_ratios: np.array,
+) -> pd.Series:
+    return 1.0 - np.exp(0.0 - param * test_ratios)
+
+
 def add_notifications_output(
     model: CompartmentalModel,
 ) -> str:
@@ -413,11 +420,9 @@ def add_notifications_output(
     hh_impact = load_household_impacts_data()
     hh_test_ratio = hh_impact["Proportion testing"] / hh_impact["Proportion symptomatic"]
 
-    # Calculate parameter governing relationship between CDR and testing ratio
+    # Do the necessary calculations
     exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter("start_cdr"))
-
-    # Calculate the CDR values
-    cdr_values = 1.0 - np.exp(0.0 - exp_param * hh_test_ratio.to_numpy())
+    cdr_values = get_cdr_values(exp_param, hh_test_ratio.to_numpy())
 
     # Track case detection rate as an interpolated function of time
     aust_epoch = model.get_epoch()
@@ -441,15 +446,6 @@ def add_notifications_output(
     ratio_fig.write_image(SUPPLEMENT_PATH / "ratio.jpg")
 
     return hh_test_ratio
-
-    # output = "notifications"
-    # output_to_convolve = "incidence"
-    # delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), model.times)
-    # notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter("cdr")
-    # model.request_function_output(name=output, func=notif_dist_rel_inc)
-    # return f"Modelled {output} is calculated as " \
-    #     f"the {output_to_convolve} rate convolved with a gamma-distributed onset to notification delay, " \
-    #     f"multiplied by the case detection rate. "
 
 
 def track_age_specific_incidence(
