@@ -466,3 +466,11 @@ def track_age_specific_incidence(
             save_results=False,
         )
 
+
+def show_cdr_profiles(start_cdr_samples, hh_test_ratio):
+    cdr_values = pd.DataFrame()
+    for start_cdr in start_cdr_samples:
+        exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
+        cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
+    modelled_cdr_fig = cdr_values.plot(markers=True, labels={"value": "case detection ratio", "index": ""})
+    modelled_cdr_fig.write_image(SUPPLEMENT_PATH / "modelled_cdr.jpg")
