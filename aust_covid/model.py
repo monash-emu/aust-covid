@@ -434,6 +434,12 @@ def add_notifications_output(
     notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput("incidence"), delay]) * tracked_ratio_interp
     model.request_function_output(name="notifications", func=notif_dist_rel_inc)
 
+
+    ratio_fig = hh_test_ratio.plot(labels={"value": "ratio", "index": ""}, title="Test to symptomatic ratio over time", markers=True)
+    ratio_fig.write_image(SUPPLEMENT_PATH / "ratio.jpg")
+
+    return hh_test_ratio
+
     # output = "notifications"
     # output_to_convolve = "incidence"
     # delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), model.times)
