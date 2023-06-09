@@ -411,7 +411,7 @@ def add_notifications_output(
     
     # Get data, using test to symptomatic ratio
     hh_impact = load_household_impacts_data()
-    hh_test_ratio = hh_impact["test_prop"] / hh_impact["sympt_prop"]
+    hh_test_ratio = hh_impact["Proportion testing"] / hh_impact["Proportion symptomatic"]
 
     # Calculate parameter governing relationship between CDR and testing ratio
     exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter("start_cdr"))
@@ -434,8 +434,10 @@ def add_notifications_output(
     notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput("incidence"), delay]) * tracked_ratio_interp
     model.request_function_output(name="notifications", func=notif_dist_rel_inc)
 
+    survey_fig = hh_impact.plot(labels={"value": "percentage", "index": ""}, markers=True)
+    survey_fig.write_image(SUPPLEMENT_PATH / "survey.jpg")
 
-    ratio_fig = hh_test_ratio.plot(labels={"value": "ratio", "index": ""}, title="Test to symptomatic ratio over time", markers=True)
+    ratio_fig = hh_test_ratio.plot(labels={"value": "ratio", "index": ""}, markers=True)
     ratio_fig.write_image(SUPPLEMENT_PATH / "ratio.jpg")
 
     return hh_test_ratio
