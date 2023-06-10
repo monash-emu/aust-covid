@@ -467,7 +467,17 @@ def track_age_specific_incidence(
         )
 
 
-def show_cdr_profiles(start_cdr_samples, hh_test_ratio):
+def show_cdr_profiles(
+    start_cdr_samples: pd.Series, 
+    hh_test_ratio: pd.Series,
+):
+    """
+    Create figure to visualise CDR values from sampled parameter values.
+
+    Args:
+        start_cdr_samples: The CDR parameter values to feed through the algorithm
+        hh_test_ratio: The ratio values over time that are fed into the algorithm
+    """
     cdr_values = pd.DataFrame()
     for start_cdr in start_cdr_samples:
         exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
