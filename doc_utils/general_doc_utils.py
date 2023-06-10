@@ -1,7 +1,6 @@
 from pathlib import Path
 import pylatex as pl
-from pylatex import LineBreak
-from pylatex.section import Section
+from pylatex.section import Section, Subsection
 from pylatex.utils import NoEscape
 import matplotlib.figure as mpl
 import plotly.graph_objects as go
