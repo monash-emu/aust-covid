@@ -10,11 +10,11 @@ BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
 
 
-def escape_refs(
+def escape_special_text(
     text: str,
 ) -> str:
     """
-    Don't escape characters if they are needed for citations.
+    Don't escape characters if they are needed for citations or underscores.
 
     Args:
         text: Text for document
@@ -22,7 +22,7 @@ def escape_refs(
     Returns:
         Revised text string
     """
-    return NoEscape(text) if "\cite{" in text else text
+    return NoEscape(text) if "\cite{" in text or "extunderscore" in text else text
 
 
 class DocElement:
@@ -62,7 +62,7 @@ class TextElement(DocElement):
         Args:
             text: The text to write
         """
-        self.text = escape_refs(text)
+        self.text = escape_special_text(text)
 
     def emit_latex(
             self, 
@@ -150,7 +150,7 @@ class TableElement(DocElement):
             output_table.add_row(headers)
             output_table.add_hline()
             for index in self.table.index:
-                content = [index] + [escape_refs(str(element)) for element in self.table.loc[index]]
+                content = [index] + [escape_special_text(str(element)) for element in self.table.loc[index]]
                 output_table.add_row(content)
                 output_table.add_hline()
             doc.append(pl.NewPage())

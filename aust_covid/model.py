@@ -81,9 +81,10 @@ def get_pop_data() -> tuple:
         with description.
     """
     pop_data, sheet_name = load_pop_data()
+    sheet_name = sheet_name.replace("_", "\\textunderscore")
     description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded "
     description2 = "from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. "
-    return pop_data, description + description2
+    return pop_data, description, description2
 
 
 def set_starting_conditions(
