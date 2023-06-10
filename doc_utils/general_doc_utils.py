@@ -160,18 +160,22 @@ def add_element_to_document(
     section_name: str, 
     element: DocElement, 
     doc_sections: dict,
+    subsection_name: str="no_subsection",
 ):
     """
-    Add a document element to the working document compilation object.
+    Add a document element to the working document compilation structure.
 
     Args:
-        section_name: Name of the document section to add the element to
+        section_name: Title of the document section to add the element to
         element: The element to add
         doc_sections: The document to be added to
+        subsection_name: The title of the sub-section to add to the element to, if any
     """
     if section_name not in doc_sections:
-        doc_sections[section_name] = []
-    doc_sections[section_name].append(element)
+        doc_sections[section_name] = {}
+    if subsection_name not in doc_sections[section_name]:
+        doc_sections[section_name][subsection_name] = []
+    doc_sections[section_name][subsection_name].append(element)
 
 
 def save_pyplot_add_to_doc(
@@ -257,8 +261,14 @@ def compile_doc(
     """
     for section in doc_sections:
         with doc.create(Section(section)):
-            for element in doc_sections[section]:
-                element.emit_latex(doc)
+            for subsection in doc_sections[section]:
+                if subsection == "no_subsection":
+                    for element in doc_sections[section]["no_subsection"]:
+                        element.emit_latex(doc)
+                else:
+                    with doc.create(Subsection(subsection)):
+                        for element in doc_sections[section][subsection]:
+                            element.emit_latex(doc)
             doc.append(pl.NewPage())
     doc.append(pl.Command("printbibliography"))
     doc.generate_tex(str(SUPPLEMENT_PATH / "supplement"))
