@@ -257,31 +257,33 @@ def adapt_gb_matrix_to_aust(
         "we sourced the 2001 UK census population for those living in the UK at the time of the census " \
         "from the Eurostat database (https://ec.europa.eu/eurostat). "
 
-    filename = "input_population.jpg"
-    pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
-    pop_fig.update_layout(showlegend=False)
-    pop_fig.write_image(SUPPLEMENT_PATH / filename)
-    caption = "Population sizes by age group obtained from Australia Bureau of Statistics."
+    input_pop_filename = "input_population.jpg"
+    input_pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
+    input_pop_fig.update_layout(showlegend=False)
+    input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
+    input_pop_caption = "Australian population sizes by age group obtained from Australia Bureau of Statistics."
 
-    filename = "modelled_population.jpg"
+    modelled_pop_filename = "modelled_population.jpg"
     modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
     modelled_pop_fig.update_layout(showlegend=False)
-    modelled_pop_fig.write_image(SUPPLEMENT_PATH / filename)
-    caption = "Population sizes by age group included in the model."
+    modelled_pop_fig.write_image(SUPPLEMENT_PATH / modelled_pop_filename)
+    modelled_pop_caption = "Population sizes by age group implemented in the model."
 
-    filename = "matrix_ref_pop.jpg"
-    uk_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
-    uk_pop_fig.update_layout(showlegend=False)
-    uk_pop_fig.write_image(SUPPLEMENT_PATH / filename)
-    caption = "United Kingdom population sizes."
+    matrix_ref_pop_filename = "matrix_ref_pop.jpg"
+    matrix_ref_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
+    matrix_ref_pop_fig.update_layout(showlegend=False)
+    matrix_ref_pop_fig.write_image(SUPPLEMENT_PATH / matrix_ref_pop_filename)
+    matrix_ref_pop_caption = "United Kingdom population sizes."
 
-    filename = "adjusted_matrix.jpg"
-    matrix_plotly_fig = px.imshow(unadjusted_matrix, x=age_strata, y=age_strata)
-    matrix_plotly_fig.write_image(SUPPLEMENT_PATH / filename)
-    caption = "Matrices adjusted to Australian population. Values are contacts per person per day. "
+    adjusted_matrix_filename = "adjusted_matrix.jpg"
+    adjusted_matrix_fig = px.imshow(unadjusted_matrix, x=age_strata, y=age_strata)
+    adjusted_matrix_fig.write_image(SUPPLEMENT_PATH / adjusted_matrix_filename)
+    adjusted_matrix_caption = "Matrices adjusted to Australian population. Values are contacts per person per day. "
 
     aust_age_props.index = aust_age_props.index.astype(str)
-    return adjusted_matrix, aust_age_props, description
+    return adjusted_matrix, aust_age_props, description, \
+        input_pop_filename, input_pop_caption, input_pop_fig, modelled_pop_filename, modelled_pop_caption, modelled_pop_fig, \
+        matrix_ref_pop_filename, matrix_ref_pop_caption, matrix_ref_pop_fig, adjusted_matrix_filename, adjusted_matrix_caption, adjusted_matrix_fig
 
 
 def add_age_stratification(
