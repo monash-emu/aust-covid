@@ -261,14 +261,13 @@ def compile_doc(
     """
     for section in doc_sections:
         with doc.create(Section(section)):
-            for subsection in doc_sections[section]:
-                if subsection == "no_subsection":
-                    for element in doc_sections[section]["no_subsection"]:
+            if "no_subsection" in doc_sections[section]:
+                for element in doc_sections[section]["no_subsection"]:
+                    element.emit_latex(doc)
+            for subsection in [sub for sub in doc_sections[section].keys() if sub != "no_subsection"]:
+                with doc.create(Subsection(subsection)):
+                    for element in doc_sections[section][subsection]:
                         element.emit_latex(doc)
-                else:
-                    with doc.create(Subsection(subsection)):
-                        for element in doc_sections[section][subsection]:
-                            element.emit_latex(doc)
             doc.append(pl.NewPage())
     doc.append(pl.Command("printbibliography"))
     doc.generate_tex(str(SUPPLEMENT_PATH / "supplement"))

@@ -307,7 +307,7 @@ def add_age_stratification(
         "into sequential age brackets in five year " \
         "bands from age 0 to 4 through to age 65 to 69 " \
         "with a final age band to represent those aged 70 and above. " \
-        "These age brackets were chosen to match those used by the POLYMOD survey. " \
+        "These age brackets were chosen to match those used by the POLYMOD survey and so fit with the mixing data available. " \
         "The population distribution by age group was informed by the data from the Australian " \
         "Bureau of Statistics introduced previously. "
     return age_strat, description
