@@ -257,6 +257,8 @@ def adapt_gb_matrix_to_aust(
         "we sourced the 2001 UK census population for those living in the UK at the time of the census " \
         "from the Eurostat database (https://ec.europa.eu/eurostat). "
 
+    age_group_names = [f"{age}-{age + 4}" for age in age_strata[:-1]] + ["70 and over"]
+
     input_pop_filename = "input_population.jpg"
     input_pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
     input_pop_fig.update_layout(showlegend=False)
@@ -265,13 +267,13 @@ def adapt_gb_matrix_to_aust(
 
     modelled_pop_filename = "modelled_population.jpg"
     modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
-    modelled_pop_fig.update_layout(showlegend=False)
+    modelled_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
     modelled_pop_fig.write_image(SUPPLEMENT_PATH / modelled_pop_filename)
     modelled_pop_caption = "Population sizes by age group implemented in the model."
 
     matrix_ref_pop_filename = "matrix_ref_pop.jpg"
     matrix_ref_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
-    matrix_ref_pop_fig.update_layout(showlegend=False)
+    matrix_ref_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
     matrix_ref_pop_fig.write_image(SUPPLEMENT_PATH / matrix_ref_pop_filename)
     matrix_ref_pop_caption = "United Kingdom population sizes."
 
@@ -283,7 +285,7 @@ def adapt_gb_matrix_to_aust(
     aust_age_props.index = aust_age_props.index.astype(str)
     return adjusted_matrix, aust_age_props, description, \
         input_pop_filename, input_pop_caption, input_pop_fig, modelled_pop_filename, modelled_pop_caption, modelled_pop_fig, \
-        matrix_ref_pop_filename, matrix_ref_pop_caption, matrix_ref_pop_fig, adjusted_matrix_filename, adjusted_matrix_caption, adjusted_matrix_fig
+        matrix_ref_pop_filename, matrix_ref_pop_caption, matrix_ref_pop_fig, adjusted_matrix_filename, adjusted_matrix_caption, adjusted_matrix_fig, modelled_pops
 
 
 def add_age_stratification(
