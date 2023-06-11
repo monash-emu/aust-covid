@@ -166,7 +166,7 @@ def add_waning(
 
 
 def build_polymod_britain_matrix(
-    age_strata,
+    age_strata: list,
 ) -> np.array:
     """
     Args:
@@ -200,16 +200,16 @@ def build_polymod_britain_matrix(
         "from the United Kingdom data provided by Mossong et al.'s POLYMOD study \cite{mossong2008}. " \
         "The data were obtained from https://doi.org/10.1371/journal.pmed.0050074.st005 " \
         "on 12th February 2023 (downloaded in their native docx format). " \
-        "The matrix is transposed because summer assumes that rows represent infectees " \
+        "The matrix was transposed because summer assumes that rows represent infectees " \
         "and columns represent infectors, whereas the POLYMOD data are labelled " \
-        "`age of contact' for the rows and `age group of participant' for the columns. "
-    
+        "`age of contact' for the rows and `age group of participant' for the columns, " \
+        "indicating the opposite orientation. "
+
     filename = "raw_matrix.jpg"
     matrix_fig = px.imshow(matrix, x=age_strata, y=age_strata)
     matrix_fig.write_image(SUPPLEMENT_PATH / filename)
     caption = "Raw matrices from Great Britain POLYMOD. Values are contacts per person per day. "
-
-    return matrix, description
+    return matrix, description, matrix_fig, filename, caption
 
 
 def adapt_gb_matrix_to_aust(
