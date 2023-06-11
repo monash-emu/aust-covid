@@ -101,7 +101,7 @@ def set_starting_conditions(
     """
     total_pop = pop_data["Australia"].sum()
     model.set_initial_population({"susceptible": total_pop})
-    return f"The simulation starts with {str(round(total_pop / 1e6, 3))} million susceptible persons only, " \
+    return f"The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, " \
         "with infectious persons introduced later through strain seeding as described below. "
 
 
@@ -130,10 +130,11 @@ def add_progression(
     process = "progression"
     origin = "latent"
     destination = "infectious"
-    model.add_transition_flow(process, 1.0 / Parameter("latent_period"), origin, destination)
+    parameter_name = "latent_period"
+    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
     return f"The {process} process moves " \
-        f"people directly from the {origin} state to the {destination} compartment, " \
-        "with the rate of transition calculated as the reciprocal of the latent period. "
+        f"people from the {origin} state to the {destination} compartment, " \
+        f"with the transition rate calculated as the reciprocal of the {parameter_name.replace('_', ' ')}. "
 
 
 def add_recovery(
@@ -142,10 +143,11 @@ def add_recovery(
     process = "recovery"
     origin = "infectious"
     destination = "recovered"
-    model.add_transition_flow(process, 1.0 / Parameter("infectious_period"), origin, destination)
+    parameter_name = "infectious_period"
+    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
     return f"The {process} process moves " \
-        f"people directly from the {origin} state to the {destination} compartment, " \
-        "with the rate of transition calculated as the reciprocal of the infectious period. "
+        f"people from the {origin} state to the {destination} compartment, " \
+        f"with the transition rate calculated as the reciprocal of the {parameter_name.replace('_', ' ')}. "
 
 
 def add_waning(
@@ -154,12 +156,13 @@ def add_waning(
     process = "waning"
     origin = "recovered"
     destination = "waned"
-    model.add_transition_flow(process, 1.0 / Parameter("natural_immunity_period"), origin, destination)
+    parameter_name = "natural_immunity_period"
+    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
     return "A waned compartment is included in the model " \
         "to represent persons who no longer have immunity from past natural immunity. " \
-        f"Modelled individuals transition from the {origin} compartment to the " \
-        f"{destination} compartment at a rate equal to the reciprocal of the " \
-        "requested period of time spent with natural immunity. "
+        f"As these persons lose their infection-induced immunity, they transition from the " \
+        f"{origin} compartment to the {destination} compartment at a rate equal to the reciprocal of the " \
+        f"{parameter_name.replace('_', ' ')}. "
 
 
 def build_polymod_britain_matrix(
