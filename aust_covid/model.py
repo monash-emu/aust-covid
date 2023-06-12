@@ -447,13 +447,18 @@ def add_notifications_output(
     notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput("incidence"), delay]) * tracked_ratio_interp
     model.request_function_output(name="notifications", func=notif_dist_rel_inc)
 
+    survey_fig_name = "survey.jpg"
     survey_fig = hh_impact.plot(labels={"value": "percentage", "index": ""}, markers=True)
-    survey_fig.write_image(SUPPLEMENT_PATH / "survey.jpg")
+    survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
+    survey_fig_caption = "Raw survey values."
 
+    ratio_fig_name = "ratio.jpg"
     ratio_fig = hh_test_ratio.plot(labels={"value": "ratio", "index": ""}, markers=True)
-    ratio_fig.write_image(SUPPLEMENT_PATH / "ratio.jpg")
+    ratio_fig.update_layout(showlegend=False)
+    ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
+    ratio_fig_caption = "Ratio of proportion of households testing to proportion reporting symptoms."
 
-    return hh_test_ratio
+    return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption
 
 
 def track_age_specific_incidence(
