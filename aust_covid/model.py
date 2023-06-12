@@ -317,11 +317,11 @@ def get_strain_stratification(
     compartments: list,
     strain_strata,
 ) -> tuple:
-    strain_strings = list(strain_strata.keys())
+    strain_strings = [f"{strain.replace('ba', 'BA.')}" for strain in strain_strata]
     compartments_to_stratify = [comp for comp in compartments if comp != "susceptible"]
-    strain_strat = StrainStratification("strain", strain_strings, compartments_to_stratify)
-    description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}. " \
-        f"including compartments to represent strains: {', '.join(strain_strata.values())}. " \
+    strain_strat = StrainStratification("strain", strain_strata, compartments_to_stratify)
+    description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}, " \
+        f"including compartments to represent strains: {', '.join(strain_strings)}. " \
         f"This was implemented using summer's `{StrainStratification.__name__}' class. "
     return strain_strat, description
 
@@ -347,7 +347,7 @@ def seed_vocs(
             dest_strata={"strain": strain},
             split_imports=True,
         )
-    return f"Each strain (including the starting {strains[0]} strain) is seeded through " \
+    return f"Each strain (including the starting {strains[0].replace('ba', 'BA.')} strain) is seeded through " \
         "a step function that allows the introduction of a constant rate of new infectious " \
         "persons into the system over a fixed seeding duration. "
 
