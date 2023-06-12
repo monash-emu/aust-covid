@@ -458,26 +458,23 @@ def add_notifications_output(
     ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
     ratio_fig_caption = "Ratio of proportion of households testing to proportion reporting symptoms."
 
-    return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption
+    description = "Notifications are calculated from incidence by first multiplying the raw incidence value " \
+        "by a function of time that is intended to capture the declining proportion of COVID-19 episodes " \
+        "that were captured through surveillance mechanisms due to a declining proportion of symptomatic " \
+        "persons testing over the course of the simulation period, and then applying a convolution." \
+        "The Household Impacts of COVID-19 Survey downloaded from " \
+        "https://www.abs.gov.au/statistics/people/people-and-communities/ " \
+        "household-impacts-covid-19-survey/latest-release on 12th June 2023 " \
+        "reports on three indicators, including the proportion of households reporting a household member with symptoms of cold, flu or COVID-19, " \
+        "and the proportion of households reporting a household member has had a COVID-19 test. " \
+        "The ratio of the second to the first of these indicators was taken as an indicator of declining case detection. " \
+        "A transposed exponential function was used to define the relationship between this ratio and the modelled case detection over time, " \
+        "with the starting case detection rate varied to capture the uncertainty in the true absolute case detection rate " \
+        "proportion of all infection episodes captured through surveillance. " \
+        "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
+        "$(1 - e^{p * r}) * s$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
 
-
-def track_age_specific_incidence(
-    model: CompartmentalModel,
-    infection_processes: list,
-):
-    for age in model.stratifications["agegroup"].strata:
-        for process in infection_processes:
-            model.request_output_for_flow(
-                f"{process}_onsetXagegroup_{age}", 
-                process, 
-                source_strata={"agegroup": age},
-                save_results=False,
-            )
-        model.request_function_output(
-            f"incidenceXagegroup_{age}",
-            func=sum([DerivedOutput(f"{process}_onsetXagegroup_{age}") for process in infection_processes]),
-            save_results=False,
-        )
+    return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption, description
 
 
 def show_cdr_profiles(
@@ -485,8 +482,6 @@ def show_cdr_profiles(
     hh_test_ratio: pd.Series,
 ):
     """
-    Create figure to visualise CDR values from sampled parameter values.
-
     Args:
         start_cdr_samples: The CDR parameter values to feed through the algorithm
         hh_test_ratio: The ratio values over time that are fed into the algorithm
@@ -495,5 +490,10 @@ def show_cdr_profiles(
     for start_cdr in start_cdr_samples:
         exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
         cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
+
+    modelled_cdr_fig_name = "modelled_cdr.jpg"
     modelled_cdr_fig = cdr_values.plot(markers=True, labels={"value": "case detection ratio", "index": ""})
-    modelled_cdr_fig.write_image(SUPPLEMENT_PATH / "modelled_cdr.jpg")
+    modelled_cdr_fig.write_image(SUPPLEMENT_PATH / modelled_cdr_fig_name)
+    modelled_cdr_fig_caption = "Example case detection rates implemented in randomly selected model runs."
+
+    return modelled_cdr_fig, modelled_cdr_fig_name, modelled_cdr_fig_caption

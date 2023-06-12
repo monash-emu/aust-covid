@@ -22,7 +22,7 @@ def escape_special_text(
     Returns:
         Revised text string
     """
-    return NoEscape(text) if "\cite{" in text or "extunderscore" in text else text
+    return NoEscape(text) if "\cite{" in text or "extunderscore" in text or "$" in text else text
 
 
 class DocElement:
