@@ -395,8 +395,8 @@ def add_reinfection(
         "For late reinfection, all natural immunity is lost for persons in the waned compartment, " \
         "such that the rate of reinfection for these persons is the same as the rate of infection " \
         "for fully susceptible persons. " \
-        "As for the first infection process, " \
-        "all reinfection processes transition people to the model's latent compartment. "
+        "As for the first infection process, all reinfection processes transition individuals " \
+        "to the latent compartment corresponding to the infecting strain. "
 
 
 def add_incidence_output(
