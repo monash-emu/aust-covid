@@ -5,12 +5,12 @@ import pandas as pd
 import plotly.express as px
 from pathlib import Path
 
+from summer2.functions.time import get_linear_interpolation_function
 from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
 from aust_covid.model_utils import triangle_wave_func, convolve_probability, build_gamma_dens_interval_func
-from aust_covid.inputs import load_pop_data, load_uk_pop_data
-
+from aust_covid.inputs import load_pop_data, load_uk_pop_data, load_household_impacts_data
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
@@ -81,9 +81,10 @@ def get_pop_data() -> tuple:
         with description.
     """
     pop_data, sheet_name = load_pop_data()
-    description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded "
-    description2 = "from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. "
-    return pop_data, description + description2
+    sheet_name = sheet_name.replace("_", "\\textunderscore")
+    description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded " \
+        "from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. "
+    return pop_data, description
 
 
 def set_starting_conditions(
@@ -100,7 +101,7 @@ def set_starting_conditions(
     """
     total_pop = pop_data["Australia"].sum()
     model.set_initial_population({"susceptible": total_pop})
-    return f"The simulation starts with {str(round(total_pop / 1e6, 3))} million susceptible persons only, " \
+    return f"The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, " \
         "with infectious persons introduced later through strain seeding as described below. "
 
 
@@ -129,10 +130,11 @@ def add_progression(
     process = "progression"
     origin = "latent"
     destination = "infectious"
-    model.add_transition_flow(process, 1.0 / Parameter("latent_period"), origin, destination)
+    parameter_name = "latent_period"
+    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
     return f"The {process} process moves " \
-        f"people directly from the {origin} state to the {destination} compartment, " \
-        "with the rate of transition calculated as the reciprocal of the latent period. "
+        f"people from the {origin} state to the {destination} compartment, " \
+        f"with the transition rate calculated as the reciprocal of the {parameter_name.replace('_', ' ')}. "
 
 
 def add_recovery(
@@ -141,10 +143,11 @@ def add_recovery(
     process = "recovery"
     origin = "infectious"
     destination = "recovered"
-    model.add_transition_flow(process, 1.0 / Parameter("infectious_period"), origin, destination)
+    parameter_name = "infectious_period"
+    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
     return f"The {process} process moves " \
-        f"people directly from the {origin} state to the {destination} compartment, " \
-        "with the rate of transition calculated as the reciprocal of the infectious period. "
+        f"people from the {origin} state to the {destination} compartment, " \
+        f"with the transition rate calculated as the reciprocal of the {parameter_name.replace('_', ' ')}. "
 
 
 def add_waning(
@@ -153,16 +156,17 @@ def add_waning(
     process = "waning"
     origin = "recovered"
     destination = "waned"
-    model.add_transition_flow(process, 1.0 / Parameter("natural_immunity_period"), origin, destination)
+    parameter_name = "natural_immunity_period"
+    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
     return "A waned compartment is included in the model " \
         "to represent persons who no longer have immunity from past natural immunity. " \
-        f"Modelled individuals transition from the {origin} compartment to the " \
-        f"{destination} compartment at a rate equal to the reciprocal of the " \
-        "requested period of time spent with natural immunity. "
+        f"As these persons lose their infection-induced immunity, they transition from the " \
+        f"{origin} compartment to the {destination} compartment at a rate equal to the reciprocal of the " \
+        f"{parameter_name.replace('_', ' ')}. "
 
 
 def build_polymod_britain_matrix(
-    age_strata,
+    age_strata: list,
 ) -> np.array:
     """
     Args:
@@ -196,16 +200,16 @@ def build_polymod_britain_matrix(
         "from the United Kingdom data provided by Mossong et al.'s POLYMOD study \cite{mossong2008}. " \
         "The data were obtained from https://doi.org/10.1371/journal.pmed.0050074.st005 " \
         "on 12th February 2023 (downloaded in their native docx format). " \
-        "The matrix is transposed because summer assumes that rows represent infectees " \
+        "The matrix was transposed because summer assumes that rows represent infectees " \
         "and columns represent infectors, whereas the POLYMOD data are labelled " \
-        "`age of contact' for the rows and `age group of participant' for the columns. "
-    
+        "`age of contact' for the rows and `age group of participant' for the columns, " \
+        "indicating the opposite orientation. "
+
     filename = "raw_matrix.jpg"
     matrix_fig = px.imshow(matrix, x=age_strata, y=age_strata)
     matrix_fig.write_image(SUPPLEMENT_PATH / filename)
     caption = "Raw matrices from Great Britain POLYMOD. Values are contacts per person per day. "
-
-    return matrix, description
+    return matrix, description, matrix_fig, filename, caption
 
 
 def adapt_gb_matrix_to_aust(
@@ -253,31 +257,35 @@ def adapt_gb_matrix_to_aust(
         "we sourced the 2001 UK census population for those living in the UK at the time of the census " \
         "from the Eurostat database (https://ec.europa.eu/eurostat). "
 
-    filename = "input_population.jpg"
-    pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
-    pop_fig.update_layout(showlegend=False)
-    pop_fig.write_image(SUPPLEMENT_PATH / filename)
-    caption = "Population sizes by age group obtained from Australia Bureau of Statistics."
+    age_group_names = [f"{age}-{age + 4}" for age in age_strata[:-1]] + ["70 and over"]
 
-    filename = "modelled_population.jpg"
+    input_pop_filename = "input_population.jpg"
+    input_pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
+    input_pop_fig.update_layout(showlegend=False)
+    input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
+    input_pop_caption = "Australian population sizes by age group obtained from Australia Bureau of Statistics."
+
+    modelled_pop_filename = "modelled_population.jpg"
     modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
-    modelled_pop_fig.update_layout(showlegend=False)
-    modelled_pop_fig.write_image(SUPPLEMENT_PATH / filename)
-    caption = "Population sizes by age group included in the model."
+    modelled_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
+    modelled_pop_fig.write_image(SUPPLEMENT_PATH / modelled_pop_filename)
+    modelled_pop_caption = "Population sizes by age group implemented in the model."
 
-    filename = "matrix_ref_pop.jpg"
-    uk_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
-    uk_pop_fig.update_layout(showlegend=False)
-    uk_pop_fig.write_image(SUPPLEMENT_PATH / filename)
-    caption = "United Kingdom population sizes."
+    matrix_ref_pop_filename = "matrix_ref_pop.jpg"
+    matrix_ref_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
+    matrix_ref_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
+    matrix_ref_pop_fig.write_image(SUPPLEMENT_PATH / matrix_ref_pop_filename)
+    matrix_ref_pop_caption = "United Kingdom population sizes."
 
-    filename = "adjusted_matrix.jpg"
-    matrix_plotly_fig = px.imshow(unadjusted_matrix, x=age_strata, y=age_strata)
-    matrix_plotly_fig.write_image(SUPPLEMENT_PATH / filename)
-    caption = "Matrices adjusted to Australian population. Values are contacts per person per day. "
+    adjusted_matrix_filename = "adjusted_matrix.jpg"
+    adjusted_matrix_fig = px.imshow(unadjusted_matrix, x=age_strata, y=age_strata)
+    adjusted_matrix_fig.write_image(SUPPLEMENT_PATH / adjusted_matrix_filename)
+    adjusted_matrix_caption = "Matrices adjusted to Australian population. Values are contacts per person per day. "
 
     aust_age_props.index = aust_age_props.index.astype(str)
-    return adjusted_matrix, aust_age_props, description
+    return adjusted_matrix, aust_age_props, description, \
+        input_pop_filename, input_pop_caption, input_pop_fig, modelled_pop_filename, modelled_pop_caption, modelled_pop_fig, \
+        matrix_ref_pop_filename, matrix_ref_pop_caption, matrix_ref_pop_fig, adjusted_matrix_filename, adjusted_matrix_caption, adjusted_matrix_fig, modelled_pops
 
 
 def add_age_stratification(
@@ -299,7 +307,7 @@ def add_age_stratification(
         "into sequential age brackets in five year " \
         "bands from age 0 to 4 through to age 65 to 69 " \
         "with a final age band to represent those aged 70 and above. " \
-        "These age brackets were chosen to match those used by the POLYMOD survey. " \
+        "These age brackets were chosen to match those used by the POLYMOD survey and so fit with the mixing data available. " \
         "The population distribution by age group was informed by the data from the Australian " \
         "Bureau of Statistics introduced previously. "
     return age_strat, description
@@ -309,11 +317,11 @@ def get_strain_stratification(
     compartments: list,
     strain_strata,
 ) -> tuple:
-    strain_strings = list(strain_strata.keys())
+    strain_strings = [f"{strain.replace('ba', 'BA.')}" for strain in strain_strata]
     compartments_to_stratify = [comp for comp in compartments if comp != "susceptible"]
-    strain_strat = StrainStratification("strain", strain_strings, compartments_to_stratify)
-    description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}. " \
-        f"including compartments to represent strains: {', '.join(strain_strata.values())}. " \
+    strain_strat = StrainStratification("strain", strain_strata, compartments_to_stratify)
+    description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}, " \
+        f"including compartments to represent strains: {', '.join(strain_strings)}. " \
         f"This was implemented using summer's `{StrainStratification.__name__}' class. "
     return strain_strat, description
 
@@ -339,7 +347,7 @@ def seed_vocs(
             dest_strata={"strain": strain},
             split_imports=True,
         )
-    return f"Each strain (including the starting {strains[0]} strain) is seeded through " \
+    return f"Each strain (including the starting {strains[0].replace('ba', 'BA.')} strain) is seeded through " \
         "a step function that allows the introduction of a constant rate of new infectious " \
         "persons into the system over a fixed seeding duration. "
 
@@ -387,8 +395,8 @@ def add_reinfection(
         "For late reinfection, all natural immunity is lost for persons in the waned compartment, " \
         "such that the rate of reinfection for these persons is the same as the rate of infection " \
         "for fully susceptible persons. " \
-        "As for the first infection process, " \
-        "all reinfection processes transition people to the model's latent compartment. "
+        "As for the first infection process, all reinfection processes transition individuals " \
+        "to the latent compartment corresponding to the infecting strain. "
 
 
 def add_incidence_output(
@@ -401,12 +409,15 @@ def add_incidence_output(
     total_infection_processes = sum([DerivedOutput(f"{process}_onset") for process in infection_processes])
     model.request_function_output(output, func=total_infection_processes)
     return f"Modelled {output} is calculated as " \
-        f"the absolute rate of {infection_processes[0].replace('_', '')} or {infection_processes[1].replace('_', '')} " \
+        f"the absolute rate of {infection_processes[0].replace('_', ' ')} or {infection_processes[1].replace('_', '')} " \
         "in the community. "
 
 
-from aust_covid.inputs import load_household_impacts_data
-from summer2.functions.time import get_linear_interpolation_function
+def get_cdr_values(
+    param: float, 
+    test_ratios: np.array,
+) -> pd.Series:
+    return 1.0 - np.exp(0.0 - param * test_ratios)
 
 
 def add_notifications_output(
@@ -415,13 +426,11 @@ def add_notifications_output(
     
     # Get data, using test to symptomatic ratio
     hh_impact = load_household_impacts_data()
-    hh_test_ratio = hh_impact["test_prop"] / hh_impact["sympt_prop"]
+    hh_test_ratio = hh_impact["Proportion testing"] / hh_impact["Proportion symptomatic"]
 
-    # Calculate parameter governing relationship between CDR and testing ratio
-    exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter("cdr"))
-
-    # Calculate the CDR values
-    cdr_values = 1.0 - np.exp(0.0 - exp_param * hh_test_ratio.to_numpy())
+    # Do the necessary calculations
+    exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter("start_cdr"))
+    cdr_values = get_cdr_values(exp_param, hh_test_ratio.to_numpy())
 
     # Track case detection rate as an interpolated function of time
     aust_epoch = model.get_epoch()
@@ -438,51 +447,53 @@ def add_notifications_output(
     notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput("incidence"), delay]) * tracked_ratio_interp
     model.request_function_output(name="notifications", func=notif_dist_rel_inc)
 
-    # output = "notifications"
-    # output_to_convolve = "incidence"
-    # delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), model.times)
-    # notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter("cdr")
-    # model.request_function_output(name=output, func=notif_dist_rel_inc)
-    # return f"Modelled {output} is calculated as " \
-    #     f"the {output_to_convolve} rate convolved with a gamma-distributed onset to notification delay, " \
-    #     f"multiplied by the case detection rate. "
+    survey_fig_name = "survey.jpg"
+    survey_fig = hh_impact.plot(labels={"value": "percentage", "index": ""}, markers=True)
+    survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
+    survey_fig_caption = "Raw survey values."
+
+    ratio_fig_name = "ratio.jpg"
+    ratio_fig = hh_test_ratio.plot(labels={"value": "ratio", "index": ""}, markers=True)
+    ratio_fig.update_layout(showlegend=False)
+    ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
+    ratio_fig_caption = "Ratio of proportion of households testing to proportion reporting symptoms."
+
+    description = "Notifications are calculated from incidence by first multiplying the raw incidence value " \
+        "by a function of time that is intended to capture the declining proportion of COVID-19 episodes " \
+        "that were captured through surveillance mechanisms due to a declining proportion of symptomatic " \
+        "persons testing over the course of the simulation period, and then applying a convolution." \
+        "The Household Impacts of COVID-19 Survey downloaded from " \
+        "https://www.abs.gov.au/statistics/people/people-and-communities/ " \
+        "household-impacts-covid-19-survey/latest-release on 12th June 2023 " \
+        "reports on three indicators, including the proportion of households reporting a household member with symptoms of cold, flu or COVID-19, " \
+        "and the proportion of households reporting a household member has had a COVID-19 test. " \
+        "The ratio of the second to the first of these indicators was taken as an indicator of declining case detection. " \
+        "A transposed exponential function was used to define the relationship between this ratio and the modelled case detection over time, " \
+        "with the starting case detection rate varied to capture the uncertainty in the true absolute case detection rate " \
+        "proportion of all infection episodes captured through surveillance. " \
+        "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
+        "$(1 - e^{p * r}) * s$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
+
+    return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption, description
 
 
-def track_age_specific_incidence(
-    model: CompartmentalModel,
-    infection_processes: list,
+def show_cdr_profiles(
+    start_cdr_samples: pd.Series, 
+    hh_test_ratio: pd.Series,
 ):
-    for age in model.stratifications["agegroup"].strata:
-        for process in infection_processes:
-            model.request_output_for_flow(
-                f"{process}_onsetXagegroup_{age}", 
-                process, 
-                source_strata={"agegroup": age},
-                save_results=False,
-            )
-        model.request_function_output(
-            f"incidenceXagegroup_{age}",
-            func=sum([DerivedOutput(f"{process}_onsetXagegroup_{age}") for process in infection_processes]),
-            save_results=False,
-        )
+    """
+    Args:
+        start_cdr_samples: The CDR parameter values to feed through the algorithm
+        hh_test_ratio: The ratio values over time that are fed into the algorithm
+    """
+    cdr_values = pd.DataFrame()
+    for start_cdr in start_cdr_samples:
+        exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
+        cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
 
+    modelled_cdr_fig_name = "modelled_cdr.jpg"
+    modelled_cdr_fig = cdr_values.plot(markers=True, labels={"value": "case detection ratio", "index": ""})
+    modelled_cdr_fig.write_image(SUPPLEMENT_PATH / modelled_cdr_fig_name)
+    modelled_cdr_fig_caption = "Example case detection rates implemented in randomly selected model runs."
 
-def add_death_output(
-    model: CompartmentalModel,
-) -> str:
-    agegroups = model.stratifications["agegroup"].strata
-    for age in agegroups:
-        age_output = f"deathsXagegroup_{age}"
-        output_to_convolve = f"incidenceXagegroup_{age}"
-        delay = build_gamma_dens_interval_func(Parameter("deaths_shape"), Parameter("deaths_mean"), model.times)
-        death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter(f"ifr_{age}")
-        model.request_function_output(name=age_output, func=death_dist_rel_inc, save_results=False)
-    output = "deaths"
-    model.request_function_output(
-        output,
-        func=sum([DerivedOutput(f"deathsXagegroup_{age}") for age in agegroups]),
-    )
-    return f"Modelled {output} is calculated from " \
-        f"the age-specific incidence rate convolved with a gamma-distributed onset to death delay, " \
-        f"multiplied by an age-specific infection fatality rate for each age bracket. " \
-        f"The time series of deaths for each age gorup is then summed to obtain total modelled {output}. "
+    return modelled_cdr_fig, modelled_cdr_fig_name, modelled_cdr_fig_caption

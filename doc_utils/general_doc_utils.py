@@ -1,7 +1,6 @@
 from pathlib import Path
 import pylatex as pl
-from pylatex import LineBreak
-from pylatex.section import Section
+from pylatex.section import Section, Subsection
 from pylatex.utils import NoEscape
 import matplotlib.figure as mpl
 import plotly.graph_objects as go
@@ -11,11 +10,11 @@ BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
 
 
-def escape_refs(
+def escape_special_text(
     text: str,
 ) -> str:
     """
-    Don't escape characters if they are needed for citations.
+    Don't escape characters if they are needed for citations or underscores.
 
     Args:
         text: Text for document
@@ -23,7 +22,7 @@ def escape_refs(
     Returns:
         Revised text string
     """
-    return NoEscape(text) if "\cite{" in text else text
+    return NoEscape(text) if "\cite{" in text or "extunderscore" in text or "$" in text else text
 
 
 class DocElement:
@@ -63,7 +62,7 @@ class TextElement(DocElement):
         Args:
             text: The text to write
         """
-        self.text = escape_refs(text)
+        self.text = escape_special_text(text)
 
     def emit_latex(
             self, 
@@ -151,7 +150,7 @@ class TableElement(DocElement):
             output_table.add_row(headers)
             output_table.add_hline()
             for index in self.table.index:
-                content = [index] + [escape_refs(str(element)) for element in self.table.loc[index]]
+                content = [index] + [escape_special_text(str(element)) for element in self.table.loc[index]]
                 output_table.add_row(content)
                 output_table.add_hline()
             doc.append(pl.NewPage())
@@ -161,18 +160,22 @@ def add_element_to_document(
     section_name: str, 
     element: DocElement, 
     doc_sections: dict,
+    subsection_name: str="no_subsection",
 ):
     """
-    Add a document element to the working document compilation object.
+    Add a document element to the working document compilation structure.
 
     Args:
-        section_name: Name of the document section to add the element to
+        section_name: Title of the document section to add the element to
         element: The element to add
         doc_sections: The document to be added to
+        subsection_name: The title of the sub-section to add to the element to, if any
     """
     if section_name not in doc_sections:
-        doc_sections[section_name] = []
-    doc_sections[section_name].append(element)
+        doc_sections[section_name] = {}
+    if subsection_name not in doc_sections[section_name]:
+        doc_sections[section_name][subsection_name] = []
+    doc_sections[section_name][subsection_name].append(element)
 
 
 def save_pyplot_add_to_doc(
@@ -258,8 +261,13 @@ def compile_doc(
     """
     for section in doc_sections:
         with doc.create(Section(section)):
-            for element in doc_sections[section]:
-                element.emit_latex(doc)
+            if "no_subsection" in doc_sections[section]:
+                for element in doc_sections[section]["no_subsection"]:
+                    element.emit_latex(doc)
+            for subsection in [sub for sub in doc_sections[section].keys() if sub != "no_subsection"]:
+                with doc.create(Subsection(subsection)):
+                    for element in doc_sections[section][subsection]:
+                        element.emit_latex(doc)
             doc.append(pl.NewPage())
     doc.append(pl.Command("printbibliography"))
     doc.generate_tex(str(SUPPLEMENT_PATH / "supplement"))
