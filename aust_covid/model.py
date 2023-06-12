@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from jax import numpy as jnp
 import numpy as np
 import pandas as pd
@@ -423,7 +423,7 @@ def get_cdr_values(
 
 def add_notifications_output(
     model: CompartmentalModel,
-) -> str:
+) -> tuple:
     
     # Get data, using test to symptomatic ratio
     hh_impact = load_household_impacts_data()
@@ -481,7 +481,7 @@ def add_notifications_output(
 def track_sero_prevalence(
     compartments: list, 
     model: CompartmentalModel,
-):
+) -> str:
     seropos_comps = [comp for comp in compartments if comp != "susceptible"]
     model.request_output_for_compartments("total_pop", compartments)
     model.request_output_for_compartments("seropos", seropos_comps)
@@ -492,7 +492,7 @@ def track_sero_prevalence(
 def track_strain_prop(
     strain_strata: list, 
     model: CompartmentalModel,
-):
+) -> tuple:
     model.request_output_for_compartments("prev", ["infectious"], save_results=False)
     for strain in strain_strata:
         model.request_output_for_compartments(f"{strain}_prev", ["infectious"], {"strain": strain}, save_results=False)
@@ -504,7 +504,7 @@ def track_strain_prop(
 def show_cdr_profiles(
     start_cdr_samples: pd.Series, 
     hh_test_ratio: pd.Series,
-):
+) -> tuple:
     """
     Args:
         start_cdr_samples: The CDR parameter values to feed through the algorithm
@@ -521,3 +521,27 @@ def show_cdr_profiles(
     modelled_cdr_fig_caption = "Example case detection rates implemented in randomly selected model runs."
 
     return modelled_cdr_fig, modelled_cdr_fig_name, modelled_cdr_fig_caption
+
+
+def show_strain_props(
+    strain_strata: list, 
+    model: CompartmentalModel,
+) -> tuple:
+    """
+    Args:
+        strain_strata: Names of sub-variants
+        model: Working model
+
+    Returns:
+        Output figure, name used to save figure, caption for figure
+    """
+    
+    end_date = model.get_epoch().index_to_dti([model.times[-1]])  # Plot to end of simulation
+    strain_props = [f"{strain}_prop" for strain in strain_strata]
+
+    strain_prop_fig_name = "strain_prop.jpg"
+    strain_prop_fig = model.get_derived_outputs_df()[strain_props].plot.area(labels={"value": "proportion", "index": ""})
+    strain_prop_fig.update_xaxes(range=(date(2022, 1, 1), end_date[0]))
+    strain_prop_fig.write_image(SUPPLEMENT_PATH / strain_prop_fig_name)
+    strain_prop_fig_caption = "Proportion of prevalent cases by sub-variant."
+    return strain_prop_fig, strain_prop_fig_name, strain_prop_fig_caption
