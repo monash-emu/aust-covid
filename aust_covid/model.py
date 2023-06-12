@@ -90,6 +90,7 @@ def get_pop_data() -> tuple:
 def set_starting_conditions(
     model: CompartmentalModel,
     pop_data: pd.DataFrame,
+    adjuster: 1.0,
 ) -> str:
     """
     Args:
@@ -99,7 +100,7 @@ def set_starting_conditions(
     Returns:
         Description of data being used
     """
-    total_pop = pop_data["Australia"].sum()
+    total_pop = pop_data["Australia"].sum() * adjuster
     model.set_initial_population({"susceptible": total_pop})
     return f"The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, " \
         "with infectious persons introduced later through strain seeding as described below. "
@@ -409,7 +410,7 @@ def add_incidence_output(
     total_infection_processes = sum([DerivedOutput(f"{process}_onset") for process in infection_processes])
     model.request_function_output(output, func=total_infection_processes)
     return f"Modelled {output} is calculated as " \
-        f"the absolute rate of {infection_processes[0].replace('_', ' ')} or {infection_processes[1].replace('_', '')} " \
+        f"the absolute rate of {infection_processes[0].replace('_', ' ')} or {infection_processes[1].replace('_', ' ')} " \
         "in the community. "
 
 
@@ -463,7 +464,7 @@ def add_notifications_output(
         "that were captured through surveillance mechanisms due to a declining proportion of symptomatic " \
         "persons testing over the course of the simulation period, and then applying a convolution." \
         "The Household Impacts of COVID-19 Survey downloaded from " \
-        "https://www.abs.gov.au/statistics/people/people-and-communities/ " \
+        "https://www.abs.gov.au/statistics/people/ people-and-communities/" \
         "household-impacts-covid-19-survey/latest-release on 12th June 2023 " \
         "reports on three indicators, including the proportion of households reporting a household member with symptoms of cold, flu or COVID-19, " \
         "and the proportion of households reporting a household member has had a COVID-19 test. " \
@@ -472,9 +473,32 @@ def add_notifications_output(
         "with the starting case detection rate varied to capture the uncertainty in the true absolute case detection rate " \
         "proportion of all infection episodes captured through surveillance. " \
         "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
-        "$(1 - e^{p * r}) * s$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
+        "$(1 - e^{p \\times r}) \\times s$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
 
     return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption, description
+
+
+def track_sero_prevalence(
+    compartments: list, 
+    model: CompartmentalModel,
+):
+    seropos_comps = [comp for comp in compartments if comp != "susceptible"]
+    model.request_output_for_compartments("total_pop", compartments)
+    model.request_output_for_compartments("seropos", seropos_comps)
+    model.request_function_output("seropos_prop", DerivedOutput("seropos") / DerivedOutput("total_pop"))
+    return "Seroprevalence is calculated as the proportion of the population ever leaving the susceptible compartment. "
+
+
+def track_strain_prop(
+    strain_strata: list, 
+    model: CompartmentalModel,
+):
+    model.request_output_for_compartments("prev", ["infectious"], save_results=False)
+    for strain in strain_strata:
+        model.request_output_for_compartments(f"{strain}_prev", ["infectious"], {"strain": strain}, save_results=False)
+        model.request_function_output(f"{strain}_prop", DerivedOutput(f"{strain}_prev") / DerivedOutput("prev"))
+    return "Proportionate prevalence by strain is tracked as the proportion of the population currently in " \
+        "the infectious compartment that is infected with the modelled strain of interest. "
 
 
 def show_cdr_profiles(
