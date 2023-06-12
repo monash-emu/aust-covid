@@ -90,6 +90,7 @@ def get_pop_data() -> tuple:
 def set_starting_conditions(
     model: CompartmentalModel,
     pop_data: pd.DataFrame,
+    adjuster: 1.0,
 ) -> str:
     """
     Args:
@@ -99,7 +100,7 @@ def set_starting_conditions(
     Returns:
         Description of data being used
     """
-    total_pop = pop_data["Australia"].sum()
+    total_pop = pop_data["Australia"].sum() * adjuster
     model.set_initial_population({"susceptible": total_pop})
     return f"The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, " \
         "with infectious persons introduced later through strain seeding as described below. "
@@ -475,6 +476,13 @@ def add_notifications_output(
         "$(1 - e^{p * r}) * s$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
 
     return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption, description
+
+
+def track_sero_prevalence(compartments, model):
+    seropos_comps = [comp for comp in compartments if comp != "susceptible"]
+    model.request_output_for_compartments("total_pop", compartments)
+    model.request_output_for_compartments("seropos", seropos_comps)
+    model.request_function_output("seropos_prop", DerivedOutput("seropos") / DerivedOutput("total_pop"))
 
 
 def show_cdr_profiles(
