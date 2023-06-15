@@ -552,7 +552,7 @@ def show_strain_props(
     for voc in voc_emerge_df:
         voc_info = voc_emerge_df[voc]
         colour = voc_info["colour"]
-        lag = timedelta(days=3.5)
+        lag = timedelta(days=3.5)  # Dates are given as first day of week in which VoC was first detected
         strain_prop_fig.add_vline(voc_info["any"] + lag, line_dash="dot", line_color=colour)
         strain_prop_fig.add_vline(voc_info[">1%"] + lag, line_dash="dash", line_color=colour)
         strain_prop_fig.add_vline(voc_info[">50%"] + lag, line_color=colour)
