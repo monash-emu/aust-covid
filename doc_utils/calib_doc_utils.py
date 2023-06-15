@@ -99,7 +99,7 @@ def get_prior_dist_support(
     Returns:        
         The bounds to the prior's distribution joined together
     """
-    return " to ".join([str(i) for i in prior.bounds()])
+    return " to ".join([str(round_sigfig(i, 3)) for i in prior.bounds()])
 
 
 def convert_idata_to_df(

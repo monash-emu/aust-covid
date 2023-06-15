@@ -122,7 +122,7 @@ class TableElement(DocElement):
     def __init__(
         self, 
         input_table: pd.DataFrame,
-        table_width: float=12.0,
+        table_width: float=11.0,
         col_requests: list=[], 
     ):
         """
