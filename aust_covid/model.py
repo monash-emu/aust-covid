@@ -531,6 +531,7 @@ def show_strain_props(
     """
     Args:
         strain_strata: Names of sub-variants
+        plot_start_time: Request for left-hand end point for x-axis
         model: Working model
 
     Returns:
@@ -549,15 +550,17 @@ def show_strain_props(
         },
         index=["any", ">1%", ">50%", "colour"]
     )
+    lag = timedelta(days=3.5)  # Dates are given as first day of week in which VoC was first detected
     for voc in voc_emerge_df:
         voc_info = voc_emerge_df[voc]
         colour = voc_info["colour"]
-        lag = timedelta(days=3.5)  # Dates are given as first day of week in which VoC was first detected
         strain_prop_fig.add_vline(voc_info["any"] + lag, line_dash="dot", line_color=colour)
         strain_prop_fig.add_vline(voc_info[">1%"] + lag, line_dash="dash", line_color=colour)
         strain_prop_fig.add_vline(voc_info[">50%"] + lag, line_color=colour)
     strain_prop_fig.update_xaxes(range=(plot_start_time, end_date[0]))
     strain_prop_fig.update_yaxes(range=(0.0, 1.0))
     strain_prop_fig.write_image(SUPPLEMENT_PATH / strain_prop_fig_name)
-    strain_prop_fig_caption = "Proportion of prevalent cases by sub-variant, with first sequence proportion times."
+    strain_prop_fig_caption = "Proportion of prevalent cases by sub-variant, with first sequence proportion times. " \
+        "Dotted line, first isolate of VoC; dashed line, first time VoC represents more than 1% of all isolates; " \
+        "solid line, first time VoC represnets more than 50% of all isolates. "
     return strain_prop_fig, strain_prop_fig_name, strain_prop_fig_caption
