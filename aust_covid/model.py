@@ -473,7 +473,7 @@ def add_notifications_output(
         "with the starting case detection rate varied to capture the uncertainty in the true absolute case detection rate " \
         "proportion of all infection episodes captured through surveillance. " \
         "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
-        "$(1 - e^{p \\times r}) \\times s$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
+        "$s = (1 - e^{-p \\times r})$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
 
     return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption, description
 
