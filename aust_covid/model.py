@@ -108,6 +108,7 @@ def set_starting_conditions(
 
 def add_infection(
     model: CompartmentalModel,
+    mob_adjuster,
 ) -> str:
     """
     Args:
@@ -119,7 +120,7 @@ def add_infection(
     process = "infection"
     origin = "susceptible"
     destination = "latent"
-    model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
+    model.add_infection_frequency_flow(process, mob_adjuster * Parameter("contact_rate"), origin, destination)
     return f"The {process} process moves people from the {origin} " \
         f"compartment to the {destination} compartment, " \
         "under the frequency-dependent transmission assumption. "
@@ -356,6 +357,7 @@ def seed_vocs(
 def add_reinfection(
     model: CompartmentalModel,
     strain_strata: list,
+    mob_adjuster,
 ) -> str:
     for dest_strain in strain_strata:
         for source_strain in strain_strata:
@@ -365,7 +367,7 @@ def add_reinfection(
             if int(dest_strain[-1]) > int(source_strain[-1]): 
                 model.add_infection_frequency_flow(
                     process, 
-                    Parameter("contact_rate") * Parameter(f"{dest_strain}_escape"),
+                    mob_adjuster * Parameter("contact_rate") * Parameter(f"{dest_strain}_escape"),
                     origin, 
                     destination,
                     source_strata={"strain": source_strain},
@@ -375,7 +377,7 @@ def add_reinfection(
             origin = "waned"
             model.add_infection_frequency_flow(
                 process, 
-                Parameter("contact_rate"), 
+                mob_adjuster * Parameter("contact_rate"),
                 origin, 
                 destination,
                 source_strata={"strain": source_strain},
