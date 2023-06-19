@@ -292,24 +292,51 @@ def adapt_gb_matrix_to_aust(
 def get_raw_mobility(
     plot_start_time: datetime.date,
     model: CompartmentalModel,
-) -> pd.DataFrame:
+) -> tuple:
     """
     Args:
         plot_start_time: Left limit of x-axis
-        model: Compartmental model
+        model: The compartmental model
 
     Returns:
         Raw mobility data
     """
     mob_df = pd.concat([load_google_mob_year_df(2021), load_google_mob_year_df(2022)])
     mob_df.columns = [col.replace("_percent_change_from_baseline", "").replace("_", " ") for col in mob_df.columns]
-    end_date = model.get_epoch().index_to_dti([model.times[-1]])  # Plot to end of simulation
+    end_date = model.get_epoch().index_to_dti([model.times[-1]])
     
     raw_mob_filename = "raw_mobility.jpg"
     raw_mob_fig = mob_df.plot(labels={"value": "percent change from baseline", "date": ""})
     raw_mob_fig.update_xaxes(range=(plot_start_time, end_date[0]))
     raw_mob_fig.write_image(SUPPLEMENT_PATH / raw_mob_filename)
-    return mob_df
+    return mob_df, raw_mob_fig, raw_mob_filename
+
+
+def process_mobility(
+    mob_df: pd.DataFrame,
+    plot_start_time: datetime.date,
+    model: CompartmentalModel,
+) -> tuple:
+    """
+    Args:
+        mob_df: Raw mobility data returned by previous function
+        plot_start_time: Left limit of x-axis
+        model: The compartmental model
+
+    Returns:
+        Processed mobility data to be used in model
+    """
+    non_resi_mob = mob_df[[col for col in mob_df.columns if "residential" not in col]]
+    mean_mob = non_resi_mob.mean(axis=1)
+    smoothed_mean_mob = mean_mob.rolling(window=14).mean().dropna()
+    combined_mob = pd.DataFrame({"mean non-residential": mean_mob, "smoothed mean non-resi": smoothed_mean_mob})
+    end_date = model.get_epoch().index_to_dti([model.times[-1]])
+
+    modelled_mob_filename = "modelled_mobility.jpg"
+    modelled_mob_fig = combined_mob.plot()
+    modelled_mob_fig.update_xaxes(range=(plot_start_time, end_date[0]))
+    modelled_mob_fig.write_image(SUPPLEMENT_PATH / modelled_mob_filename)
+    return smoothed_mean_mob, modelled_mob_fig, modelled_mob_filename
 
 
 def add_age_stratification(
