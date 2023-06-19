@@ -333,7 +333,7 @@ def process_mobility(
     end_date = model.get_epoch().index_to_dti([model.times[-1]])
 
     modelled_mob_filename = "modelled_mobility.jpg"
-    modelled_mob_fig = combined_mob.plot()
+    modelled_mob_fig = combined_mob.plot(labels={"value": "percent change from baseline", "date": ""})
     modelled_mob_fig.update_xaxes(range=(plot_start_time, end_date[0]))
     modelled_mob_fig.write_image(SUPPLEMENT_PATH / modelled_mob_filename)
     return smoothed_mean_mob, modelled_mob_fig, modelled_mob_filename
