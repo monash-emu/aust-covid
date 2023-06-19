@@ -108,7 +108,6 @@ def set_starting_conditions(
 
 def add_infection(
     model: CompartmentalModel,
-    mob_adjuster,
 ) -> str:
     """
     Args:
@@ -120,7 +119,7 @@ def add_infection(
     process = "infection"
     origin = "susceptible"
     destination = "latent"
-    model.add_infection_frequency_flow(process, mob_adjuster * Parameter("contact_rate"), origin, destination)
+    model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
     return f"The {process} process moves people from the {origin} " \
         f"compartment to the {destination} compartment, " \
         "under the frequency-dependent transmission assumption. "
