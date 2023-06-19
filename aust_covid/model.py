@@ -10,7 +10,7 @@ from summer2 import CompartmentalModel, Stratification, StrainStratification
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
 from aust_covid.model_utils import triangle_wave_func, convolve_probability, build_gamma_dens_interval_func
-from aust_covid.inputs import load_pop_data, load_uk_pop_data, load_household_impacts_data
+from aust_covid.inputs import load_pop_data, load_uk_pop_data, load_household_impacts_data, load_google_mob_year_df
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
@@ -287,6 +287,29 @@ def adapt_gb_matrix_to_aust(
     return adjusted_matrix, aust_age_props, description, \
         input_pop_filename, input_pop_caption, input_pop_fig, modelled_pop_filename, modelled_pop_caption, modelled_pop_fig, \
         matrix_ref_pop_filename, matrix_ref_pop_caption, matrix_ref_pop_fig, adjusted_matrix_filename, adjusted_matrix_caption, adjusted_matrix_fig, modelled_pops
+
+
+def get_raw_mobility(
+    plot_start_time: datetime.date,
+    model: CompartmentalModel,
+) -> pd.DataFrame:
+    """
+    Args:
+        plot_start_time: Left limit of x-axis
+        model: Compartmental model
+
+    Returns:
+        Raw mobility data
+    """
+    mob_df = pd.concat([load_google_mob_year_df(2021), load_google_mob_year_df(2022)])
+    mob_df.columns = [col.replace("_percent_change_from_baseline", "").replace("_", " ") for col in mob_df.columns]
+    end_date = model.get_epoch().index_to_dti([model.times[-1]])  # Plot to end of simulation
+    
+    raw_mob_filename = "raw_mobility.jpg"
+    raw_mob_fig = mob_df.plot(labels={"value": "percent change from baseline", "date": ""})
+    raw_mob_fig.update_xaxes(range=(plot_start_time, end_date[0]))
+    raw_mob_fig.write_image(SUPPLEMENT_PATH / raw_mob_filename)
+    return mob_df
 
 
 def add_age_stratification(
