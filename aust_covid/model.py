@@ -168,32 +168,38 @@ def add_waning(
 
 def adapt_gb_matrices_to_aust(
     age_strata: list,
-    unadjusted_matrix: np.array, 
+    unadjusted_matrices: dict, 
     pop_data: pd.DataFrame,
 ) -> tuple:
 
-    # Australian population distribution by age        
-    aust_pop_series = pop_data["Australia"]
-    modelled_pops = aust_pop_series[:"70-74"]
-    modelled_pops["75"] = aust_pop_series["75-79":].sum()
-    modelled_pops.index = age_strata
-    aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=age_strata)
-    assert len(aust_age_props) == unadjusted_matrix.shape[0], "Different number of Aust age groups from mixing categories"
+    adjusted_matrices = {}
+    for location in ["school", "home", "work", "other_locations"]:
 
-    # UK population distributions
-    raw_uk_data = load_uk_pop_data()
-    uk_age_pops = raw_uk_data[:15]
-    uk_age_pops["75 years and up"] = raw_uk_data[15:].sum()
-    uk_age_pops.index = age_strata
-    uk_age_props = uk_age_pops / uk_age_pops.sum()
-    assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
+        unadjusted_matrix = unadjusted_matrices[location]
 
-    # Calculation
-    aust_uk_ratios = aust_age_props / uk_age_props
-    adjusted_matrix = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
+        # Australian population distribution by age        
+        aust_pop_series = pop_data["Australia"]
+        modelled_pops = aust_pop_series[:"70-74"]
+        modelled_pops["75"] = aust_pop_series["75-79":].sum()
+        modelled_pops.index = age_strata
+        aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=age_strata)
+        assert len(aust_age_props) == unadjusted_matrix.shape[0], "Different number of Aust age groups from mixing categories"
 
-    aust_age_props.index = aust_age_props.index.astype(str)
-    return adjusted_matrix, aust_age_props
+        # UK population distributions
+        raw_uk_data = load_uk_pop_data()
+        uk_age_pops = raw_uk_data[:15]
+        uk_age_pops["75 years and up"] = raw_uk_data[15:].sum()
+        uk_age_pops.index = age_strata
+        uk_age_props = uk_age_pops / uk_age_pops.sum()
+        assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
+
+        # Calculation
+        aust_uk_ratios = aust_age_props / uk_age_props
+        adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
+
+        aust_age_props.index = aust_age_props.index.astype(str)
+
+    return adjusted_matrices, aust_age_props
 
 
 def adapt_gb_matrix_to_aust(
