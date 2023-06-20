@@ -292,7 +292,12 @@ def get_raw_mobility(
     raw_mob_fig = mob_df.plot(labels={"value": "percent change from baseline", "date": ""})
     raw_mob_fig.update_xaxes(range=(plot_start_time, end_date[0]))
     raw_mob_fig.write_image(SUPPLEMENT_PATH / raw_mob_filename)
-    return mob_df, raw_mob_fig, raw_mob_filename
+
+    raw_mob_text = "Google mobility data were downloaded from https://www.gstatic.com/covid19/ mobility/Region_Mobility_Report_CSVs.zip" \
+        "on the 15th June 2023. These spreadsheets provide daily estimates of rates of attendance at certain `locations' and can " \
+        "be used to provide an overall picture of the populations's attendance at specific venue types. "
+
+    return mob_df, raw_mob_fig, raw_mob_filename, raw_mob_text
 
 
 def process_mobility(
