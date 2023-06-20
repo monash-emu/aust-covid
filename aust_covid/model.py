@@ -360,6 +360,15 @@ def calculate_mobility_effect(
     return mobility_effect, mobility_effect_func, mob_adj_text, mob_effect_fig, mob_effect_filename
 
 
+def get_mobility_mapper() -> tuple:
+    mob_map_text = "The mobility mapping function is used to scale the contribution of contacts at " \
+        "workplaces and in `other locations' to the overall time-varying mixing matrix " \
+        "(that is, contacts in locations other than the home and in schools). "
+    def mobility_scaling(home_matrix, school_contacts, work_matrix, work_scaler, other_matrix, other_scaler):
+        return home_matrix + school_contacts + work_matrix * work_scaler + other_matrix * other_scaler
+    return mobility_scaling, mob_map_text
+
+
 def add_age_stratification(
     compartments: list,
     age_strata: list,
