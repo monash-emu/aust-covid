@@ -174,16 +174,16 @@ def adapt_gb_matrices_to_aust(
 
     # Australian population distribution by age        
     aust_pop_series = pop_data["Australia"]
-    modelled_pops = aust_pop_series[:"65-69"]
-    modelled_pops["70"] = aust_pop_series["70-74":].sum()
+    modelled_pops = aust_pop_series[:"70-74"]
+    modelled_pops["75"] = aust_pop_series["75-79":].sum()
     modelled_pops.index = age_strata
     aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=age_strata)
     assert len(aust_age_props) == unadjusted_matrix.shape[0], "Different number of Aust age groups from mixing categories"
 
     # UK population distributions
     raw_uk_data = load_uk_pop_data()
-    uk_age_pops = raw_uk_data[:14]
-    uk_age_pops["70 years and up"] = raw_uk_data[14:].sum()
+    uk_age_pops = raw_uk_data[:15]
+    uk_age_pops["75 years and up"] = raw_uk_data[15:].sum()
     uk_age_pops.index = age_strata
     uk_age_props = uk_age_pops / uk_age_pops.sum()
     assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
@@ -374,8 +374,8 @@ def add_age_stratification(
     age_strat.set_mixing_matrix(matrix)
     description = "We stratified all compartments of the base model " \
         "into sequential age brackets in five year " \
-        "bands from age 0 to 4 through to age 65 to 69 " \
-        "with a final age band to represent those aged 70 and above. " \
+        "bands from age 0 to 4 through to age 70 to 74 " \
+        "with a final age band to represent those aged 75 and above. " \
         "These age brackets were chosen to match those used by the POLYMOD survey and so fit with the mixing data available. " \
         "The population distribution by age group was informed by the data from the Australian " \
         "Bureau of Statistics introduced previously. "
