@@ -179,12 +179,31 @@ def adapt_gb_matrices_to_aust(
     modelled_pops.index = age_strata
     aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=age_strata)
 
+    age_group_names = [f"{age}-{age + 4}" for age in age_strata[:-1]] + ["75 and over"]
+    input_pop_filename = "input_population.jpg"
+    input_pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
+    input_pop_fig.update_layout(showlegend=False)
+    input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
+    input_pop_caption = "Australian population sizes by age group obtained from Australia Bureau of Statistics."
+
+    modelled_pop_filename = "modelled_population.jpg"
+    modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
+    modelled_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
+    modelled_pop_fig.write_image(SUPPLEMENT_PATH / modelled_pop_filename)
+    modelled_pop_caption = "Population sizes by age group implemented in the model."
+
     # UK population distribution
     raw_uk_data = load_uk_pop_data()
     uk_age_pops = raw_uk_data[:15]
     uk_age_pops["75 years and up"] = raw_uk_data[15:].sum()
     uk_age_pops.index = age_strata
     uk_age_props = uk_age_pops / uk_age_pops.sum()
+
+    matrix_ref_pop_filename = "matrix_ref_pop.jpg"
+    matrix_ref_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
+    matrix_ref_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
+    matrix_ref_pop_fig.write_image(SUPPLEMENT_PATH / matrix_ref_pop_filename)
+    matrix_ref_pop_caption = "United Kingdom population sizes."
 
     # Ratio
     aust_uk_ratios = aust_age_props / uk_age_props
