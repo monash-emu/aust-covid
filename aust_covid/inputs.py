@@ -130,5 +130,5 @@ def load_param_info(
             working_data = all_data[col]
             if param_keys != working_data.keys():
                 raise ValueError("Incorrect keys for data")
-            out_df[col] = working_data.values()
+            out_df[col] = out_df.index.map(working_data)
     return out_df
