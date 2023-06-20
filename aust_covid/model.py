@@ -339,6 +339,27 @@ def process_mobility(
     return smoothed_mean_mob, modelled_mob_fig, modelled_mob_filename
 
 
+def calculate_mobility_effect(
+    mob_input: pd.Series,
+    plot_start_time: datetime.date,
+    model: CompartmentalModel,
+) -> tuple:
+    mobility_effect = (1.0 + mob_input / 100.0) ** 2.0
+    mobility_effect_func = get_linear_interpolation_function(model.get_epoch().dti_to_index(mobility_effect.index), mobility_effect.to_numpy())
+
+    mob_adj_text = "The adjustment in the rates of contact at the locations affected by mobility is " \
+        "calculated as one plus the averaged Google mobility percentage change metric divided by 100 (usually negative). " \
+        "This is then squared to account for this effect applying to both the infector and infectee of any potential " \
+        "effective contact. "
+    mob_effect_filename = "mobility_effect.jpg"
+    mob_effect_fig = mobility_effect.plot(labels={"value": "adjustment", "date": ""})
+    end_date = model.get_epoch().index_to_dti([model.times[-1]])
+    mob_effect_fig.update_xaxes(range=(plot_start_time, end_date[0]))
+    mob_effect_fig.update_layout(showlegend=False)
+    mob_effect_fig.write_image(SUPPLEMENT_PATH / mob_effect_filename)
+    return mobility_effect, mobility_effect_func, mob_adj_text, mob_effect_fig, mob_effect_filename
+
+
 def add_age_stratification(
     compartments: list,
     age_strata: list,
