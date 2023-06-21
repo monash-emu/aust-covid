@@ -1,9 +1,11 @@
+from pathlib import Path
 from datetime import datetime, timedelta
 from jax import numpy as jnp
 import numpy as np
 import pandas as pd
 import plotly.express as px
-from pathlib import Path
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 from summer2.functions.time import get_linear_interpolation_function
 from summer2 import CompartmentalModel, Stratification, StrainStratification
@@ -239,6 +241,17 @@ def adapt_gb_matrices_to_aust(
     return input_pop_fig, input_pop_caption, input_pop_filename, modelled_pop_fig, modelled_pop_caption, modelled_pop_filename, \
         matrix_ref_pop_fig, matrix_ref_pop_caption, matrix_ref_pop_filename, \
         adjusted_matrices, aust_age_props
+
+
+def plot_mixing_matrices(matrices, locations, strata):
+    matrix_figsize = 800
+    fig = make_subplots(rows=2, cols=2, subplot_titles=locations)
+    positions = [[1, 1], [1, 2], [2, 1], [2, 2]]
+    for i_loc, loc in enumerate(locations):
+        cur_position = positions[i_loc]
+        fig.add_trace(go.Heatmap(x=strata, y=strata, z=matrices[loc], coloraxis = "coloraxis"), cur_position[0], cur_position[1])
+    fig.update_layout(width=matrix_figsize, height=matrix_figsize * 1.15)
+    return fig
 
 
 def get_raw_mobility(
