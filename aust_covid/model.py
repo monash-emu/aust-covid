@@ -228,10 +228,9 @@ def adapt_gb_matrices_to_aust(
         adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
         aust_age_props.index = aust_age_props.index.astype(str)
 
-    # ### Not sure this is actually correct yet
-    description = "Matrices were adjusted to account for the differences in the age distribution of the " \
+    matrix_adjustment_text = "Matrices were adjusted to account for the differences in the age distribution of the " \
         "Australian population distribution in 2022 compared to the population of Great Britain in 2000. " \
-        "The matrices were adjusted by taking the dot product of the unadjusted matrices and the diagonal matrix " \
+        "The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices and the diagonal matrix " \
         "containing the vector of the ratios between the proportion of the British and Australian populations " \
         "within each age bracket as its diagonal elements. " \
         "To align with the methodology of the POLYMOD study \cite{mossong2008} " \
@@ -240,18 +239,37 @@ def adapt_gb_matrices_to_aust(
 
     return input_pop_fig, input_pop_caption, input_pop_filename, modelled_pop_fig, modelled_pop_caption, modelled_pop_filename, \
         matrix_ref_pop_fig, matrix_ref_pop_caption, matrix_ref_pop_filename, \
-        adjusted_matrices, aust_age_props
+        adjusted_matrices, aust_age_props, matrix_adjustment_text
 
 
-def plot_mixing_matrices(matrices, locations, strata):
+def plot_mixing_matrices(
+    matrices: dict, 
+    locations: list, 
+    strata: list, 
+    filename: str,
+) -> tuple:
+    """
+    Visualise the mixing matrices (either raw or adjusted).
+
+    Args:
+        matrices: Collection of arrays containing the age-specific contact rates for each location
+        locations: A string for each epidemiological setting/venue in which transmission can occur
+        strata: Age stratification breakpoints
+        filename: Name for the file to save the plot output
+    
+    Returns:
+        Outputs for visualisation
+    """
     matrix_figsize = 800
-    fig = make_subplots(rows=2, cols=2, subplot_titles=locations)
+    matrix_fig = make_subplots(rows=2, cols=2, subplot_titles=locations)
     positions = [[1, 1], [1, 2], [2, 1], [2, 2]]
     for i_loc, loc in enumerate(locations):
-        cur_position = positions[i_loc]
-        fig.add_trace(go.Heatmap(x=strata, y=strata, z=matrices[loc], coloraxis = "coloraxis"), cur_position[0], cur_position[1])
-    fig.update_layout(width=matrix_figsize, height=matrix_figsize * 1.15)
-    return fig
+        cur_pos = positions[i_loc]
+        matrix_fig.add_trace(go.Heatmap(x=strata, y=strata, z=matrices[loc], coloraxis = "coloraxis"), cur_pos[0], cur_pos[1])
+    matrix_fig.update_layout(width=matrix_figsize, height=matrix_figsize * 1.15)
+    matrix_fig.write_image(SUPPLEMENT_PATH / filename)
+    matrix_fig_text = f"Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace('_', ' ')}. "
+    return matrix_fig, matrix_fig_text
 
 
 def get_raw_mobility(
