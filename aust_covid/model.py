@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import datetime, timedelta
 from jax import numpy as jnp
+from jax import jit
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -270,6 +271,29 @@ def plot_mixing_matrices(
     matrix_fig.write_image(SUPPLEMENT_PATH / filename)
     matrix_fig_text = f"Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace('_', ' ')}. "
     return matrix_fig, matrix_fig_text
+
+
+def video_mixing_matrices(
+    model: CompartmentalModel, 
+    size: int=400
+) -> go.Figure:
+    """
+    Get a video of the mixing matrix scaling over time.
+
+    Args:
+        model: The model to interrogate for its mixing structure
+        size: Request for the size of the plot
+
+    Returns:
+        The animated figure
+    """
+    mmgraph = model.graph.filter("mixing_matrix")
+    mmfunc = jit(mmgraph.get_callable())
+    mixing_matrix_progress = np.stack([mmfunc(model_variables={"time": t})["mixing_matrix"] for t in model.times])
+    matrix_video = px.imshow(mixing_matrix_progress, animation_frame=0, range_color=[0.0, mixing_matrix_progress.max()])
+    matrix_video.update_layout(width=size, height=size * 1.15)
+    matrix_video.layout.updatemenus[0].buttons[0].args[1]["frame"]["duration"] = 20
+    return matrix_video
 
 
 def get_raw_mobility(
