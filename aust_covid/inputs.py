@@ -105,7 +105,7 @@ def load_google_mob_year_df(year=int) -> pd.DataFrame:
 
 def load_param_info(
     data_path: Path, 
-    param_names: dict,
+    parameters: dict,
 ) -> pd.DataFrame:
     """
     Load specific parameter information from 
@@ -113,7 +113,7 @@ def load_param_info(
 
     Args:
         data_path: Location of the source file
-        param_names: The parameters provided
+        parameters: The parameters provided by the user (with their values)
 
     Returns:
         The parameters info DataFrame contains the following fields:
@@ -122,7 +122,7 @@ def load_param_info(
             evidence: TeX-formatted full description of the evidence underpinning the choice of value
     """
     data_cols = ["descriptions", "units", "evidence"]
-    param_keys = param_names.keys()
+    param_keys = parameters.keys()
     out_df = pd.DataFrame(index=param_keys, columns=data_cols)
     with open(data_path, "r") as param_file:
         all_data = yaml.safe_load(param_file)
@@ -131,4 +131,5 @@ def load_param_info(
             if param_keys != working_data.keys():
                 raise ValueError("Incorrect keys for data")
             out_df[col] = out_df.index.map(working_data)
+        out_df["manual_values"] = parameters.values()
     return out_df
