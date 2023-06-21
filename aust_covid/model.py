@@ -171,6 +171,14 @@ def adapt_gb_matrices_to_aust(
     unadjusted_matrices: dict, 
     pop_data: pd.DataFrame,
 ) -> tuple:
+    """
+    Args:
+        age_strata: The age breakpoints being used in the model
+        unadjusted_matrices: The unadjusted matrices
+        pop_data: ABS population numbers
+    Returns:
+        Outputs and graphs for use in the model and through the notebook
+    """
 
     # Australian population distribution 
     aust_pop_series = pop_data["Australia"]
@@ -212,50 +220,13 @@ def adapt_gb_matrices_to_aust(
     adjusted_matrices = {}
     for location in ["school", "home", "work", "other_locations"]:
         unadjusted_matrix = unadjusted_matrices[location]
+        assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], "Unadjusted mixing matrix not square"
         assert len(aust_age_props) == unadjusted_matrix.shape[0], "Different number of Aust age groups from mixing categories"
         assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
         adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
         aust_age_props.index = aust_age_props.index.astype(str)
 
-    return adjusted_matrices, aust_age_props
-
-
-def adapt_gb_matrix_to_aust(
-    age_strata: list,
-    unadjusted_matrix: np.array, 
-    pop_data: pd.DataFrame,
-) -> tuple:
-    """
-    Args:
-        unadjusted_matrix: The unadjusted matrix
-        pop_data: ABS population numbers
-    Returns:
-        Matrix adjusted to target population
-        Proportions of Australian population in modelled age groups
-    """
-    
-    assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], "Unadjusted mixing matrix not square"
-
-    # Australian population distribution by age        
-    aust_pop_series = pop_data["Australia"]
-    modelled_pops = aust_pop_series[:"65-69"]
-    modelled_pops["70"] = aust_pop_series["70-74":].sum()
-    modelled_pops.index = age_strata
-    aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=age_strata)
-    assert len(aust_age_props) == unadjusted_matrix.shape[0], "Different number of Aust age groups from mixing categories"
-
-    # UK population distributions
-    raw_uk_data = load_uk_pop_data()
-    uk_age_pops = raw_uk_data[:14]
-    uk_age_pops["70 years and up"] = raw_uk_data[14:].sum()
-    uk_age_pops.index = age_strata
-    uk_age_props = uk_age_pops / uk_age_pops.sum()
-    assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
-    
-    # Calculation
-    aust_uk_ratios = aust_age_props / uk_age_props
-    adjusted_matrix = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
-    
+    # ### Not sure this is actually correct yet
     description = "Matrices were adjusted to account for the differences in the age distribution of the " \
         "Australian population distribution in 2022 compared to the population of Great Britain in 2000. " \
         "The matrices were adjusted by taking the dot product of the unadjusted matrices and the diagonal matrix " \
@@ -265,35 +236,9 @@ def adapt_gb_matrix_to_aust(
         "we sourced the 2001 UK census population for those living in the UK at the time of the census " \
         "from the Eurostat database (https://ec.europa.eu/eurostat). "
 
-    age_group_names = [f"{age}-{age + 4}" for age in age_strata[:-1]] + ["70 and over"]
-
-    input_pop_filename = "input_population.jpg"
-    input_pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
-    input_pop_fig.update_layout(showlegend=False)
-    input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
-    input_pop_caption = "Australian population sizes by age group obtained from Australia Bureau of Statistics."
-
-    modelled_pop_filename = "modelled_population.jpg"
-    modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
-    modelled_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
-    modelled_pop_fig.write_image(SUPPLEMENT_PATH / modelled_pop_filename)
-    modelled_pop_caption = "Population sizes by age group implemented in the model."
-
-    matrix_ref_pop_filename = "matrix_ref_pop.jpg"
-    matrix_ref_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
-    matrix_ref_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
-    matrix_ref_pop_fig.write_image(SUPPLEMENT_PATH / matrix_ref_pop_filename)
-    matrix_ref_pop_caption = "United Kingdom population sizes."
-
-    adjusted_matrix_filename = "adjusted_matrix.jpg"
-    adjusted_matrix_fig = px.imshow(unadjusted_matrix, x=age_strata, y=age_strata)
-    adjusted_matrix_fig.write_image(SUPPLEMENT_PATH / adjusted_matrix_filename)
-    adjusted_matrix_caption = "Matrices adjusted to Australian population. Values are contacts per person per day. "
-
-    aust_age_props.index = aust_age_props.index.astype(str)
-    return adjusted_matrix, aust_age_props, description, \
-        input_pop_filename, input_pop_caption, input_pop_fig, modelled_pop_filename, modelled_pop_caption, modelled_pop_fig, \
-        matrix_ref_pop_filename, matrix_ref_pop_caption, matrix_ref_pop_fig, adjusted_matrix_filename, adjusted_matrix_caption, adjusted_matrix_fig, modelled_pops
+    return input_pop_fig, input_pop_caption, input_pop_filename, modelled_pop_fig, modelled_pop_caption, modelled_pop_filename, \
+        matrix_ref_pop_fig, matrix_ref_pop_caption, matrix_ref_pop_filename, \
+        adjusted_matrices, aust_age_props
 
 
 def get_raw_mobility(
