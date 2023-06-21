@@ -94,6 +94,15 @@ def load_household_impacts_data():
     return data
 
 
+def load_google_mob_year_df(year=int) -> pd.DataFrame:
+    mob_df = pd.read_csv(DATA_PATH / f"{year}_AU_Region_Mobility_Report.csv", index_col=8)
+    mob_df = mob_df[[isinstance(region, float) for region in mob_df["sub_region_1"]]]  # National data subregion is given as nan
+    mob_cols = [col for col in mob_df.columns if "percent_change_from_baseline" in col]
+    mob_df = mob_df[mob_cols]
+    mob_df.index = pd.to_datetime(mob_df.index)
+    return mob_df
+
+
 def load_param_info(
     data_path: Path, 
     param_names: dict,
@@ -121,5 +130,5 @@ def load_param_info(
             working_data = all_data[col]
             if param_keys != working_data.keys():
                 raise ValueError("Incorrect keys for data")
-            out_df[col] = working_data.values()
+            out_df[col] = out_df.index.map(working_data)
     return out_df
