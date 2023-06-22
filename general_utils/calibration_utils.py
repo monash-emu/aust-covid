@@ -151,8 +151,8 @@ def plot_param_progression(
     Plot progression of parameters over model iterations with posterior density plots.
     
     Args:
-        uncertainty_outputs: Formatted outputs from calibration
-        descriptions: Parameter descriptions
+        idata: Formatted outputs from calibration
+        param_info: Collated information on the parameter values (excluding calibration/priors-related)
     
     Returns:
         Formatted figure object created from arviz plotting command
@@ -179,8 +179,8 @@ def plot_param_posterior(
     Plot posterior distribution of parameters.
 
     Args:
-        uncertainty_outputs: Formatted outputs from calibration
-        descriptions: Parameter descriptions
+        idata: Formatted outputs from calibration
+        param_info: Collated information on the parameter values (excluding calibration/priors-related)
         grid_request: How the subplots should be arranged
             
     Returns:
@@ -275,9 +275,8 @@ def tabulate_parameters(
 
     Args:
         parameters: All parameter values, even if calibrated
-        param_units: Parameter units
         priors: Priors for use in calibration algorithm
-        param_info: 
+        param_info: Collated information on the parameter values (excluding calibration/priors-related)
 
     Returns:
         Formatted table combining the information listed above
@@ -298,7 +297,7 @@ def tabulate_priors(
 
     Args:
         priors: Priors for use in calibration algorithm
-        param_info: 
+        param_info: Collated information on the parameter values (excluding calibration/priors-related)
 
     Returns:
         Formatted table combining the information listed above
