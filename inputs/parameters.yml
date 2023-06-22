@@ -13,7 +13,7 @@ descriptions:
   notifs_shape: "Gamma distribution shape, infection to notification delay"
   notifs_mean: "Gamma distribution mean, infection to notification delay"
   natural_immunity_period: "Natural immunity period"
-  vacc_infect_effect: "Vaccination infection protection"
+  vacc_infect_protect: "Vaccination infection protection"
   vacc_prop: "Proportion vaccinated"
 units:
   contact_rate: "contacts per person per day"
@@ -30,7 +30,7 @@ units:
   notifs_shape: ""
   notifs_mean: "days"
   natural_immunity_period: "days"
-  vacc_infect_effect: ""
+  vacc_infect_protect: ""
   vacc_prop: ""
 evidence:
   contact_rate: "Calibrated within plausible range"
@@ -47,5 +47,5 @@ evidence:
   notifs_shape: "Assumed"
   notifs_mean: "Assumed"
   natural_immunity_period: "Assumed"
-  vacc_infect_effect: "Assumed"
+  vacc_infect_protect: "Assumed"
   vacc_prop: "Assumed"
