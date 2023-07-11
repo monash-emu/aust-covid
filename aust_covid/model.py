@@ -381,7 +381,7 @@ def get_mobility_mapper() -> tuple:
     return mobility_scaling, mob_map_text
 
 
-def add_age_stratification(
+def get_age_stratification(
     compartments: list,
     age_strata: list,
     pop_splits: pd.Series,
