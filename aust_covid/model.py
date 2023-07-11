@@ -9,7 +9,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 from summer2.functions.time import get_linear_interpolation_function
-from summer2 import CompartmentalModel, Stratification, StrainStratification
+from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
 from aust_covid.model_utils import triangle_wave_func, convolve_probability, build_gamma_dens_interval_func
@@ -417,6 +417,25 @@ def get_strain_stratification(
         f"including compartments to represent strains: {', '.join(strain_strings)}. " \
         f"This was implemented using summer's `{StrainStratification.__name__}' class. "
     return strain_strat, description
+
+
+def get_vacc_stratification(compartments, infection_processes):
+    vacc_strat = Stratification("vaccination", ["vacc", "unvacc"], compartments)
+    for infection_process in infection_processes:
+        vacc_strat.set_flow_adjustments(
+            infection_process,
+            {
+                "vacc": Multiply(1.0 - Parameter("vacc_infect_protect")),
+                "unvacc": None,
+            },
+        )
+    vacc_strat.set_population_split(
+        {
+            "vacc": Parameter("vacc_prop"),
+            "unvacc": 1.0 - Parameter("vacc_prop"),
+        }
+    )
+    return vacc_strat
 
 
 def seed_vocs(
