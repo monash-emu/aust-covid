@@ -613,6 +613,14 @@ def track_strain_prop(
         "the infectious compartment that is infected with the modelled strain of interest. "
 
 
+def track_reproduction_number(model, infection_processes):
+    model.request_output_for_compartments("n_infectious", ["infectious"])
+    for process in infection_processes:
+        model.request_output_for_flow(process, process, save_results=False)
+    model.request_function_output("all_infection", sum([DerivedOutput(process) for process in infection_processes]), save_results=False)
+    model.request_function_output("reproduction_number", DerivedOutput("all_infection") / DerivedOutput("n_infectious") * Parameter("infectious_period"))
+
+
 def show_cdr_profiles(
     start_cdr_samples: pd.Series, 
     hh_test_ratio: pd.Series,
