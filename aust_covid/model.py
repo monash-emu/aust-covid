@@ -630,14 +630,15 @@ def track_child_adult_sero_prevalence(
     adult_cut_off,
 ) -> str:    
     seropos_comps = [comp for comp in compartments if comp != "susceptible"]
-    child_agegroup_filter = {"agegroup": age for age in model.stratifications["agegroup"].strata if int(age) < adult_cut_off}
-    adult_agegroup_filter = {"agegroup": age for age in model.stratifications["agegroup"].strata if int(age) >= adult_cut_off}
-    model.request_output_for_compartments("child_pop", compartments, strata=child_agegroup_filter, save_results=False)
-    model.request_output_for_compartments("adult_pop", compartments, strata=adult_agegroup_filter, save_results=False)
-    model.request_output_for_compartments("child_seropos", seropos_comps, strata=child_agegroup_filter, save_results=False)
-    model.request_output_for_compartments("adult_seropos", seropos_comps, strata=adult_agegroup_filter, save_results=False)
-    model.request_function_output("child_seropos_prop", DerivedOutput("child_seropos") / DerivedOutput("child_pop"))
-    model.request_function_output("adult_seropos_prop", DerivedOutput("adult_seropos") / DerivedOutput("adult_pop"))
+    age_strata = model.stratifications["agegroup"].strata
+    filters = {
+        "child": {"agegroup": age for age in age_strata if int(age) < adult_cut_off},
+        "adult": {"agegroup": age for age in age_strata if int(age) >= adult_cut_off},
+    }
+    for age_cat in ["child", "adult"]:
+        model.request_output_for_compartments(f"{age_cat}_pop", compartments, strata=filters[age_cat], save_results=False)
+        model.request_output_for_compartments(f"{age_cat}_seropos", seropos_comps, strata=filters[age_cat], save_results=False)
+        model.request_function_output(f"{age_cat}_seropos_prop", DerivedOutput(f"{age_cat}_seropos") / DerivedOutput(f"{age_cat}_pop"))
 
 
 def track_strain_prop(
