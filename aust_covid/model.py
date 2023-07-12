@@ -410,29 +410,29 @@ def get_strain_stratification(
     compartments: list,
     strain_strata,
 ) -> tuple:
-    strain_strings = [f"{strain.replace('ba', 'BA.')}" for strain in strain_strata]
-    compartments_to_stratify = [comp for comp in compartments if comp != "susceptible"]
-    strain_strat = StrainStratification("strain", strain_strata, compartments_to_stratify)
-    description = f"We stratified the following compartments according to strain: {', '.join(compartments_to_stratify)}, " \
-        f"including compartments to represent strains: {', '.join(strain_strings)}. " \
+    strain_strings = [f'{strain.replace("ba", "BA.")}' for strain in strain_strata]
+    compartments_to_stratify = [comp for comp in compartments if comp != 'susceptible']
+    strain_strat = StrainStratification('strain', strain_strata, compartments_to_stratify)
+    description = f'We stratified the following compartments according to strain: {", ".join(compartments_to_stratify)}, ' \
+        f'including compartments to represent strains: {", ".join(strain_strings)}. ' \
         f"This was implemented using summer's `{StrainStratification.__name__}' class. "
     return strain_strat, description
 
 
 def get_vacc_stratification(compartments, infection_processes):
-    vacc_strat = Stratification("vaccination", ["vacc", "unvacc"], compartments)
+    vacc_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
     for infection_process in infection_processes:
         vacc_strat.set_flow_adjustments(
             infection_process,
             {
-                "vacc": Multiply(1.0 - Parameter("vacc_infect_protect")),
-                "unvacc": None,
+                'vacc': Multiply(1.0 - Parameter('vacc_infect_protect')),
+                'unvacc': None,
             },
         )
     vacc_strat.set_population_split(
         {
-            "vacc": Parameter("vacc_prop"),
-            "unvacc": 1.0 - Parameter("vacc_prop"),
+            'vacc': Parameter('vacc_prop'),
+            'unvacc': 1.0 - Parameter('vacc_prop'),
         }
     )
     return vacc_strat
@@ -440,22 +440,22 @@ def get_vacc_stratification(compartments, infection_processes):
 
 def get_spatial_stratification(compartments, infection_processes, wa_prop):
     spatial_strat = Stratification(
-        "states",
-        ["wa", "other"],
+        'states',
+        ['wa', 'other'],
         compartments,
     )
     spatial_strat.set_population_split(
         {
-            "wa": wa_prop,
-            "other": 1.0 - wa_prop,
+            'wa': wa_prop,
+            'other': 1.0 - wa_prop,
         }
     )
     for infection_process in infection_processes:
         spatial_strat.set_flow_adjustments(
             infection_process,
             {
-                "wa": Overwrite(0.0),
-                "other": None,
+                'wa': Overwrite(0.0),
+                'other': None,
             }
         )
     return spatial_strat
@@ -464,27 +464,27 @@ def get_spatial_stratification(compartments, infection_processes, wa_prop):
 def seed_vocs(
     model: CompartmentalModel,
 ) -> str:
-    strains = model.stratifications["strain"].strata
+    strains = model.stratifications['strain'].strata
     for strain in strains:
         voc_seed_func = Function(
             triangle_wave_func, 
             [
                 Time, 
-                Parameter(f"{strain}_seed_time"), 
-                Parameter("seed_duration"), 
-                Parameter("seed_rate"),
+                Parameter(f'{strain}_seed_time'), 
+                Parameter('seed_duration'), 
+                Parameter('seed_rate'),
             ]
         )
         model.add_importation_flow(
-            f"seed_{strain}",
+            f'seed_{strain}',
             voc_seed_func,
-            "latent",
-            dest_strata={"strain": strain},
+            'latent',
+            dest_strata={'strain': strain},
             split_imports=True,
         )
-    return f"Each strain (including the starting {strains[0].replace('ba', 'BA.')} strain) is seeded through " \
-        "a step function that allows the introduction of a constant rate of new infectious " \
-        "persons into the system over a fixed seeding duration. "
+    return f'Each strain (including the starting {strains[0].replace("ba", "BA.")} strain) is seeded through ' \
+        'a step function that allows the introduction of a constant rate of new infectious ' \
+        'persons into the system over a fixed seeding duration. '
 
 
 def add_reinfection(
@@ -494,55 +494,55 @@ def add_reinfection(
 ) -> str:
     for dest_strain in strain_strata:
         for source_strain in strain_strata:
-            process = "early_reinfection"
-            origin = "recovered"
-            destination = "latent"
+            process = 'early_reinfection'
+            origin = 'recovered'
+            destination = 'latent'
             if int(dest_strain[-1]) > int(source_strain[-1]): 
                 model.add_infection_frequency_flow(
                     process, 
-                    mob_adjuster * Parameter("contact_rate") * Parameter(f"{dest_strain}_escape"),
+                    mob_adjuster * Parameter('contact_rate') * Parameter(f'{dest_strain}_escape'),
                     origin, 
                     destination,
-                    source_strata={"strain": source_strain},
-                    dest_strata={"strain": dest_strain},
+                    source_strata={'strain': source_strain},
+                    dest_strata={'strain': dest_strain},
                 )
-            process = "late_reinfection"
-            origin = "waned"
+            process = 'late_reinfection'
+            origin = 'waned'
             model.add_infection_frequency_flow(
                 process, 
-                mob_adjuster * Parameter("contact_rate"),
+                mob_adjuster * Parameter('contact_rate'),
                 origin, 
                 destination,
-                source_strata={"strain": source_strain},
-                dest_strata={"strain": dest_strain},
+                source_strata={'strain': source_strain},
+                dest_strata={'strain': dest_strain},
             )
 
-    return "Reinfection is possible from both the recovered " \
-        "and waned compartments, with these processes termed " \
+    return 'Reinfection is possible from both the recovered ' \
+        'and waned compartments, with these processes termed ' \
         "`early' and `late' reinfection respectively. " \
-        "In the case of early reinfection, this is only possible " \
-        "for persons who have recovered from an earlier circulating sub-variant. " \
-        "That is, BA.2 early reinfection is possible for persons previously infected with " \
-        "BA.1, while BA.5 reinfection is possible for persons previously infected with " \
-        "BA.1 or BA.2. The degree of immune escape is determined by the infecting variant " \
-        "and differs for BA.2 and BA.5. This implies that the rate of reinfection " \
-        "is equal for BA.5 reinfecting those recovered from past BA.1 infection " \
-        "as it is for those recovered from past BA.2 infection. " \
-        "For late reinfection, all natural immunity is lost for persons in the waned compartment, " \
-        "such that the rate of reinfection for these persons is the same as the rate of infection " \
-        "for fully susceptible persons. " \
-        "As for the first infection process, all reinfection processes transition individuals " \
-        "to the latent compartment corresponding to the infecting strain. "
+        'In the case of early reinfection, this is only possible ' \
+        'for persons who have recovered from an earlier circulating sub-variant. ' \
+        'That is, BA.2 early reinfection is possible for persons previously infected with ' \
+        'BA.1, while BA.5 reinfection is possible for persons previously infected with ' \
+        'BA.1 or BA.2. The degree of immune escape is determined by the infecting variant ' \
+        'and differs for BA.2 and BA.5. This implies that the rate of reinfection ' \
+        'is equal for BA.5 reinfecting those recovered from past BA.1 infection ' \
+        'as it is for those recovered from past BA.2 infection. ' \
+        'For late reinfection, all natural immunity is lost for persons in the waned compartment, ' \
+        'such that the rate of reinfection for these persons is the same as the rate of infection ' \
+        'for fully susceptible persons. ' \
+        'As for the first infection process, all reinfection processes transition individuals ' \
+        'to the latent compartment corresponding to the infecting strain. '
 
 
 def add_incidence_output(
     model: CompartmentalModel,
     infection_processes: list,
 ) -> str:
-    output = "incidence"
+    output = 'incidence'
     for process in infection_processes:
-        model.request_output_for_flow(f"{process}_onset", process, save_results=False)
-    total_infection_processes = sum([DerivedOutput(f"{process}_onset") for process in infection_processes])
+        model.request_output_for_flow(f'{process}_onset', process, save_results=False)
+    total_infection_processes = sum([DerivedOutput(f'{process}_onset') for process in infection_processes])
     model.request_function_output(output, func=total_infection_processes)
     return f'Modelled {output} is calculated as ' \
         f'the absolute rate of {" or ".join([process.replace("_", " ") for process in infection_processes])} ' \
