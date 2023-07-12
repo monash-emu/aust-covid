@@ -16,8 +16,8 @@ from aust_covid.model_utils import triangle_wave_func, convolve_probability, bui
 from aust_covid.inputs import load_pop_data, load_uk_pop_data, load_household_impacts_data, load_google_mob_year_df
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
-SUPPLEMENT_PATH = BASE_PATH / "supplement"
-DATA_PATH = BASE_PATH / "data"
+SUPPLEMENT_PATH = BASE_PATH / 'supplement'
+DATA_PATH = BASE_PATH / 'data'
 
 
 """
@@ -60,7 +60,7 @@ def build_base_model(
         Simple model starting point for extension through the following functions
         with text description of the process.
     """
-    infectious_compartment = "infectious"
+    infectious_compartment = 'infectious'
     model = CompartmentalModel(
         times=(
             (start_date - ref_date).days, 
@@ -70,10 +70,10 @@ def build_base_model(
         infectious_compartments=[infectious_compartment],
         ref_date=ref_date,
     )
-    description = f"The base model consists of {len(compartments)} states, " \
-        f"representing the following states: {', '.join(compartments)}. " \
-        f"Only the {infectious_compartment} compartment contributes to the force of infection. " \
-        f"The model is run from {str(start_date.date())} to {str(end_date.date())}. "
+    description = f'The base model consists of {len(compartments)} states, ' \
+        f'representing the following states: {", ".join(compartments)}. ' \
+        f'Only the {infectious_compartment} compartment contributes to the force of infection. ' \
+        f'The model is run from {str(start_date.date())} to {str(end_date.date())}. '
     return model, description
 
 
@@ -84,9 +84,9 @@ def get_pop_data() -> tuple:
         with description.
     """
     pop_data, sheet_name = load_pop_data()
-    sheet_name = sheet_name.replace("_", "\\textunderscore")
-    description = f"For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded " \
-        "from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. "
+    sheet_name = sheet_name.replace('_', '\\textunderscore')
+    description = f'For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded ' \
+        'from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. '
     return pop_data, description
 
 
@@ -103,10 +103,10 @@ def set_starting_conditions(
     Returns:
         Description of data being used
     """
-    total_pop = pop_data["Australia"].sum() * adjuster
-    model.set_initial_population({"susceptible": total_pop})
-    return f"The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, " \
-        "with infectious persons introduced later through strain seeding as described below. "
+    total_pop = pop_data['Australia'].sum() * adjuster
+    model.set_initial_population({'susceptible': total_pop})
+    return f'The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, ' \
+        'with infectious persons introduced later through strain seeding as described below. '
 
 
 def add_infection(
@@ -119,54 +119,54 @@ def add_infection(
     Returns:
         Description of process added
     """
-    process = "infection"
-    origin = "susceptible"
-    destination = "latent"
-    model.add_infection_frequency_flow(process, Parameter("contact_rate"), origin, destination)
-    return f"The {process} process moves people from the {origin} " \
-        f"compartment to the {destination} compartment, " \
-        "under the frequency-dependent transmission assumption. "
+    process = 'infection'
+    origin = 'susceptible'
+    destination = 'latent'
+    model.add_infection_frequency_flow(process, Parameter('contact_rate'), origin, destination)
+    return f'The {process} process moves people from the {origin} ' \
+        f'compartment to the {destination} compartment, ' \
+        'under the frequency-dependent transmission assumption. '
 
 
 def add_progression(
     model: CompartmentalModel,
 ) -> str:
-    process = "progression"
-    origin = "latent"
-    destination = "infectious"
-    parameter_name = "latent_period"
+    process = 'progression'
+    origin = 'latent'
+    destination = 'infectious'
+    parameter_name = 'latent_period'
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
-    return f"The {process} process moves " \
-        f"people from the {origin} state to the {destination} compartment, " \
-        f"with the transition rate calculated as the reciprocal of the {parameter_name.replace('_', ' ')}. "
+    return f'The {process} process moves ' \
+        f'people from the {origin} state to the {destination} compartment, ' \
+        f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
 
 
 def add_recovery(
     model: CompartmentalModel,
 ) -> str:
-    process = "recovery"
-    origin = "infectious"
-    destination = "recovered"
-    parameter_name = "infectious_period"
+    process = 'recovery'
+    origin = 'infectious'
+    destination = 'recovered'
+    parameter_name = 'infectious_period'
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
-    return f"The {process} process moves " \
-        f"people from the {origin} state to the {destination} compartment, " \
-        f"with the transition rate calculated as the reciprocal of the {parameter_name.replace('_', ' ')}. "
+    return f'The {process} process moves ' \
+        f'people from the {origin} state to the {destination} compartment, ' \
+        f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
 
 
 def add_waning(
     model: CompartmentalModel,
 ) -> str:
-    process = "waning"
-    origin = "recovered"
-    destination = "waned"
-    parameter_name = "natural_immunity_period"
+    process = 'waning'
+    origin = 'recovered'
+    destination = 'waned'
+    parameter_name = 'natural_immunity_period'
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
-    return "A waned compartment is included in the model " \
-        "to represent persons who no longer have immunity from past natural immunity. " \
-        f"As these persons lose their infection-induced immunity, they transition from the " \
-        f"{origin} compartment to the {destination} compartment at a rate equal to the reciprocal of the " \
-        f"{parameter_name.replace('_', ' ')}. "
+    return 'A waned compartment is included in the model ' \
+        'to represent persons who no longer have immunity from past natural immunity. ' \
+        f'As these persons lose their infection-induced immunity, they transition from the ' \
+        f'{origin} compartment to the {destination} compartment at a rate equal to the reciprocal of the ' \
+        f'{parameter_name.replace("_", " ")}. '
 
 
 def adapt_gb_matrices_to_aust(
@@ -184,59 +184,59 @@ def adapt_gb_matrices_to_aust(
     """
 
     # Australian population distribution 
-    aust_pop_series = pop_data["Australia"]
-    modelled_pops = aust_pop_series[:"70-74"]
-    modelled_pops["75"] = aust_pop_series["75-79":].sum()
+    aust_pop_series = pop_data['Australia']
+    modelled_pops = aust_pop_series[:'70-74']
+    modelled_pops['75'] = aust_pop_series['75-79':].sum()
     modelled_pops.index = age_strata
     aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=age_strata)
 
-    age_group_names = [f"{age}-{age + 4}" for age in age_strata[:-1]] + ["75 and over"]
-    input_pop_filename = "input_population.jpg"
-    input_pop_fig = px.bar(aust_pop_series, labels={"value": "population", "Age (years)": ""})
+    age_group_names = [f'{age}-{age + 4}' for age in age_strata[:-1]] + ['75 and over']
+    input_pop_filename = 'input_population.jpg'
+    input_pop_fig = px.bar(aust_pop_series, labels={'value': 'population', 'Age (years)': ''})
     input_pop_fig.update_layout(showlegend=False)
     input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
-    input_pop_caption = "Australian population sizes by age group obtained from Australia Bureau of Statistics."
+    input_pop_caption = 'Australian population sizes by age group obtained from Australia Bureau of Statistics.'
 
-    modelled_pop_filename = "modelled_population.jpg"
-    modelled_pop_fig = px.bar(modelled_pops, labels={"value": "population", "index": ""})
+    modelled_pop_filename = 'modelled_population.jpg'
+    modelled_pop_fig = px.bar(modelled_pops, labels={'value': 'population', 'index': ''})
     modelled_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
     modelled_pop_fig.write_image(SUPPLEMENT_PATH / modelled_pop_filename)
-    modelled_pop_caption = "Population sizes by age group implemented in the model."
+    modelled_pop_caption = 'Population sizes by age group implemented in the model.'
 
     # UK population distribution
     raw_uk_data = load_uk_pop_data()
     uk_age_pops = raw_uk_data[:15]
-    uk_age_pops["75 years and up"] = raw_uk_data[15:].sum()
+    uk_age_pops['75 years and up'] = raw_uk_data[15:].sum()
     uk_age_pops.index = age_strata
     uk_age_props = uk_age_pops / uk_age_pops.sum()
 
-    matrix_ref_pop_filename = "matrix_ref_pop.jpg"
-    matrix_ref_pop_fig = px.bar(uk_age_pops, labels={"value": "population", "index": ""})
+    matrix_ref_pop_filename = 'matrix_ref_pop.jpg'
+    matrix_ref_pop_fig = px.bar(uk_age_pops, labels={'value': 'population', 'index': ''})
     matrix_ref_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
     matrix_ref_pop_fig.write_image(SUPPLEMENT_PATH / matrix_ref_pop_filename)
-    matrix_ref_pop_caption = "United Kingdom population sizes."
+    matrix_ref_pop_caption = 'United Kingdom population sizes.'
 
     # Ratio
     aust_uk_ratios = aust_age_props / uk_age_props
 
     # Adjust each location-specific matrix
     adjusted_matrices = {}
-    for location in ["school", "home", "work", "other_locations"]:
+    for location in ['school', 'home', 'work', 'other_locations']:
         unadjusted_matrix = unadjusted_matrices[location]
-        assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], "Unadjusted mixing matrix not square"
-        assert len(aust_age_props) == unadjusted_matrix.shape[0], "Different number of Aust age groups from mixing categories"
-        assert len(uk_age_props) == unadjusted_matrix.shape[0], "Different number of UK age groups from mixing categories"
+        assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], 'Unadjusted mixing matrix not square'
+        assert len(aust_age_props) == unadjusted_matrix.shape[0], 'Different number of Aust age groups from mixing categories'
+        assert len(uk_age_props) == unadjusted_matrix.shape[0], 'Different number of UK age groups from mixing categories'
         adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
         aust_age_props.index = aust_age_props.index.astype(str)
 
-    matrix_adjustment_text = "Matrices were adjusted to account for the differences in the age distribution of the " \
-        "Australian population distribution in 2022 compared to the population of Great Britain in 2000. " \
-        "The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices and the diagonal matrix " \
-        "containing the vector of the ratios between the proportion of the British and Australian populations " \
-        "within each age bracket as its diagonal elements. " \
-        "To align with the methodology of the POLYMOD study \cite{mossong2008} " \
-        "we sourced the 2001 UK census population for those living in the UK at the time of the census " \
-        "from the Eurostat database (https://ec.europa.eu/eurostat). "
+    matrix_adjustment_text = 'Matrices were adjusted to account for the differences in the age distribution of the ' \
+        'Australian population distribution in 2022 compared to the population of Great Britain in 2000. ' \
+        'The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices and the diagonal matrix ' \
+        'containing the vector of the ratios between the proportion of the British and Australian populations ' \
+        'within each age bracket as its diagonal elements. ' \
+        'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
+        'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
+        'from the Eurostat database (https://ec.europa.eu/eurostat). '
 
     return input_pop_fig, input_pop_caption, input_pop_filename, modelled_pop_fig, modelled_pop_caption, modelled_pop_filename, \
         matrix_ref_pop_fig, matrix_ref_pop_caption, matrix_ref_pop_filename, \
@@ -269,7 +269,7 @@ def plot_mixing_matrices(
         matrix_fig.add_trace(go.Heatmap(x=strata, y=strata, z=matrices[loc], coloraxis = "coloraxis"), cur_pos[0], cur_pos[1])
     matrix_fig.update_layout(width=matrix_figsize, height=matrix_figsize * 1.15)
     matrix_fig.write_image(SUPPLEMENT_PATH / filename)
-    matrix_fig_text = f"Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace('_', ' ')}. "
+    matrix_fig_text = f'Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace("_", " ")}. '
     return matrix_fig, matrix_fig_text
 
 
@@ -287,12 +287,12 @@ def video_mixing_matrices(
     Returns:
         The animated figure
     """
-    mmgraph = model.graph.filter("mixing_matrix")
+    mmgraph = model.graph.filter('mixing_matrix')
     mmfunc = jit(mmgraph.get_callable())
-    mixing_matrix_progress = np.stack([mmfunc(model_variables={"time": t})["mixing_matrix"] for t in model.times])
+    mixing_matrix_progress = np.stack([mmfunc(model_variables={'time': t})['mixing_matrix'] for t in model.times])
     matrix_video = px.imshow(mixing_matrix_progress, animation_frame=0, range_color=[0.0, mixing_matrix_progress.max()])
     matrix_video.update_layout(width=size, height=size * 1.15)
-    matrix_video.layout.updatemenus[0].buttons[0].args[1]["frame"]["duration"] = 20
+    matrix_video.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = 20
     return matrix_video
 
 
@@ -309,15 +309,15 @@ def get_raw_mobility(
         Raw mobility data
     """
     mob_df = pd.concat([load_google_mob_year_df(2021), load_google_mob_year_df(2022)])
-    mob_df.columns = [col.replace("_percent_change_from_baseline", "").replace("_", " ") for col in mob_df.columns]
+    mob_df.columns = [col.replace('_percent_change_from_baseline', '').replace('_', ' ') for col in mob_df.columns]
     end_date = model.get_epoch().index_to_dti([model.times[-1]])
     
-    raw_mob_filename = "raw_mobility.jpg"
-    raw_mob_fig = mob_df.plot(labels={"value": "percent change from baseline", "date": ""})
+    raw_mob_filename = 'raw_mobility.jpg'
+    raw_mob_fig = mob_df.plot(labels={'value': 'percent change from baseline', 'date': ''})
     raw_mob_fig.update_xaxes(range=(plot_start_time, end_date[0]))
     raw_mob_fig.write_image(SUPPLEMENT_PATH / raw_mob_filename)
 
-    raw_mob_text = "Google mobility data were downloaded from https://www.gstatic.com/covid19/ mobility/Region_Mobility_Report_CSVs.zip" \
+    raw_mob_text = 'Google mobility data were downloaded from https://www.gstatic.com/covid19/ mobility/Region_Mobility_Report_CSVs.zip' \
         "on the 15th June 2023. These spreadsheets provide daily estimates of rates of attendance at certain `locations' and can " \
         "be used to provide an overall picture of the populations's attendance at specific venue types. "
 
@@ -338,14 +338,14 @@ def process_mobility(
     Returns:
         Processed mobility data to be used in model
     """
-    non_resi_mob = mob_df[[col for col in mob_df.columns if "residential" not in col]]
+    non_resi_mob = mob_df[[col for col in mob_df.columns if 'residential' not in col]]
     mean_mob = non_resi_mob.mean(axis=1)
     smoothed_mean_mob = mean_mob.rolling(window=14).mean().dropna()
-    combined_mob = pd.DataFrame({"mean non-residential": mean_mob, "smoothed mean non-resi": smoothed_mean_mob})
+    combined_mob = pd.DataFrame({'mean non-residential': mean_mob, 'smoothed mean non-resi': smoothed_mean_mob})
     end_date = model.get_epoch().index_to_dti([model.times[-1]])
 
-    modelled_mob_filename = "modelled_mobility.jpg"
-    modelled_mob_fig = combined_mob.plot(labels={"value": "percent change from baseline", "date": ""})
+    modelled_mob_filename = 'modelled_mobility.jpg'
+    modelled_mob_fig = combined_mob.plot(labels={'value': 'percent change from baseline', 'date': ''})
     modelled_mob_fig.update_xaxes(range=(plot_start_time, end_date[0]))
     modelled_mob_fig.write_image(SUPPLEMENT_PATH / modelled_mob_filename)
     return smoothed_mean_mob, modelled_mob_fig, modelled_mob_filename
@@ -359,12 +359,12 @@ def calculate_mobility_effect(
     mobility_effect = (1.0 + mob_input / 100.0) ** 0.0
     mobility_effect_func = get_linear_interpolation_function(model.get_epoch().dti_to_index(mobility_effect.index), mobility_effect.to_numpy())
 
-    mob_adj_text = "The adjustment in the rates of contact at the locations affected by mobility is " \
-        "calculated as one plus the averaged Google mobility percentage change metric divided by 100 (usually negative). " \
-        "This is then squared to account for this effect applying to both the infector and infectee of any potential " \
-        "effective contact. "
-    mob_effect_filename = "mobility_effect.jpg"
-    mob_effect_fig = mobility_effect.plot(labels={"value": "adjustment", "date": ""})
+    mob_adj_text = 'The adjustment in the rates of contact at the locations affected by mobility is ' \
+        'calculated as one plus the averaged Google mobility percentage change metric divided by 100 (usually negative). ' \
+        'This is then squared to account for this effect applying to both the infector and infectee of any potential ' \
+        'effective contact. '
+    mob_effect_filename = 'mobility_effect.jpg'
+    mob_effect_fig = mobility_effect.plot(labels={'value': 'adjustment', 'date': ''})
     end_date = model.get_epoch().index_to_dti([model.times[-1]])
     mob_effect_fig.update_xaxes(range=(plot_start_time, end_date[0]))
     mob_effect_fig.update_layout(showlegend=False)
@@ -373,11 +373,11 @@ def calculate_mobility_effect(
 
 
 def get_mobility_mapper() -> tuple:
-    mob_map_text = "The mobility mapping function is used to scale the contribution of contacts at " \
+    mob_map_text = 'The mobility mapping function is used to scale the contribution of contacts at ' \
         "workplaces and in `other locations' to the overall time-varying mixing matrix " \
-        "(that is, contacts in locations other than the home and in schools). "
+        '(that is, contacts in locations other than the home and in schools). '
     def mobility_scaling(matrices, mobility_func):
-        return matrices["home"] + matrices["school"] + matrices["work"] + mobility_func * matrices["other_locations"]
+        return matrices['home'] + matrices['school'] + matrices['work'] + mobility_func * matrices['other_locations']
     return mobility_scaling, mob_map_text
 
 
@@ -392,17 +392,17 @@ def get_age_stratification(
         pop_splits: The proportion of the population to assign to each age group
         matrix: The mixing matrix to apply
     """
-    age_strat = Stratification("agegroup", age_strata, compartments)
-    assert len(pop_splits) == len(age_strata), "Different number of age group sizes from age strata request"
+    age_strat = Stratification('agegroup', age_strata, compartments)
+    assert len(pop_splits) == len(age_strata), 'Different number of age group sizes from age strata request'
     age_strat.set_population_split(pop_splits.to_dict())
     age_strat.set_mixing_matrix(matrix)
-    description = "We stratified all compartments of the base model " \
-        "into sequential age brackets in five year " \
-        "bands from age 0 to 4 through to age 70 to 74 " \
-        "with a final age band to represent those aged 75 and above. " \
-        "These age brackets were chosen to match those used by the POLYMOD survey and so fit with the mixing data available. " \
-        "The population distribution by age group was informed by the data from the Australian " \
-        "Bureau of Statistics introduced previously. "
+    description = 'We stratified all compartments of the base model ' \
+        'into sequential age brackets in five year ' \
+        'bands from age 0 to 4 through to age 70 to 74 ' \
+        'with a final age band to represent those aged 75 and above. ' \
+        'These age brackets were chosen to match those used by the POLYMOD survey and so fit with the mixing data available. ' \
+        'The population distribution by age group was informed by the data from the Australian ' \
+        'Bureau of Statistics introduced previously. '
     return age_strat, description
 
 
