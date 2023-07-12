@@ -9,7 +9,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 from summer2.functions.time import get_linear_interpolation_function
-from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply
+from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply, Overwrite
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
 from aust_covid.model_utils import triangle_wave_func, convolve_probability, build_gamma_dens_interval_func
@@ -438,6 +438,29 @@ def get_vacc_stratification(compartments, infection_processes):
     return vacc_strat
 
 
+def get_spatial_stratification(model, compartments, infection_processes, wa_prop):
+    spatial_strat = Stratification(
+        "states",
+        ["wa", "non_wa"],
+        compartments,
+    )
+    spatial_strat.set_population_split(
+        {
+            "wa": wa_prop,
+            "non_wa": 1.0 - wa_prop,
+        }
+    )
+    for infection_process in infection_processes:
+        spatial_strat.set_flow_adjustments(
+            infection_process,
+            {
+                "wa": Overwrite(0.0),
+                "non_wa": None,
+            }
+        )
+    return spatial_strat
+
+
 def seed_vocs(
     model: CompartmentalModel,
 ) -> str:
@@ -599,6 +622,18 @@ def track_sero_prevalence(
     model.request_output_for_compartments("seropos", seropos_comps)
     model.request_function_output("seropos_prop", DerivedOutput("seropos") / DerivedOutput("total_pop"))
     return "Seroprevalence is calculated as the proportion of the population ever leaving the susceptible compartment. "
+
+
+def track_adult_sero_prevalence(
+    compartments: list, 
+    model: CompartmentalModel,
+    adult_cut_off,
+) -> str:    
+    seropos_comps = [comp for comp in compartments if comp != "susceptible"]
+    adult_agegroup_filter = {"agegroup": age for age in model.stratifications["agegroup"].strata if int(age) >= adult_cut_off}
+    model.request_output_for_compartments("adult_pop", compartments, strata=adult_agegroup_filter)
+    model.request_output_for_compartments("adult_seropos", seropos_comps, strata=adult_agegroup_filter)
+    model.request_function_output("adult_seropos_prop", DerivedOutput("adult_seropos") / DerivedOutput("adult_pop"))
 
 
 def track_strain_prop(
