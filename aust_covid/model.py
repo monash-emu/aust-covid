@@ -439,15 +439,17 @@ def get_vacc_stratification(compartments, infection_processes):
 
 
 def get_spatial_stratification(model, compartments, infection_processes, wa_prop):
+    syd_melb_prop = 0.4
     spatial_strat = Stratification(
         "states",
-        ["wa", "non_wa"],
+        ["wa", "syd_melb", "other"],
         compartments,
     )
     spatial_strat.set_population_split(
         {
             "wa": wa_prop,
-            "non_wa": 1.0 - wa_prop,
+            "syd_melb": syd_melb_prop,
+            "other": 1.0 - wa_prop - syd_melb_prop,
         }
     )
     for infection_process in infection_processes:
@@ -455,7 +457,8 @@ def get_spatial_stratification(model, compartments, infection_processes, wa_prop
             infection_process,
             {
                 "wa": Overwrite(0.0),
-                "non_wa": None,
+                "syd_melb": None,
+                "other": Multiply(Parameter("rural_susc_adj")),
             }
         )
     return spatial_strat
