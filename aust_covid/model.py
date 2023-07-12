@@ -356,7 +356,7 @@ def calculate_mobility_effect(
     plot_start_time: datetime.date,
     model: CompartmentalModel,
 ) -> tuple:
-    mobility_effect = (1.0 + mob_input / 100.0) ** 2.0
+    mobility_effect = (1.0 + mob_input / 100.0) ** 0.0
     mobility_effect_func = get_linear_interpolation_function(model.get_epoch().dti_to_index(mobility_effect.index), mobility_effect.to_numpy())
 
     mob_adj_text = "The adjustment in the rates of contact at the locations affected by mobility is " \
@@ -377,7 +377,7 @@ def get_mobility_mapper() -> tuple:
         "workplaces and in `other locations' to the overall time-varying mixing matrix " \
         "(that is, contacts in locations other than the home and in schools). "
     def mobility_scaling(matrices, mobility_func):
-        return matrices["home"] + matrices["school"] + matrices["work"] + matrices["other_locations"]
+        return matrices["home"] + matrices["school"] + matrices["work"] + mobility_func * matrices["other_locations"]
     return mobility_scaling, mob_map_text
 
 
