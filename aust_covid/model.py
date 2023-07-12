@@ -544,9 +544,9 @@ def add_incidence_output(
         model.request_output_for_flow(f"{process}_onset", process, save_results=False)
     total_infection_processes = sum([DerivedOutput(f"{process}_onset") for process in infection_processes])
     model.request_function_output(output, func=total_infection_processes)
-    return f"Modelled {output} is calculated as " \
-        f"the absolute rate of {infection_processes[0].replace('_', ' ')} or {infection_processes[1].replace('_', ' ')} " \
-        "in the community. "
+    return f'Modelled {output} is calculated as ' \
+        f'the absolute rate of {" or ".join([process.replace("_", " ") for process in infection_processes])} ' \
+        'in the community. '
 
 
 def get_cdr_values(
