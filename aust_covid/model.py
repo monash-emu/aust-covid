@@ -338,38 +338,49 @@ def process_mobility(
     Returns:
         Processed mobility data to be used in model
     """
-    non_resi_mob = mob_df[[col for col in mob_df.columns if 'residential' not in col]]
-    mean_mob = non_resi_mob.mean(axis=1)
-    smoothed_mean_mob = mean_mob.rolling(window=14).mean().dropna()
-    combined_mob = pd.DataFrame({'mean non-residential': mean_mob, 'smoothed mean non-resi': smoothed_mean_mob})
+    work_mob = mob_df['workplaces']
+    other_mob = mob_df[['retail and recreation', 'grocery and pharmacy', 'transit stations']].mean(axis=1)
+
+    smoothed_work_mob = work_mob.rolling(window=14).mean().dropna()
+    smoothed_other_mob = other_mob.rolling(window=14).mean().dropna()
+
+    combined_mob = pd.DataFrame(
+        {
+            'other places': other_mob, 
+            'smoothed other places': smoothed_other_mob,
+            'work': work_mob,
+            'smoothed work': smoothed_work_mob,
+        }
+    )
     end_date = model.get_epoch().index_to_dti([model.times[-1]])
 
     modelled_mob_filename = 'modelled_mobility.jpg'
     modelled_mob_fig = combined_mob.plot(labels={'value': 'percent change from baseline', 'date': ''})
     modelled_mob_fig.update_xaxes(range=(plot_start_time, end_date[0]))
     modelled_mob_fig.write_image(SUPPLEMENT_PATH / modelled_mob_filename)
-    return smoothed_mean_mob, modelled_mob_fig, modelled_mob_filename
+    return smoothed_work_mob, smoothed_other_mob, modelled_mob_fig, modelled_mob_filename
 
 
 def calculate_mobility_effect(
     mob_input: pd.Series,
     plot_start_time: datetime.date,
     model: CompartmentalModel,
+    exponent: float,
 ) -> tuple:
-    mobility_effect = (1.0 + mob_input / 100.0) ** 0.0
+    mobility_effect = (1.0 + mob_input / 100.0) ** exponent
     mobility_effect_func = get_linear_interpolation_function(model.get_epoch().dti_to_index(mobility_effect.index), mobility_effect.to_numpy())
 
-    mob_adj_text = 'The adjustment in the rates of contact at the locations affected by mobility is ' \
-        'calculated as one plus the averaged Google mobility percentage change metric divided by 100 (usually negative). ' \
-        'This is then squared to account for this effect applying to both the infector and infectee of any potential ' \
-        'effective contact. '
-    mob_effect_filename = 'mobility_effect.jpg'
-    mob_effect_fig = mobility_effect.plot(labels={'value': 'adjustment', 'date': ''})
-    end_date = model.get_epoch().index_to_dti([model.times[-1]])
-    mob_effect_fig.update_xaxes(range=(plot_start_time, end_date[0]))
-    mob_effect_fig.update_layout(showlegend=False)
-    mob_effect_fig.write_image(SUPPLEMENT_PATH / mob_effect_filename)
-    return mobility_effect, mobility_effect_func, mob_adj_text, mob_effect_fig, mob_effect_filename
+    # mob_adj_text = 'The adjustment in the rates of contact at the locations affected by mobility is ' \
+    #     'calculated as one plus the averaged Google mobility percentage change metric divided by 100 (usually negative). ' \
+    #     'This is then squared to account for this effect applying to both the infector and infectee of any potential ' \
+    #     'effective contact. '
+    # mob_effect_filename = 'mobility_effect.jpg'
+    # mob_effect_fig = mobility_effect.plot(labels={'value': 'adjustment', 'date': ''})
+    # end_date = model.get_epoch().index_to_dti([model.times[-1]])
+    # mob_effect_fig.update_xaxes(range=(plot_start_time, end_date[0]))
+    # mob_effect_fig.update_layout(showlegend=False)
+    # mob_effect_fig.write_image(SUPPLEMENT_PATH / mob_effect_filename)
+    return mobility_effect_func
 
 
 def get_mobility_mapper() -> tuple:
@@ -377,7 +388,7 @@ def get_mobility_mapper() -> tuple:
         "workplaces and in `other locations' to the overall time-varying mixing matrix " \
         '(that is, contacts in locations other than the home and in schools). '
     def mobility_scaling(matrices, mobility_func):
-        return matrices['home'] + matrices['school'] + matrices['work'] + mobility_func * matrices['other_locations']
+        return matrices['home'] + matrices['school'] + mobility_func * (matrices['work'] + matrices['other_locations'])
     return mobility_scaling, mob_map_text
 
 
