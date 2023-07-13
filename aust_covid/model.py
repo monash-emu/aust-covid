@@ -8,7 +8,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
-from summer2.functions.time import get_linear_interpolation_function
+from summer2.functions.time import get_piecewise_scalar_function, get_linear_interpolation_function
 from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply, Overwrite
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
@@ -460,10 +460,14 @@ def get_vacc_stratification(compartments, infection_processes):
     return vacc_strat
 
 
-def get_spatial_stratification(compartments, infection_processes, pop_dist):
+def get_spatial_stratification(reopen_date, compartments, infection_processes, pop_dist, model):
     spatial_strat = Stratification('states', pop_dist.keys(), compartments)
     spatial_strat.set_population_split(pop_dist)
-    infection_adj = {'wa': Overwrite(0.0), 'other': None}
+    reopen_func = get_piecewise_scalar_function(
+        [model.get_epoch().dti_to_index(reopen_date)], 
+        np.array([0.0, 1.0]),
+    )
+    infection_adj = {'wa': reopen_func, 'other': None}
     for infection_process in infection_processes:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
     return spatial_strat
