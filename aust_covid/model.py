@@ -90,8 +90,7 @@ def get_pop_data(age_strata) -> tuple:
         }
     )
 
-    model_pop_data = pop_data.loc[:'70-74']
-    model_pop_data.loc['75', :] = pop_data.loc['75-79':].sum().to_dict()
+    model_pop_data = pd.concat([pop_data.loc[:'70-74'], pd.DataFrame([pop_data.loc['75-79':].sum()])])
     model_pop_data.index = age_strata
 
     sheet_name = sheet_name.replace('_', '\\textunderscore')
