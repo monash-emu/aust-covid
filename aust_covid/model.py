@@ -387,8 +387,8 @@ def get_mobility_mapper() -> tuple:
     mob_map_text = 'The mobility mapping function is used to scale the contribution of contacts at ' \
         "workplaces and in `other locations' to the overall time-varying mixing matrix " \
         '(that is, contacts in locations other than the home and in schools). '
-    def mobility_scaling(matrices, mobility_func):
-        return matrices['home'] + matrices['school'] + mobility_func * (matrices['work'] + matrices['other_locations'])
+    def mobility_scaling(matrices, work_func, mobility_func):
+        return matrices['home'] + matrices['school'] + mobility_func * matrices['other_locations'] + work_func * matrices['work']
     return mobility_scaling, mob_map_text
 
 
