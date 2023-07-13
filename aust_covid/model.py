@@ -460,27 +460,20 @@ def get_vacc_stratification(compartments, infection_processes):
     return vacc_strat
 
 
-def get_spatial_stratification(compartments, infection_processes, wa_prop):
-    spatial_strat = Stratification(
-        'states',
-        ['wa', 'other'],
-        compartments,
-    )
-    spatial_strat.set_population_split(
-        {
-            'wa': wa_prop,
-            'other': 1.0 - wa_prop,
-        }
-    )
+def get_spatial_stratification(compartments, infection_processes, pop_dist):
+    spatial_strat = Stratification('states', pop_dist.keys(), compartments)
+    spatial_strat.set_population_split(pop_dist)
+    infection_adj = {'wa': Overwrite(0.0), 'other': None}
     for infection_process in infection_processes:
-        spatial_strat.set_flow_adjustments(
-            infection_process,
-            {
-                'wa': Overwrite(0.0),
-                'other': None,
-            }
-        )
+        spatial_strat.set_flow_adjustments(infection_process, infection_adj)
     return spatial_strat
+
+
+def adjust_state_pops(pop_data, state_pop_dist, model):
+    for state in state_pop_dist.index:
+        props = pop_data[state] / pop_data[state].sum()
+        props.index = props.index.astype(str)
+        model.adjust_population_split('agegroup', {'states': state}, props.to_dict())
 
 
 def seed_vocs(
