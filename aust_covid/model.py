@@ -77,23 +77,33 @@ def build_base_model(
     return model, description
 
 
-def get_pop_data() -> tuple:
+def get_pop_data(age_strata) -> tuple:
     """
     Returns:
-        Dataframe containing all Australian population data we may need
-        with description.
+        Dataframe containing the relevant population data with description
     """
-    pop_data, sheet_name = load_pop_data()
+    raw_data, sheet_name = load_pop_data()
+    pop_data = pd.DataFrame(
+        {
+            'wa': raw_data['Western Australia'], 
+            'other': raw_data[[col for col in raw_data.columns if col not in ['Western Australia', 'Australia']]].sum(axis=1),
+        }
+    )
+
+    model_pop_data = pop_data.loc[:'70-74']
+    model_pop_data.loc['75', :] = pop_data.loc['75-79':].sum().to_dict()
+    model_pop_data.index = age_strata
+
     sheet_name = sheet_name.replace('_', '\\textunderscore')
     description = f'For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded ' \
-        'from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. '
-    return pop_data, description
+        'from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. ' \
+        'Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory are excluded from data. '
+    return model_pop_data, description
 
 
 def set_starting_conditions(
     model: CompartmentalModel,
     pop_data: pd.DataFrame,
-    adjuster: 1.0,
 ) -> str:
     """
     Args:
@@ -103,7 +113,7 @@ def set_starting_conditions(
     Returns:
         Description of data being used
     """
-    total_pop = pop_data['Australia'].sum() * adjuster
+    total_pop = pop_data.sum().sum()
     model.set_initial_population({'susceptible': total_pop})
     return f'The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, ' \
         'with infectious persons introduced later through strain seeding as described below. '
@@ -184,23 +194,24 @@ def adapt_gb_matrices_to_aust(
     """
 
     # Australian population distribution 
-    aust_pop_series = pop_data['Australia']
-    modelled_pops = aust_pop_series[:'70-74']
-    modelled_pops['75'] = aust_pop_series['75-79':].sum()
-    modelled_pops.index = age_strata
-    aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=age_strata)
+    # aust_pop_series = pop_data
+    # modelled_pops = aust_pop_series[:'70-74']
+    # modelled_pops['75'] = aust_pop_series['75-79':].sum()
+    # modelled_pops.index = age_strata
+    # aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=age_strata)
+    aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
 
     age_group_names = [f'{age}-{age + 4}' for age in age_strata[:-1]] + ['75 and over']
     input_pop_filename = 'input_population.jpg'
-    input_pop_fig = px.bar(aust_pop_series, labels={'value': 'population', 'Age (years)': ''})
-    input_pop_fig.update_layout(showlegend=False)
-    input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
+    # input_pop_fig = px.bar(aust_pop_series, labels={'value': 'population', 'Age (years)': ''})
+    # input_pop_fig.update_layout(showlegend=False)
+    # input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
     input_pop_caption = 'Australian population sizes by age group obtained from Australia Bureau of Statistics.'
 
     modelled_pop_filename = 'modelled_population.jpg'
-    modelled_pop_fig = px.bar(modelled_pops, labels={'value': 'population', 'index': ''})
-    modelled_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
-    modelled_pop_fig.write_image(SUPPLEMENT_PATH / modelled_pop_filename)
+    # modelled_pop_fig = px.bar(modelled_pops, labels={'value': 'population', 'index': ''})
+    # modelled_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
+    # modelled_pop_fig.write_image(SUPPLEMENT_PATH / modelled_pop_filename)
     modelled_pop_caption = 'Population sizes by age group implemented in the model.'
 
     # UK population distribution
@@ -238,7 +249,7 @@ def adapt_gb_matrices_to_aust(
         'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
         'from the Eurostat database (https://ec.europa.eu/eurostat). '
 
-    return input_pop_fig, input_pop_caption, input_pop_filename, modelled_pop_fig, modelled_pop_caption, modelled_pop_filename, \
+    return input_pop_caption, input_pop_filename, modelled_pop_caption, modelled_pop_filename, \
         matrix_ref_pop_fig, matrix_ref_pop_caption, matrix_ref_pop_filename, \
         adjusted_matrices, aust_age_props, matrix_adjustment_text
 
@@ -395,7 +406,7 @@ def get_mobility_mapper() -> tuple:
 def get_age_stratification(
     compartments: list,
     age_strata: list,
-    pop_splits: pd.Series,
+    # pop_splits: pd.Series,
     matrix: np.array,
 ) -> tuple:
     """
@@ -404,8 +415,8 @@ def get_age_stratification(
         matrix: The mixing matrix to apply
     """
     age_strat = Stratification('agegroup', age_strata, compartments)
-    assert len(pop_splits) == len(age_strata), 'Different number of age group sizes from age strata request'
-    age_strat.set_population_split(pop_splits.to_dict())
+    # assert len(pop_splits) == len(age_strata), 'Different number of age group sizes from age strata request'
+    # age_strat.set_population_split(pop_splits.to_dict())
     age_strat.set_mixing_matrix(matrix)
     description = 'We stratified all compartments of the base model ' \
         'into sequential age brackets in five year ' \
