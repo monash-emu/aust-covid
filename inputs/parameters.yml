@@ -16,6 +16,7 @@ descriptions:
   vacc_infect_protect: "Vaccination infection protection"
   vacc_prop: "Proportion vaccinated"
   rural_susc_adj: "Rural susceptibility adjustment"
+  wa_reopen_period: 'Time to WA fully mixing with rest of country'
 units:
   contact_rate: "contacts per person per day"
   infectious_period: "days"
@@ -34,6 +35,7 @@ units:
   vacc_infect_protect: ""
   vacc_prop: ""
   rural_susc_adj: ""
+  wa_reopen_period: 'days'
 evidence:
   contact_rate: "Calibrated within plausible range"
   infectious_period: "This quantity is difficult to estimate, given that identified cases are typically quarantined. Studies in settings of high case ascertainment and an effective public health response have suggested a duration of greater than 5.5 days \\cite{bi2020}. PCR positivity, which may continue for up to two to three weeks from the point of symptom onset \\cite{he2020} \\cite{byrne2020} does not necessarily indicate infectiousness. The duration infectious for asymptomatic persons has also been estimated at 6.5 to 9.5 days \\cite{byrne2020}."
@@ -52,3 +54,4 @@ evidence:
   vacc_infect_protect: "Assumed"
   vacc_prop: "Assumed"
   rural_susc_adj: "Assumed"
+  wa_reopen_period: 'Assumed'

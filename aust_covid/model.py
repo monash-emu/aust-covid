@@ -462,8 +462,12 @@ def get_vacc_stratification(compartments, infection_processes):
 def get_spatial_stratification(reopen_date, compartments, infection_processes, pop_dist, model):
     spatial_strat = Stratification('states', pop_dist.keys(), compartments)
     spatial_strat.set_population_split(pop_dist)
-    reopen_func = get_piecewise_scalar_function(
-        [model.get_epoch().dti_to_index(reopen_date)], 
+
+    wa_reopen_period = 30.0  # This should ideally be Parameter('wa_reopen_period')
+
+    reopen_index = model.get_epoch().dti_to_index(reopen_date)
+    reopen_func = get_linear_interpolation_function(
+        [reopen_index, reopen_index + wa_reopen_period],
         np.array([0.0, 1.0]),
     )
     infection_adj = {'wa': reopen_func, 'other': None}
