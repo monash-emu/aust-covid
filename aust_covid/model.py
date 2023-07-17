@@ -635,6 +635,25 @@ def add_notifications_output(
     return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption, description
 
 
+def track_age_specific_incidence(
+    model: CompartmentalModel,
+    infection_processes: list,
+):
+    for age in model.stratifications["agegroup"].strata:
+        for process in infection_processes:
+            model.request_output_for_flow(
+                f"{process}_onsetXagegroup_{age}", 
+                process, 
+                source_strata={"agegroup": age},
+                save_results=False,
+            )
+        model.request_function_output(
+            f"incidenceXagegroup_{age}",
+            func=sum([DerivedOutput(f"{process}_onsetXagegroup_{age}") for process in infection_processes]),
+            save_results=False,
+        )
+
+
 def add_death_output(
     model: CompartmentalModel,
 ) -> str:
