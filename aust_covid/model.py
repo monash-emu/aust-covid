@@ -663,7 +663,7 @@ def add_death_output(
         output_to_convolve = f"incidenceXagegroup_{age}"
         delay = build_gamma_dens_interval_func(Parameter("deaths_shape"), Parameter("deaths_mean"), model.times)
         death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter(f"ifr_{age}")
-        model.request_function_output(name=age_output, func=death_dist_rel_inc, save_results=False)
+        model.request_function_output(name=age_output, func=death_dist_rel_inc)
     output = "deaths"
     model.request_function_output(
         output,
