@@ -1,6 +1,5 @@
 import pandas as pd
 from pathlib import Path
-import yaml
 from datetime import datetime
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
@@ -9,47 +8,53 @@ DATA_PATH = BASE_PATH / "data"
 
 def load_calibration_targets(
     start_request: datetime, 
-    rolling_window: int=7,
+    rolling_window: int,
 ) -> pd.Series:
 
     # Australian national data
-    national_data = pd.read_csv(DATA_PATH / "Aus_covid_data.csv", index_col="date")
+    national_data = pd.read_csv(DATA_PATH / 'Aus_covid_data.csv', index_col='date')
     national_data.index = pd.to_datetime(national_data.index)
-    national_data = national_data[national_data["region"] == "AUS"]
+    national_data = national_data[national_data['region'] == 'AUS']
 
     # OWID data
-    owid_data = pd.read_csv(DATA_PATH / "aust_2021_surv_data.csv", index_col=0)["new_cases"]
+    owid_data = pd.read_csv(DATA_PATH / 'aust_2021_surv_data.csv', index_col=0)['new_cases']
     owid_data.index = pd.to_datetime(owid_data.index)
 
     # Join them together, truncate and smooth
     national_data_start = datetime(2022, 1, 1)
     window = (start_request < owid_data.index) & (owid_data.index < national_data_start)
-    composite_aust_data = pd.concat([owid_data[window], national_data["cases"]])
+    composite_aust_data = pd.concat([owid_data[window], national_data['cases']])
     final_data = composite_aust_data.rolling(window=rolling_window).mean().dropna()
 
-    description = "Official COVID-19 data for Australian through 2022 were obtained from https://www.health.gov.au/health-alerts/covid-19/weekly-reporting " \
-        "on the 2nd of May 2023. " \
-        "Data that extended back to 2021 were obtained from Our World in Data (attribution: https://github.com/owid/covid-19-data/tree/master/public/data#license)" \
-        "on the 16th of June 2023, downloaded from " \
-        "https://github.com/owid/covid-19-data/blob/master/public/data/jhu/full_data.csv and filtered to the Australian data only." \
-        "The final calibration target for cases was constructed as the OWID data for 2021 concatenated with the Australian Government data for 2022. "
+    description = 'Official COVID-19 data for Australian through 2022 were obtained from https://www.health.gov.au/health-alerts/covid-19/weekly-reporting ' \
+        'on the 2nd of May 2023. Data that extended back to 2021 were obtained from Our World in Data ' \
+        '(attribution: https://github.com/owid/covid-19-data/tree/master/public/data#license) on the 16th of June 2023, downloaded from ' \
+        'https://github.com/owid/covid-19-data/blob/master/public/data/jhu/full_data.csv and filtered to the Australian data only.' \
+        'The final calibration target for cases was constructed as the OWID data for 2021 concatenated with the Australian Government data for 2022. ' \
+        'These daily case data were then smoothed using a {rolling_window}-day moving average. '
 
     return final_data, description
 
 
-def load_who_data(rolling_window=7):
-
-    # Data obtained from https://covid19.who.int/WHO-COVID-19-global-data.csv
-    end_daily_report_date = datetime(2022, 9, 16)
+def load_who_data(
+    rolling_window: int
+) -> pd.Series:
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
     processed_data = raw_data[raw_data['Country'] == 'Australia']
     processed_data.index = pd.to_datetime(processed_data.index)
-    processed_data = processed_data.loc[:end_daily_report_date, :]
+    change_to_weekly_report_date = datetime(2022, 9, 16)
+    processed_data = processed_data.loc[:change_to_weekly_report_date, :]
     death_data = processed_data['New_deaths']
     death_data = death_data.rolling(window=rolling_window).mean().dropna()
 
-    return death_data
+    description = 'The daily time series of deaths for Australia was obtained from the ' \
+        "World Heath Organization's 'Coronavirus (COVID-19) Dashboard, " \
+        'at https://covid19.who.int/WHO-COVID-19-global-data.csv, ' \
+        f'downloaded on 18th July 2023. These daily deaths data were then smoothed using a {rolling_window}-day ' \
+        'moving average. '
+
+    return death_data, description
 
 
 def load_pop_data() -> tuple:
