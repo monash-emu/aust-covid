@@ -37,17 +37,19 @@ def load_calibration_targets(
     return final_data, description
 
 
-def load_who_data():
+def load_who_data(rolling_window=7):
 
     # Data obtained from https://covid19.who.int/WHO-COVID-19-global-data.csv
     end_daily_report_date = datetime(2022, 9, 16)
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
     processed_data = raw_data[raw_data['Country'] == 'Australia']
-    processed_data = processed_data[['New_cases', 'New_deaths']]  # Drop several fields not relevant
     processed_data.index = pd.to_datetime(processed_data.index)
     processed_data = processed_data.loc[:end_daily_report_date, :]
-    return processed_data
+    death_data = processed_data['New_deaths']
+    death_data = death_data.rolling(window=rolling_window).mean().dropna()
+
+    return death_data
 
 
 def load_pop_data() -> tuple:
