@@ -462,8 +462,12 @@ def get_vacc_stratification(compartments, infection_processes):
 def get_spatial_stratification(reopen_date, compartments, infection_processes, pop_dist, model):
     spatial_strat = Stratification('states', pop_dist.keys(), compartments)
     spatial_strat.set_population_split(pop_dist)
-    reopen_func = get_piecewise_scalar_function(
-        [model.get_epoch().dti_to_index(reopen_date)], 
+
+    wa_reopen_period = 30.0  # This should ideally be Parameter('wa_reopen_period')
+
+    reopen_index = model.get_epoch().dti_to_index(reopen_date)
+    reopen_func = get_linear_interpolation_function(
+        [reopen_index, reopen_index + wa_reopen_period],
         np.array([0.0, 1.0]),
     )
     infection_adj = {'wa': reopen_func, 'other': None}
@@ -629,6 +633,42 @@ def add_notifications_output(
         "$s = (1 - e^{-p \\times r})$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
 
     return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption, description
+
+
+def track_age_specific_incidence(
+    model: CompartmentalModel,
+    infection_processes: list,
+):
+    for age in model.stratifications["agegroup"].strata:
+        for process in infection_processes:
+            model.request_output_for_flow(
+                f"{process}_onsetXagegroup_{age}", 
+                process, 
+                source_strata={"agegroup": age},
+                save_results=False,
+            )
+        model.request_function_output(
+            f"incidenceXagegroup_{age}",
+            func=sum([DerivedOutput(f"{process}_onsetXagegroup_{age}") for process in infection_processes]),
+            save_results=False,
+        )
+
+
+def add_death_output(
+    model: CompartmentalModel,
+) -> str:
+    agegroups = model.stratifications["agegroup"].strata
+    for age in agegroups:
+        age_output = f"deathsXagegroup_{age}"
+        output_to_convolve = f"incidenceXagegroup_{age}"
+        delay = build_gamma_dens_interval_func(Parameter("deaths_shape"), Parameter("deaths_mean"), model.times)
+        death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter(f"ifr_{age}")
+        model.request_function_output(name=age_output, func=death_dist_rel_inc)
+    output = "deaths"
+    model.request_function_output(
+        output,
+        func=sum([DerivedOutput(f"deathsXagegroup_{age}") for age in agegroups]),
+    )
 
 
 def track_sero_prevalence(
