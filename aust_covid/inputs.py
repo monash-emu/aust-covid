@@ -1,6 +1,7 @@
-import pandas as pd
 from pathlib import Path
-from datetime import datetime
+import pandas as pd
+from copy import copy
+from datetime import datetime, timedelta
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 DATA_PATH = BASE_PATH / "data"
@@ -9,7 +10,7 @@ DATA_PATH = BASE_PATH / "data"
 def load_calibration_targets(
     start_request: datetime, 
     rolling_window: int,
-) -> pd.Series:
+) -> tuple:
 
     # Australian national data
     national_data = pd.read_csv(DATA_PATH / 'Aus_covid_data.csv', index_col='date')
@@ -38,7 +39,7 @@ def load_calibration_targets(
 
 def load_who_data(
     rolling_window: int
-) -> pd.Series:
+) -> tuple:
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
     processed_data = raw_data[raw_data['Country'] == 'Australia']
@@ -55,6 +56,26 @@ def load_who_data(
         'moving average. '
 
     return death_data, description
+
+
+def load_serosurvey_data(ref_date, immunity_lag):
+    serosurvey_data = pd.Series(
+        {
+            datetime(2022, 2, 26): 0.207,
+            datetime(2022, 6, 13): 0.554,
+            datetime(2022, 8, 27): 0.782,
+            datetime(2022, 12, 5): 0.850,
+        }
+    )
+    serosurvey_data.index = serosurvey_data.index - timedelta(days=immunity_lag)
+    serosurvey_data_intindex = copy(serosurvey_data)
+    serosurvey_data_intindex.index=(serosurvey_data.index - ref_date).days
+
+    description = 'We obtained estimates of the seroprevalence of antibodies to ' \
+        'nucleocapsid antigen from Australia blood donors from URL. ' \
+        f'We lagged these estimates by {immunity_lag} to account for the delay between infection and seroconversion. '
+
+    return serosurvey_data, serosurvey_data_intindex, description
 
 
 def load_pop_data() -> tuple:
