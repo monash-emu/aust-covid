@@ -58,8 +58,8 @@ def load_who_data(
     return death_data, description
 
 
-def load_serosurvey_data(ref_date, immunity_lag):
-    serosurvey_data = pd.Series(
+def load_serosurvey_data(immunity_lag):
+    data = pd.Series(
         {
             datetime(2022, 2, 26): 0.207,
             datetime(2022, 6, 13): 0.554,
@@ -67,15 +67,15 @@ def load_serosurvey_data(ref_date, immunity_lag):
             datetime(2022, 12, 5): 0.850,
         }
     )
-    serosurvey_data.index = serosurvey_data.index - timedelta(days=immunity_lag)
-    serosurvey_data_intindex = copy(serosurvey_data)
-    serosurvey_data_intindex.index=(serosurvey_data.index - ref_date).days
+    data.index = data.index - timedelta(days=immunity_lag)
 
     description = 'We obtained estimates of the seroprevalence of antibodies to ' \
-        'nucleocapsid antigen from Australia blood donors from URL. ' \
+        'nucleocapsid antigen from Australia blood donors from Kirby Institute serosurveillance reports. ' \
+        'Data are available from round 4 survey, available at https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf. ' \
+        'Information on assay sensitivity is available at: https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf' \
         f'We lagged these estimates by {immunity_lag} to account for the delay between infection and seroconversion. '
 
-    return serosurvey_data, serosurvey_data_intindex, description
+    return data, description
 
 
 def load_pop_data() -> tuple:
