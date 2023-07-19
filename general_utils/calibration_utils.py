@@ -261,7 +261,7 @@ def plot_sampled_outputs(
     sample_model_results = run_samples_through_model(sampled_df, bayesian_model, output)  # Run through epi model
     fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names, start_date, end_date)
     fig.add_trace(go.Scatter(x=target_data.index, y=target_data, marker=dict(color="black"), name=output, mode="markers"))
-    return fig, sampled_df
+    return fig, sampled_df, sample_model_results
 
 
 def tabulate_parameters(
