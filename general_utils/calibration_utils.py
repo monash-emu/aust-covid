@@ -4,8 +4,6 @@ from arviz.labels import MapLabeller
 from pathlib import Path
 import pandas as pd
 import numpy as np
-import datetime
-import plotly.graph_objects as go
 import plotly.express as px
 import matplotlib as mpl
 
@@ -102,47 +100,6 @@ def get_prior_dist_support(
     return " to ".join([str(round_sigfig(i, 3)) for i in prior.bounds()])
 
 
-def convert_idata_to_df(
-    idata: az.data.inference_data.InferenceData, 
-    param_names: list,
-) -> pd.DataFrame:
-    """
-    Convert arviz inference data to dataframe organised
-    by draw and chain through multi-indexing.
-    
-    Args:
-        idata: arviz inference data
-        param_names: String names of the model parameters
-    
-    Returns:
-        Sorted inference data pertaining to the requested parameters only
-    """
-    sampled_idata_df = idata.to_dataframe()[param_names]
-    return sampled_idata_df.sort_index(level="draw").sort_index(level="chain")
-
-
-def run_samples_through_model(
-    samples_df: pd.DataFrame, 
-    model: BayesianCompartmentalModel,
-    output: str,
-) -> pd.DataFrame:
-    """
-    Run parameters dataframe in format created by convert_idata_to_df
-    through epidemiological model to get outputs of interest.
-    
-    Args:
-        samples_df: Parameters to run through in format generated from convert_idata_to_df
-        model: Model to run them through
-
-    Returns:
-        Results pertaining to output of interest after running requests through model
-    """
-    sres = pd.DataFrame(index=model.model._get_ref_idx(), columns=samples_df.index)
-    for (chain, draw), params in samples_df.iterrows():
-        sres[(chain,draw)] = model.run(params.to_dict()).derived_outputs[output]
-    return sres
-
-
 def plot_param_progression(
     idata: az.data.inference_data.InferenceData, 
     param_info: pd.DataFrame, 
@@ -193,75 +150,6 @@ def plot_param_posterior(
     )
     posterior_plot = posterior_plot[0, 0].figure
     return posterior_plot
-
-
-def plot_from_model_runs_df(
-    model_results: pd.DataFrame, 
-    sampled_df: pd.DataFrame,
-    param_names: list,
-    start_date: datetime.datetime,
-    end_date: datetime.datetime,
-) -> go.Figure:
-    """
-    Create interactive plot of model outputs by draw and chain
-    from standard data structures.
-    
-    Args:
-        model_results: Model outputs generated from run_samples_through_model
-        sampled_df: Inference data converted to dataframe in output format of convert_idata_to_df
-    
-    Returns:
-        Figure of sampled model outputs
-    """
-    melted = model_results.melt(ignore_index=False)
-    melted.columns = ["chain", "draw", "notifications"]
-
-    # Add parameter values from sampled dataframe to plotting 
-    for (chain, draw), params in sampled_df.iterrows():
-        for p in param_names:
-            melted.loc[(melted["chain"]==chain) & (melted["draw"] == draw), p] = round_sigfig(params[p], 3)
-        
-    plot = px.line(
-        melted, 
-        y="notifications", 
-        color="chain", 
-        line_group="draw", 
-        hover_data=melted.columns,
-        labels={"index": ""},
-    )
-    plot.update_xaxes(range=(start_date, end_date))
-    return plot
-
-
-def plot_sampled_outputs(
-    idata: az.data.inference_data.InferenceData, 
-    n_samples: int, 
-    output: str, 
-    bayesian_model: BayesianCompartmentalModel, 
-    target_data: pd.Series,
-    start_date: datetime.datetime,
-    end_date: datetime.datetime,
-) -> go.Figure:
-    """
-    Plot sample model runs from the calibration algorithm.
-
-    Args:
-        uncertainty_outputs: Outputs from calibration
-        n_samples: Number of times to sample from calibration data
-        output: The output of interest
-        bayesian_model: The calibration model (that contains the epi model, priors and targets)
-        target_data: Comparison data to plot against
-    
-    Returns:
-        Figure of sampled model runs with targets overlaid
-    """
-    prior_names = bayesian_model.priors.keys()
-    sampled_idata = az.extract(idata, num_samples=n_samples)  # Sample from the inference data
-    sampled_df = convert_idata_to_df(sampled_idata, prior_names)
-    sample_model_results = run_samples_through_model(sampled_df, bayesian_model, output)  # Run through epi model
-    fig = plot_from_model_runs_df(sample_model_results, sampled_df, prior_names, start_date, end_date)
-    fig.add_trace(go.Scatter(x=target_data.index, y=target_data, marker=dict(color="black"), name=output, mode="markers"))
-    return fig, sampled_df, sample_model_results
 
 
 def tabulate_parameters(
@@ -333,3 +221,73 @@ def tabulate_param_results(
     results_table = results_table.drop(["mcse_mean", "mcse_sd", "hdi_3%", "hdi_97%"], axis=1)
     results_table.columns = ["Mean", "Standard deviation", "ESS bulk", "ESS tail", "R_hat", "High-density interval"]
     return results_table
+
+
+def sample_idata(
+    idata: az.InferenceData, 
+    n_samples: int, 
+    model: BayesianCompartmentalModel,
+) -> pd.DataFrame:
+    """
+    Sample from inference data, retain only data pertaining to the parameters,
+    and sort by draw and chain.
+
+    Args:
+        idata: The inference data
+        n_samples: Number of samples to select
+        model: The Bayesian calibration object, only used for getting parameter names
+
+    Returns:
+        Sampled data converted to dataframe with columns for parameters and multi-index for chain and draw
+    """
+    return az.extract(idata, num_samples=n_samples).to_dataframe()[model.priors.keys()].sort_index(level='draw').sort_index(level='chain')
+
+
+def get_sampled_outputs(
+    model: BayesianCompartmentalModel, 
+    sampled_idata: pd.DataFrame, 
+    outputs: list, 
+    parameters: dict,
+) -> pd.DataFrame:
+    """
+    Take output of sample_idata and run through model to get results of multiple runs of model.
+
+    Args:
+        model: The Bayesian calibration object, needed to run the parameters through to get results again
+        sampled_idata: Output of sampled_idata
+        outputs: The names of the derived outputs we want to examine
+        parameters: The base parameter names to be updated by the samples
+
+    Returns:
+        Sampled runs with multi-index for columns output, chain and draw, and index being independent variable of model (i.e. time)
+    """
+    spaghetti_df = pd.concat([pd.DataFrame(columns=sampled_idata.index)] * len(outputs), keys=outputs, axis=1)
+    for (chain, draw), params in sampled_idata.iterrows():
+        run_results = model.run(parameters | params.to_dict()).derived_outputs
+        for output in outputs:
+            spaghetti_df[(output, chain, draw)] = run_results[output]
+    return spaghetti_df
+
+
+def melt_spaghetti(
+    spaghetti_df: pd.DataFrame, 
+    output: str, 
+    sampled_idata: az.InferenceData,
+) -> pd.DataFrame:
+    """
+    Take output of get_sampled_outputs, 'melt'/convert to long format and add columns for parameter values.
+    This is done in preparation for producing a 'spaghetti plot' of sequential model runs.
+
+    Args:
+        spaghetti_df: Output of get_sampled_outputs
+        output: The name of the derived output of interest
+        idata: The output of sample_idata
+
+    Returns:
+        The melted sequential runs spaghetti
+    """
+    melted_df = spaghetti_df[output].melt(ignore_index=False)
+    for (chain, draw), params in sampled_idata.iterrows():
+        for param, value in params.iteritems():
+            melted_df.loc[(melted_df['chain']==chain) & (melted_df['draw'] == draw), param] = round_sigfig(value, 3)
+    return melted_df
