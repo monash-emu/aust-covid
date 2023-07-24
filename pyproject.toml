@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "aust_covid"
+version = "0.1"
+readme = "README.md"
+license = "BSD-2-Clause"
+homepage = "https://github.com/monash-emu/aust-covid"
+repository = "https://github.com/monash-emu/aust-covid"
+documentation = "https://github.com/monash-emu/aust-covid"
+keywords = [
+    "covid19",
+    "summerepi"
+]
+description = "A set of calibration and probabilistic programming tools for use with summerepi2"
+authors = ["James Trauer <james.trauer@monash.edu>"]
+packages = [
+    {include = "aust_covid"},
+    {include = "general_utils"}
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8.0, <4.0.0"
+estival = "==0.3.3"
+kaleido = ">=0.2.1"
+pylatex = "==1.4.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+
