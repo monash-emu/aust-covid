@@ -22,6 +22,7 @@ python = ">=3.8.0, <4.0.0"
 estival = "==0.3.3"
 kaleido = ">=0.2.1"
 pylatex = "==1.4.1"
+summerepi2 = ">=1.2.8"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
