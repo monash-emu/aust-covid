@@ -29,8 +29,8 @@ def load_calibration_targets(
 
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
         '\href{https://www.health.gov.au/health-alerts/covid-19/weekly-reporting}{The Department of Health} ' \
-        'on the 2nd of May 2023. Data that extended back to 2021 were obtained from Our World in Data ' \
-        '(attribution: https://github.com/owid/covid-19-data/tree/master/public/data\#license) on the 16th of June 2023, downloaded from ' \
+        'on the 2nd of May 2023. Data that extended back to 2021 were obtained from ' \
+        '\href{https://github.com/owid/covid-19-data/tree/master/public/data#license}{Our World in Data} on the 16th of June 2023, downloaded from ' \
         'The final calibration target for cases was constructed as the OWID data for 2021 concatenated with the Australian Government data for 2022. ' \
         f'These daily case data were then smoothed using a {rolling_window}-day moving average. '
 
