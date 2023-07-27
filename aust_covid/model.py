@@ -66,7 +66,7 @@ def build_base_model(
     description = f'The base model consists of {len(compartments)} states, ' \
         f'representing the following states: {", ".join(compartments)}. ' \
         f"Only the `{infectious_compartment}' compartment contributes to the force of infection. " \
-        f'The model is run from {str(start_date.date())} to {str(end_date.date())}. '
+        f'The model is run from {start_date.strftime("%d %B %Y")} to {end_date.strftime("%d %B %Y")}. '
     tex_doc.add_line(description, 'Model Construction')
 
     return CompartmentalModel(
