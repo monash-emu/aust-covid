@@ -1,13 +1,16 @@
 class TexDoc:
     def __init__(self, path, doc_name):
-        self.content = []
+        self.content = {}
         self.packages = []
         self.path = path
         self.doc_name = f'{doc_name}.tex'
     
-    def add_line(self, line):
-        self.content.append(line)
-    
+    def add_line(self, line, section):
+        if section in self.content:
+            self.content[section].append(line)
+        else:
+            self.content[section] = [line]
+
     def write_line(self, line):
         self.file.write(f'{line}\n')
 
@@ -18,10 +21,13 @@ class TexDoc:
         self.write_line(f'\\addbibresource{{{bib_filename}.bib}}')
         self.write_line(f'\\title{{{title}}}')
         self.write_line('\\begin{document}')
+        self.write_line('\maketitle')
 
-    def populate_doc(self, elements):
-        for element in elements:
-            self.file.write(element)
+    def populate_doc(self, content):
+        for section in content.keys():
+            self.write_line(f'\\section{{{section}}}')
+            for element in content[section]:
+                self.file.write(element)
         self.file.write('\n')
         
     def finish_doc(self):
