@@ -14,6 +14,7 @@ from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
 from aust_covid.model_utils import triangle_wave_func, convolve_probability, build_gamma_dens_interval_func
 from aust_covid.inputs import load_pop_data, load_uk_pop_data, load_household_impacts_data, load_google_mob_year_df
+from general_utils.tex_utils import StandardTexDoc
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'
@@ -48,6 +49,7 @@ def build_base_model(
     compartments: list,
     start_date: datetime,
     end_date: datetime,
+    tex_doc: StandardTexDoc,
 ) -> tuple:
     """
     Args:
@@ -61,7 +63,13 @@ def build_base_model(
         with text description of the process.
     """
     infectious_compartment = 'infectious'
-    model = CompartmentalModel(
+    description = f'The base model consists of {len(compartments)} states, ' \
+        f'representing the following states: {", ".join(compartments)}. ' \
+        f"Only the `{infectious_compartment}' compartment contributes to the force of infection. " \
+        f'The model is run from {str(start_date.date())} to {str(end_date.date())}. '
+    tex_doc.add_line(description, 'Model Construction')
+
+    return CompartmentalModel(
         times=(
             (start_date - ref_date).days, 
             (end_date - ref_date).days,
@@ -70,11 +78,6 @@ def build_base_model(
         infectious_compartments=[infectious_compartment],
         ref_date=ref_date,
     )
-    description = f'The base model consists of {len(compartments)} states, ' \
-        f'representing the following states: {", ".join(compartments)}. ' \
-        f'Only the {infectious_compartment} compartment contributes to the force of infection. ' \
-        f'The model is run from {str(start_date.date())} to {str(end_date.date())}. '
-    return model, description
 
 
 def get_pop_data(age_strata) -> tuple:
