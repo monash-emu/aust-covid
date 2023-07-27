@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
-from copy import copy
 from datetime import datetime, timedelta
+from general_utils.tex_utils import StandardTexDoc
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 DATA_PATH = BASE_PATH / "data"
@@ -10,7 +10,7 @@ DATA_PATH = BASE_PATH / "data"
 def load_calibration_targets(
     start_request: datetime, 
     window: int,
-    tex_doc,
+    tex_doc: StandardTexDoc,
 ) -> tuple:
     
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
@@ -32,7 +32,7 @@ def load_calibration_targets(
     owid_data = pd.read_csv(DATA_PATH / 'aust_2021_surv_data.csv', index_col=0)['new_cases']
     owid_data.index = pd.to_datetime(owid_data.index)
 
-    # Join together, truncate and smooth
+    # Join, truncate and smooth
     national_data_start = datetime(2022, 1, 1)
     interval = (start_request < owid_data.index) & (owid_data.index < national_data_start)
     composite_aust_data = pd.concat([owid_data[interval], national_data['cases']])
@@ -41,7 +41,7 @@ def load_calibration_targets(
 
 def load_who_data(
     window: int,
-    tex_doc,
+    tex_doc: StandardTexDoc,
 ) -> tuple:
 
     description = 'The daily time series of deaths for Australia was obtained from the ' \
