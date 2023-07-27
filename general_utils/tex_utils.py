@@ -28,9 +28,9 @@ class TexDoc:
         self.write_line('\\printbibliography')
         self.write_line('\\end{document}')
         
-    def write_tex(self):
-        with open(self.path / 'supplement' /self.doc_name, 'w') as self.file:
-            self.start_doc('austcovid', 'Supplemental Appendix')
+    def write_tex(self, bib_name, title):
+        with open(self.path /self.doc_name, 'w') as self.file:
+            self.start_doc(bib_name, title)
             self.populate_doc(self.content)
             self.finish_doc()
             
@@ -42,4 +42,3 @@ class StandardTexDoc(TexDoc):
             '\\usepackage{hyperref}',
         ]    
         self.packages += core_packages
-        
