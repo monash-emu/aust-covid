@@ -31,13 +31,14 @@ class TexDoc:
             for element in content[section]:
                 self.file.write(element)
             self.file.write('\n')
-        
+        self.file.write('\n')
+    
     def finish_doc(self):
         self.write_line('\\printbibliography')
         self.write_line('\\end{document}')
         
     def write_tex(self, bib_name, title):
-        with open(self.path /self.doc_name, 'w') as self.file:
+        with open(self.path / self.doc_name, 'w') as self.file:
             self.start_doc(bib_name, title)
             self.populate_doc(self.content)
             self.finish_doc()

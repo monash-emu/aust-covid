@@ -87,13 +87,13 @@ def load_pop_data(
     tex_doc: StandardTexDoc,
 ) -> tuple:
     sheet_name = "31010do002_202206.xlsx"
-    description = f'For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded ' \
-        'from the Australian Bureau of Statistics website on the 1\\text_superscript{st} of March 2023 ' \
-        "Minor jurisdictions other than Australia's eight major state and territories " \
+    description = f'For estimates of the Australian population, the spreadsheet was downloaded ' \
+        'from the Australian Bureau of Statistics website on the 1\\textsuperscript{st} of March 2023. ' \
+        "\cite{abs2022} Minor jurisdictions other than Australia's eight major state and territories " \
         '(i.e. Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory) are excluded from data, ' \
         'These much smaller jurisdictions likely contribute little to overall COVID-19 epidemiology ' \
         'and are unlikely to mix homogeneously with the larger states/territories. '
-    # tex_doc.add_line(description, 'Model construction')
+    tex_doc.add_line(description, 'Model Construction')
 
     skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
     for group in range(16):
