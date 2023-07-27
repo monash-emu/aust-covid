@@ -82,20 +82,34 @@ def load_serosurvey_data(immunity_lag):
     return data, description
 
 
-def load_pop_data() -> tuple:
-    """
-    Get the Australian population data from ABS source.
+def load_pop_data(
+    age_strata: list,
+    tex_doc: StandardTexDoc,
+) -> tuple:
+    sheet_name = "31010do002_202206.xlsx"
+    description = f'For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded ' \
+        'from the Australian Bureau of Statistics website on the 1\\text_superscript{st} of March 2023 ' \
+        "Minor jurisdictions other than Australia's eight major state and territories " \
+        '(i.e. Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory) are excluded from data, ' \
+        'These much smaller jurisdictions likely contribute little to overall COVID-19 epidemiology ' \
+        'and are unlikely to mix homogeneously with the larger states/territories. '
+    # tex_doc.add_line(description, 'Model construction')
 
-    Returns:
-        The population data
-        The name of the sheet
-    """
     skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
     for group in range(16):
         skip_rows += list(range(228 + group * 6, 233 + group * 6))
-    sheet_name = "31010do002_202206.xlsx"
-    data = pd.read_excel(DATA_PATH / sheet_name, sheet_name="Table_7", skiprows=skip_rows, index_col=[0])
-    return data, sheet_name
+    raw_data = pd.read_excel(DATA_PATH / sheet_name, sheet_name="Table_7", skiprows=skip_rows, index_col=[0])
+
+    spatial_pops = pd.DataFrame(
+        {
+            'wa': raw_data['Western Australia'], 
+            'other': raw_data[[col for col in raw_data.columns if col not in ['Western Australia', 'Australia']]].sum(axis=1),
+        }
+    )
+    model_pop_data = pd.concat([spatial_pops.loc[:'70-74'], pd.DataFrame([spatial_pops.loc['75-79':].sum()])])
+    model_pop_data.index = age_strata
+
+    return model_pop_data
 
 
 def load_uk_pop_data() -> pd.Series:
