@@ -1,3 +1,5 @@
+
+
 class TexDoc:
     def __init__(self, path, doc_name):
         self.content = {}
@@ -25,10 +27,10 @@ class TexDoc:
 
     def populate_doc(self, content):
         for section in content.keys():
-            self.write_line(f'\\section{{{section}}}')
+            self.write_line(f'\n\\section{{{section}}}')
             for element in content[section]:
                 self.file.write(element)
-        self.file.write('\n')
+            self.file.write('\n')
         
     def finish_doc(self):
         self.write_line('\\printbibliography')
