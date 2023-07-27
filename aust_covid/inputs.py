@@ -10,8 +10,8 @@ DATA_PATH = BASE_PATH / "data"
 def load_calibration_targets(
     start_request: datetime, 
     rolling_window: int,
+    tex_doc=None,
 ) -> tuple:
-
     # Australian national data
     national_data = pd.read_csv(DATA_PATH / 'Aus_covid_data.csv', index_col='date')
     national_data.index = pd.to_datetime(national_data.index)
@@ -33,8 +33,10 @@ def load_calibration_targets(
         '\href{https://github.com/owid/covid-19-data/tree/master/public/data#license}{Our World in Data} on the 16th of June 2023, downloaded from ' \
         'The final calibration target for cases was constructed as the OWID data for 2021 concatenated with the Australian Government data for 2022. ' \
         f'These daily case data were then smoothed using a {rolling_window}-day moving average. '
+    
+    tex_doc.add_line(description)
 
-    return final_data, description
+    return final_data
 
 
 def load_who_data(
