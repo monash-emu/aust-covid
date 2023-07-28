@@ -417,7 +417,7 @@ def add_reinfection(
         'for fully susceptible persons. ' \
         'As for the first infection process, all reinfection processes transition individuals ' \
         'to the latent compartment corresponding to the infecting strain. '
-    # tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line(description, 'Model Construction')
 
     for dest_strain in strain_strata:
         for source_strain in strain_strata:
@@ -445,7 +445,14 @@ def add_reinfection(
             )
 
 
-def get_vacc_stratification(compartments, infection_processes):
+def get_vacc_stratification(
+    compartments: list, 
+    infection_processes: list,
+    tex_doc: StandardTexDoc,
+) -> Stratification:
+    description = ''
+    tex_doc.add_line(description, 'Stratification')
+
     vacc_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
     for infection_process in infection_processes:
         vacc_strat.set_flow_adjustments(
