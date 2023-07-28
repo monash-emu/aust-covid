@@ -131,6 +131,7 @@ def load_uk_pop_data() -> pd.Series:
     )
     data.index.name = "age_group"
     data.columns = ["uk_pops"]
+    data.index = data.index.map(lambda string: string.replace('From ', '').replace(' years', ''))
     return data["uk_pops"]
 
 

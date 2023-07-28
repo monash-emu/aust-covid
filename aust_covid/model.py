@@ -220,8 +220,7 @@ def adapt_gb_matrices_to_aust(
         Outputs and graphs for use in the model and through the notebook
     """
 
-    aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
-
+    # Australia
     aust_props_disp = copy(pop_data)
     aust_props_disp['age_group'] = [f'{age}-{age + 4}' for age in age_strata[:-1]] + ['75 and over']
     input_pop_fig = px.bar(
@@ -234,25 +233,31 @@ def adapt_gb_matrices_to_aust(
     input_pop_filename = 'input_population.jpg'
     input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
     tex_doc.include_figure(
-        'Australian population sizes by age group obtained from Australia Bureau of Statistics.', 
+        'Australian population sizes implemented in the model obtained from Australia Bureau of Statistics.', 
         'Model Construction', 
         input_pop_filename,
     )
+
+    # UK
+    raw_uk_data = load_uk_pop_data()
+    uk_pop_filename = 'uk_population.jpg'
+    uk_pop_fig = px.bar(raw_uk_data)
+    uk_pop_fig.update_layout(showlegend=False)
+    uk_pop_fig.write_image(SUPPLEMENT_PATH / uk_pop_filename)
+    tex_doc.include_figure(
+        'United Kingdom population sizes used in matrix weighting.', 
+        'Model Construction', 
+        uk_pop_filename,
+    )
     if show_figs:
         input_pop_fig.show()
+        uk_pop_fig.show()
 
-    # modelled_pop_filename = 'modelled_population.jpg'
-    # modelled_pop_fig = px.bar(modelled_pops, labels={'value': 'population', 'index': ''})
-    # modelled_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
-    # modelled_pop_fig.write_image(SUPPLEMENT_PATH / modelled_pop_filename)
-    # modelled_pop_caption = 'Population sizes by age group implemented in the model.'
-
-    # UK population distribution
-    # raw_uk_data = load_uk_pop_data()
-    # uk_age_pops = raw_uk_data[:15]
-    # uk_age_pops['75 years and up'] = raw_uk_data[15:].sum()
-    # uk_age_pops.index = age_strata
-    # uk_age_props = uk_age_pops / uk_age_pops.sum()
+    aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
+    uk_age_pops = raw_uk_data[:15]
+    uk_age_pops['75 or over'] = raw_uk_data[15:].sum()
+    uk_age_pops.index = age_strata
+    uk_age_props = uk_age_pops / uk_age_pops.sum()
 
     # matrix_ref_pop_filename = 'matrix_ref_pop.jpg'
     # matrix_ref_pop_fig = px.bar(uk_age_pops, labels={'value': 'population', 'index': ''})
