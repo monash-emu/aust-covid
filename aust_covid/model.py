@@ -148,43 +148,52 @@ def add_infection(
 
 def add_progression(
     model: CompartmentalModel,
+    tex_doc: StandardTexDoc,
 ) -> str:
     process = 'progression'
     origin = 'latent'
     destination = 'infectious'
     parameter_name = 'latent_period'
-    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
-    return f'The {process} process moves ' \
+    description = f'The {process} process moves ' \
         f'people from the {origin} state to the {destination} compartment, ' \
         f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
+    tex_doc.add_line(description, 'Model Construction')
+
+    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
 
 def add_recovery(
     model: CompartmentalModel,
+    tex_doc: StandardTexDoc,
 ) -> str:
     process = 'recovery'
     origin = 'infectious'
     destination = 'recovered'
     parameter_name = 'infectious_period'
-    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
-    return f'The {process} process moves ' \
+    description = f'The {process} process moves ' \
         f'people from the {origin} state to the {destination} compartment, ' \
         f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
+    tex_doc.add_line(description, 'Model Construction')
+
+    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
 
 def add_waning(
     model: CompartmentalModel,
+    tex_doc: StandardTexDoc,
 ) -> str:
     process = 'waning'
     origin = 'recovered'
     destination = 'waned'
     parameter_name = 'natural_immunity_period'
-    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
-    return 'A waned compartment is included in the model ' \
+    description = 'A waned compartment is included in the model ' \
         'to represent persons who no longer have immunity from past natural immunity. ' \
         f'As these persons lose their infection-induced immunity, they transition from the ' \
         f'{origin} compartment to the {destination} compartment at a rate equal to the reciprocal of the ' \
         f'{parameter_name.replace("_", " ")}. '
+    tex_doc.add_line(description, 'Model Construction')
+
+    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
 
 def adapt_gb_matrices_to_aust(

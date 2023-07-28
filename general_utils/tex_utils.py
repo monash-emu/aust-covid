@@ -21,9 +21,9 @@ class TexDoc:
     def show_doc(self):
         self.prepare_doc()
         for section in self.content:
-            print(section)
+            print(f'SECTION: {section}')
             for line in self.content[section]:
-                print(f'\t{line}')
+                print(line)
             print('\n')
         
     def write_doc(self, final_text):
@@ -40,7 +40,6 @@ class TexDoc:
             final_text += f'\n\\section{{{section}}}\n'
             for line in self.content[section]:
                 final_text += f'{line}\n'
-            final_text += '\n'
         for line in self.content['endings']:
             final_text += f'{line}\n'
         self.write_doc(final_text)
