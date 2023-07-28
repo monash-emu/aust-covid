@@ -1,7 +1,6 @@
 from pathlib import Path
 from datetime import datetime, timedelta
 from jax import numpy as jnp
-from jax import jit
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -9,12 +8,12 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from copy import copy
 
-from summer2.functions.time import get_piecewise_scalar_function, get_linear_interpolation_function
+from summer2.functions.time import get_linear_interpolation_function
 from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply, Overwrite
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
 from aust_covid.model_utils import triangle_wave_func, convolve_probability, build_gamma_dens_interval_func
-from aust_covid.inputs import load_pop_data, load_uk_pop_data, load_household_impacts_data, load_google_mob_year_df
+from aust_covid.inputs import load_pop_data, load_uk_pop_data, load_household_impacts_data
 from general_utils.tex_utils import StandardTexDoc
 
 MATRIX_LOCATIONS = [
@@ -204,6 +203,40 @@ def add_waning(
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
 
+def plot_mixing_matrices(
+    matrices: dict, 
+    strata: list, 
+    filename: str,
+    tex_doc: StandardTexDoc,
+) -> tuple:
+    """
+    Visualise the mixing matrices (either raw or adjusted).
+
+    Args:
+        matrices: Collection of arrays containing the age-specific contact rates for each location
+        locations: A string for each epidemiological setting/venue in which transmission can occur
+        strata: Age stratification breakpoints
+        filename: Name for the file to save the plot output
+    
+    Returns:
+        Outputs for visualisation
+    """
+    matrix_figsize = 800
+    matrix_fig = make_subplots(rows=2, cols=2, subplot_titles=MATRIX_LOCATIONS)
+    positions = [[1, 1], [1, 2], [2, 1], [2, 2]]
+    for i_loc, loc in enumerate(MATRIX_LOCATIONS):
+        cur_pos = positions[i_loc]
+        matrix_fig.add_trace(go.Heatmap(x=strata, y=strata, z=matrices[loc], coloraxis = 'coloraxis'), cur_pos[0], cur_pos[1])
+    matrix_fig.update_layout(width=matrix_figsize, height=matrix_figsize * 1.15)
+    matrix_fig.write_image(SUPPLEMENT_PATH / filename)
+    tex_doc.include_figure(
+        f'Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace("_", " ").replace(".jpg", "")}. ', 
+        'Population Mixing', 
+        filename,
+    )
+    return matrix_fig
+
+
 def adapt_gb_matrices_to_aust(
     age_strata: list,
     unadjusted_matrices: dict, 
@@ -219,6 +252,15 @@ def adapt_gb_matrices_to_aust(
     Returns:
         Outputs and graphs for use in the model and through the notebook
     """
+    description = 'Matrices were adjusted to account for the differences in the age distribution of the ' \
+        'Australian population distribution in 2022 compared to the population of Great Britain in 2000. ' \
+        'The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices and the diagonal matrix ' \
+        'containing the vector of the ratios between the proportion of the British and Australian populations ' \
+        'within each age bracket as its diagonal elements. ' \
+        'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
+        'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
+        'from the \href{https://ec.europa.eu/eurostat}{Eurostat database}. '
+    tex_doc.add_line(description, 'Population Mixing')
 
     # Australia
     aust_props_disp = copy(pop_data)
@@ -246,199 +288,37 @@ def adapt_gb_matrices_to_aust(
     uk_pop_fig.write_image(SUPPLEMENT_PATH / uk_pop_filename)
     tex_doc.include_figure(
         'United Kingdom population sizes used in matrix weighting.', 
-        'Model Construction', 
+        'Population Mixing', 
         uk_pop_filename,
     )
-    if show_figs:
-        input_pop_fig.show()
-        uk_pop_fig.show()
 
+    # Make weighting calculations
     aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
     uk_age_pops = raw_uk_data[:15]
     uk_age_pops['75 or over'] = raw_uk_data[15:].sum()
     uk_age_pops.index = age_strata
     uk_age_props = uk_age_pops / uk_age_pops.sum()
+    aust_uk_ratios = aust_age_props / uk_age_props
 
-    # matrix_ref_pop_filename = 'matrix_ref_pop.jpg'
-    # matrix_ref_pop_fig = px.bar(uk_age_pops, labels={'value': 'population', 'index': ''})
-    # matrix_ref_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
-    # matrix_ref_pop_fig.write_image(SUPPLEMENT_PATH / matrix_ref_pop_filename)
-    # matrix_ref_pop_caption = 'United Kingdom population sizes.'
-
-    # Ratio
-    # aust_uk_ratios = aust_age_props / uk_age_props
-
-    # # Adjust each location-specific matrix
-    # adjusted_matrices = {}
-    # for location in ['school', 'home', 'work', 'other_locations']:
-    #     unadjusted_matrix = unadjusted_matrices[location]
-    #     assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], 'Unadjusted mixing matrix not square'
-    #     assert len(aust_age_props) == unadjusted_matrix.shape[0], 'Different number of Aust age groups from mixing categories'
-    #     assert len(uk_age_props) == unadjusted_matrix.shape[0], 'Different number of UK age groups from mixing categories'
-    #     adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
-    #     aust_age_props.index = aust_age_props.index.astype(str)
-
-    # matrix_adjustment_text = 'Matrices were adjusted to account for the differences in the age distribution of the ' \
-    #     'Australian population distribution in 2022 compared to the population of Great Britain in 2000. ' \
-    #     'The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices and the diagonal matrix ' \
-    #     'containing the vector of the ratios between the proportion of the British and Australian populations ' \
-    #     'within each age bracket as its diagonal elements. ' \
-    #     'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
-    #     'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
-    #     'from the Eurostat database (https://ec.europa.eu/eurostat). '
-
-    # return input_pop_caption, input_pop_filename, modelled_pop_caption, modelled_pop_filename, \
-    #     matrix_ref_pop_fig, matrix_ref_pop_caption, matrix_ref_pop_filename, \
-    #     adjusted_matrices, aust_age_props, matrix_adjustment_text
-
-
-def plot_mixing_matrices(
-    matrices: dict, 
-    locations: list, 
-    strata: list, 
-    filename: str,
-) -> tuple:
-    """
-    Visualise the mixing matrices (either raw or adjusted).
-
-    Args:
-        matrices: Collection of arrays containing the age-specific contact rates for each location
-        locations: A string for each epidemiological setting/venue in which transmission can occur
-        strata: Age stratification breakpoints
-        filename: Name for the file to save the plot output
+    # Check and adjust each location-specific matrix
+    adjusted_matrices = {}
+    for location in MATRIX_LOCATIONS:
+        unadjusted_matrix = unadjusted_matrices[location]
+        assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], 'Unadjusted mixing matrix not square'
+        assert len(aust_age_props) == unadjusted_matrix.shape[0], 'Different number of Aust age groups from mixing categories'
+        assert len(uk_age_props) == unadjusted_matrix.shape[0], 'Different number of UK age groups from mixing categories'
+        adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
     
-    Returns:
-        Outputs for visualisation
-    """
-    matrix_figsize = 800
-    matrix_fig = make_subplots(rows=2, cols=2, subplot_titles=locations)
-    positions = [[1, 1], [1, 2], [2, 1], [2, 2]]
-    for i_loc, loc in enumerate(locations):
-        cur_pos = positions[i_loc]
-        matrix_fig.add_trace(go.Heatmap(x=strata, y=strata, z=matrices[loc], coloraxis = "coloraxis"), cur_pos[0], cur_pos[1])
-    matrix_fig.update_layout(width=matrix_figsize, height=matrix_figsize * 1.15)
-    matrix_fig.write_image(SUPPLEMENT_PATH / filename)
-    matrix_fig_text = f'Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace("_", " ")}. '
-    return matrix_fig, matrix_fig_text
+    # Some final plotting
+    raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, age_strata, 'raw_matrices.jpg', tex_doc)
+    adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, age_strata, 'adjusted_matrices.jpg', tex_doc)
+    if show_figs:
+        input_pop_fig.show()
+        uk_pop_fig.show()
+        raw_matrix_fig.show()
+        adj_matrix_fig.show()
 
-
-def video_mixing_matrices(
-    model: CompartmentalModel, 
-    size: int=400
-) -> go.Figure:
-    """
-    Get a video of the mixing matrix scaling over time.
-
-    Args:
-        model: The model to interrogate for its mixing structure
-        size: Request for the size of the plot
-
-    Returns:
-        The animated figure
-    """
-    mmgraph = model.graph.filter('mixing_matrix')
-    mmfunc = jit(mmgraph.get_callable())
-    mixing_matrix_progress = np.stack([mmfunc(model_variables={'time': t})['mixing_matrix'] for t in model.times])
-    matrix_video = px.imshow(mixing_matrix_progress, animation_frame=0, range_color=[0.0, mixing_matrix_progress.max()])
-    matrix_video.update_layout(width=size, height=size * 1.15)
-    matrix_video.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = 20
-    return matrix_video
-
-
-def get_raw_mobility(
-    plot_start_time: datetime.date,
-    model: CompartmentalModel,
-) -> tuple:
-    """
-    Args:
-        plot_start_time: Left limit of x-axis
-        model: The compartmental model
-
-    Returns:
-        Raw mobility data
-    """
-    mob_df = pd.concat([load_google_mob_year_df(2021), load_google_mob_year_df(2022)])
-    mob_df.columns = [col.replace('_percent_change_from_baseline', '').replace('_', ' ') for col in mob_df.columns]
-    end_date = model.get_epoch().index_to_dti([model.times[-1]])
-    
-    raw_mob_filename = 'raw_mobility.jpg'
-    raw_mob_fig = mob_df.plot(labels={'value': 'percent change from baseline', 'date': ''})
-    raw_mob_fig.update_xaxes(range=(plot_start_time, end_date[0]))
-    raw_mob_fig.write_image(SUPPLEMENT_PATH / raw_mob_filename)
-
-    raw_mob_text = 'Google mobility data were downloaded from https://www.gstatic.com/covid19/ mobility/Region_Mobility_Report_CSVs.zip' \
-        "on the 15th June 2023. These spreadsheets provide daily estimates of rates of attendance at certain `locations' and can " \
-        "be used to provide an overall picture of the populations's attendance at specific venue types. "
-
-    return mob_df, raw_mob_fig, raw_mob_filename, raw_mob_text
-
-
-def process_mobility(
-    mob_df: pd.DataFrame,
-    plot_start_time: datetime.date,
-    model: CompartmentalModel,
-) -> tuple:
-    """
-    Args:
-        mob_df: Raw mobility data returned by previous function
-        plot_start_time: Left limit of x-axis
-        model: The compartmental model
-
-    Returns:
-        Processed mobility data to be used in model
-    """
-    work_mob = mob_df['workplaces']
-    other_mob = mob_df[['retail and recreation', 'grocery and pharmacy', 'transit stations']].mean(axis=1)
-
-    smoothed_work_mob = work_mob.rolling(window=14).mean().dropna()
-    smoothed_other_mob = other_mob.rolling(window=14).mean().dropna()
-
-    combined_mob = pd.DataFrame(
-        {
-            'other places': other_mob, 
-            'smoothed other places': smoothed_other_mob,
-            'work': work_mob,
-            'smoothed work': smoothed_work_mob,
-        }
-    )
-    end_date = model.get_epoch().index_to_dti([model.times[-1]])
-
-    modelled_mob_filename = 'modelled_mobility.jpg'
-    modelled_mob_fig = combined_mob.plot(labels={'value': 'percent change from baseline', 'date': ''})
-    modelled_mob_fig.update_xaxes(range=(plot_start_time, end_date[0]))
-    modelled_mob_fig.write_image(SUPPLEMENT_PATH / modelled_mob_filename)
-    return smoothed_work_mob, smoothed_other_mob, modelled_mob_fig, modelled_mob_filename
-
-
-def calculate_mobility_effect(
-    mob_input: pd.Series,
-    plot_start_time: datetime.date,
-    model: CompartmentalModel,
-    exponent: float,
-) -> tuple:
-    mobility_effect = (1.0 + mob_input / 100.0) ** exponent
-    mobility_effect_func = get_linear_interpolation_function(model.get_epoch().dti_to_index(mobility_effect.index), mobility_effect.to_numpy())
-
-    # mob_adj_text = 'The adjustment in the rates of contact at the locations affected by mobility is ' \
-    #     'calculated as one plus the averaged Google mobility percentage change metric divided by 100 (usually negative). ' \
-    #     'This is then squared to account for this effect applying to both the infector and infectee of any potential ' \
-    #     'effective contact. '
-    # mob_effect_filename = 'mobility_effect.jpg'
-    # mob_effect_fig = mobility_effect.plot(labels={'value': 'adjustment', 'date': ''})
-    # end_date = model.get_epoch().index_to_dti([model.times[-1]])
-    # mob_effect_fig.update_xaxes(range=(plot_start_time, end_date[0]))
-    # mob_effect_fig.update_layout(showlegend=False)
-    # mob_effect_fig.write_image(SUPPLEMENT_PATH / mob_effect_filename)
-    return mobility_effect_func
-
-
-def get_mobility_mapper() -> tuple:
-    mob_map_text = 'The mobility mapping function is used to scale the contribution of contacts at ' \
-        "workplaces and in `other locations' to the overall time-varying mixing matrix " \
-        '(that is, contacts in locations other than the home and in schools). '
-    def mobility_scaling(matrices, work_func, mobility_func):
-        return matrices['home'] + matrices['school'] + mobility_func * matrices['other_locations'] + work_func * matrices['work']
-    return mobility_scaling, mob_map_text
+    return adjusted_matrices
 
 
 def get_age_stratification(
