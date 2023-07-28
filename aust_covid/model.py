@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from copy import copy
 
 from summer2.functions.time import get_piecewise_scalar_function, get_linear_interpolation_function
 from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply, Overwrite
@@ -15,6 +16,13 @@ from summer2.parameters import Parameter, DerivedOutput, Function, Time
 from aust_covid.model_utils import triangle_wave_func, convolve_probability, build_gamma_dens_interval_func
 from aust_covid.inputs import load_pop_data, load_uk_pop_data, load_household_impacts_data, load_google_mob_year_df
 from general_utils.tex_utils import StandardTexDoc
+
+MATRIX_LOCATIONS = [
+    'school', 
+    'home', 
+    'work', 
+    'other_locations',
+]
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'
@@ -200,6 +208,8 @@ def adapt_gb_matrices_to_aust(
     age_strata: list,
     unadjusted_matrices: dict, 
     pop_data: pd.DataFrame,
+    tex_doc: StandardTexDoc,
+    show_figs: bool=False,
 ) -> tuple:
     """
     Args:
@@ -210,65 +220,71 @@ def adapt_gb_matrices_to_aust(
         Outputs and graphs for use in the model and through the notebook
     """
 
-    # Australian population distribution 
-    # aust_pop_series = pop_data
-    # modelled_pops = aust_pop_series[:'70-74']
-    # modelled_pops['75'] = aust_pop_series['75-79':].sum()
-    # modelled_pops.index = age_strata
-    # aust_age_props = pd.Series([pop / aust_pop_series.sum() for pop in modelled_pops], index=age_strata)
     aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
 
-    age_group_names = [f'{age}-{age + 4}' for age in age_strata[:-1]] + ['75 and over']
+    aust_props_disp = copy(pop_data)
+    aust_props_disp['age_group'] = [f'{age}-{age + 4}' for age in age_strata[:-1]] + ['75 and over']
+    input_pop_fig = px.bar(
+        aust_props_disp.melt(id_vars=['age_group']), 
+        x='age_group', 
+        y='value', 
+        color='variable', 
+        labels={'value': 'population', 'age_group': ''},
+    )
     input_pop_filename = 'input_population.jpg'
-    # input_pop_fig = px.bar(aust_pop_series, labels={'value': 'population', 'Age (years)': ''})
-    # input_pop_fig.update_layout(showlegend=False)
-    # input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
-    input_pop_caption = 'Australian population sizes by age group obtained from Australia Bureau of Statistics.'
+    input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
+    tex_doc.include_figure(
+        'Australian population sizes by age group obtained from Australia Bureau of Statistics.', 
+        'Model Construction', 
+        input_pop_filename,
+    )
+    if show_figs:
+        input_pop_fig.show()
 
-    modelled_pop_filename = 'modelled_population.jpg'
+    # modelled_pop_filename = 'modelled_population.jpg'
     # modelled_pop_fig = px.bar(modelled_pops, labels={'value': 'population', 'index': ''})
     # modelled_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
     # modelled_pop_fig.write_image(SUPPLEMENT_PATH / modelled_pop_filename)
-    modelled_pop_caption = 'Population sizes by age group implemented in the model.'
+    # modelled_pop_caption = 'Population sizes by age group implemented in the model.'
 
     # UK population distribution
-    raw_uk_data = load_uk_pop_data()
-    uk_age_pops = raw_uk_data[:15]
-    uk_age_pops['75 years and up'] = raw_uk_data[15:].sum()
-    uk_age_pops.index = age_strata
-    uk_age_props = uk_age_pops / uk_age_pops.sum()
+    # raw_uk_data = load_uk_pop_data()
+    # uk_age_pops = raw_uk_data[:15]
+    # uk_age_pops['75 years and up'] = raw_uk_data[15:].sum()
+    # uk_age_pops.index = age_strata
+    # uk_age_props = uk_age_pops / uk_age_pops.sum()
 
-    matrix_ref_pop_filename = 'matrix_ref_pop.jpg'
-    matrix_ref_pop_fig = px.bar(uk_age_pops, labels={'value': 'population', 'index': ''})
-    matrix_ref_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
-    matrix_ref_pop_fig.write_image(SUPPLEMENT_PATH / matrix_ref_pop_filename)
-    matrix_ref_pop_caption = 'United Kingdom population sizes.'
+    # matrix_ref_pop_filename = 'matrix_ref_pop.jpg'
+    # matrix_ref_pop_fig = px.bar(uk_age_pops, labels={'value': 'population', 'index': ''})
+    # matrix_ref_pop_fig.update_layout(xaxis=dict(tickvals=age_strata, ticktext=age_group_names, tickangle=45), showlegend=False)
+    # matrix_ref_pop_fig.write_image(SUPPLEMENT_PATH / matrix_ref_pop_filename)
+    # matrix_ref_pop_caption = 'United Kingdom population sizes.'
 
     # Ratio
-    aust_uk_ratios = aust_age_props / uk_age_props
+    # aust_uk_ratios = aust_age_props / uk_age_props
 
-    # Adjust each location-specific matrix
-    adjusted_matrices = {}
-    for location in ['school', 'home', 'work', 'other_locations']:
-        unadjusted_matrix = unadjusted_matrices[location]
-        assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], 'Unadjusted mixing matrix not square'
-        assert len(aust_age_props) == unadjusted_matrix.shape[0], 'Different number of Aust age groups from mixing categories'
-        assert len(uk_age_props) == unadjusted_matrix.shape[0], 'Different number of UK age groups from mixing categories'
-        adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
-        aust_age_props.index = aust_age_props.index.astype(str)
+    # # Adjust each location-specific matrix
+    # adjusted_matrices = {}
+    # for location in ['school', 'home', 'work', 'other_locations']:
+    #     unadjusted_matrix = unadjusted_matrices[location]
+    #     assert unadjusted_matrix.shape[0] == unadjusted_matrix.shape[1], 'Unadjusted mixing matrix not square'
+    #     assert len(aust_age_props) == unadjusted_matrix.shape[0], 'Different number of Aust age groups from mixing categories'
+    #     assert len(uk_age_props) == unadjusted_matrix.shape[0], 'Different number of UK age groups from mixing categories'
+    #     adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
+    #     aust_age_props.index = aust_age_props.index.astype(str)
 
-    matrix_adjustment_text = 'Matrices were adjusted to account for the differences in the age distribution of the ' \
-        'Australian population distribution in 2022 compared to the population of Great Britain in 2000. ' \
-        'The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices and the diagonal matrix ' \
-        'containing the vector of the ratios between the proportion of the British and Australian populations ' \
-        'within each age bracket as its diagonal elements. ' \
-        'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
-        'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
-        'from the Eurostat database (https://ec.europa.eu/eurostat). '
+    # matrix_adjustment_text = 'Matrices were adjusted to account for the differences in the age distribution of the ' \
+    #     'Australian population distribution in 2022 compared to the population of Great Britain in 2000. ' \
+    #     'The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices and the diagonal matrix ' \
+    #     'containing the vector of the ratios between the proportion of the British and Australian populations ' \
+    #     'within each age bracket as its diagonal elements. ' \
+    #     'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
+    #     'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
+    #     'from the Eurostat database (https://ec.europa.eu/eurostat). '
 
-    return input_pop_caption, input_pop_filename, modelled_pop_caption, modelled_pop_filename, \
-        matrix_ref_pop_fig, matrix_ref_pop_caption, matrix_ref_pop_filename, \
-        adjusted_matrices, aust_age_props, matrix_adjustment_text
+    # return input_pop_caption, input_pop_filename, modelled_pop_caption, modelled_pop_filename, \
+    #     matrix_ref_pop_fig, matrix_ref_pop_caption, matrix_ref_pop_filename, \
+    #     adjusted_matrices, aust_age_props, matrix_adjustment_text
 
 
 def plot_mixing_matrices(

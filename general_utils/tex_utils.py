@@ -43,6 +43,12 @@ class TexDoc:
         for line in self.content['endings']:
             final_text += f'{line}\n'
         self.write_doc(final_text)
+
+    def include_figure(self, caption, section, filename):
+        self.add_line('\\begin{figure}', section)
+        self.add_line(f'\\caption{{{caption}}}', section)
+        self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}}}', section)
+        self.add_line('\\end{figure}', section)
                 
 
 class StandardTexDoc(TexDoc):
@@ -51,6 +57,9 @@ class StandardTexDoc(TexDoc):
         self.add_line('\\documentclass{article}', 'preamble')
         self.add_line('\\usepackage{biblatex}', 'preamble')
         self.add_line('\\usepackage{hyperref}', 'preamble')
+        self.add_line('\\usepackage{graphicx}', 'preamble')
+        self.add_line('\\graphicspath{ {./images/} }', 'preamble')
+
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
         self.add_line('\\begin{document}', 'preamble')
