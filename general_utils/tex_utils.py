@@ -20,15 +20,17 @@ class TexDoc:
 
     def show_doc(self):
         self.prepare_doc()
+        output = ''
         for section in self.content:
-            print(f'SECTION: {section}')
+            output += f'SECTION: {section}\n'
             for line in self.content[section]:
-                print(line)
-            print('\n')
-        
-    def write_doc(self, final_text):
+                output += f'{line}\n'
+            output += '\n'
+        return output
+
+    def write_doc(self):
         with open(self.path / self.doc_name, 'w') as doc_file:
-            doc_file.write(final_text)
+            doc_file.write(self.emit_doc())
     
     def emit_doc(self):
         if not self.prepared:
@@ -42,7 +44,7 @@ class TexDoc:
                 final_text += f'{line}\n'
         for line in self.content['endings']:
             final_text += f'{line}\n'
-        self.write_doc(final_text)
+        return final_text
 
     def include_figure(self, caption, section, filename):
         self.add_line('\\begin{figure}', section)
