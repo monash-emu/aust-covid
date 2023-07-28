@@ -88,8 +88,8 @@ def load_pop_data(
 ) -> tuple:
     sheet_name = "31010do002_202206.xlsx"
     description = f'For estimates of the Australian population, the spreadsheet was downloaded ' \
-        'from the Australian Bureau of Statistics website on the 1\\textsuperscript{st} of March 2023. ' \
-        "\cite{abs2022} Minor jurisdictions other than Australia's eight major state and territories " \
+        'from the Australian Bureau of Statistics website on the 1\\textsuperscript{st} of March 2023. \cite{abs2022} ' \
+        "Minor jurisdictions other than Australia's eight major state and territories " \
         '(i.e. Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory) are excluded from data, ' \
         'These much smaller jurisdictions likely contribute little to overall COVID-19 epidemiology ' \
         'and are unlikely to mix homogeneously with the larger states/territories. '

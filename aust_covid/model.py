@@ -106,6 +106,7 @@ def get_pop_data(age_strata) -> tuple:
 def set_starting_conditions(
     model: CompartmentalModel,
     pop_data: pd.DataFrame,
+    tex_doc,
 ) -> str:
     """
     Args:
@@ -116,9 +117,11 @@ def set_starting_conditions(
         Description of data being used
     """
     total_pop = pop_data.sum().sum()
-    model.set_initial_population({'susceptible': total_pop})
-    return f'The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, ' \
+    description = f'The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, ' \
         'with infectious persons introduced later through strain seeding as described below. '
+    tex_doc.add_line(description, 'Model Construction')
+
+    model.set_initial_population({'susceptible': total_pop})
 
 
 def add_infection(
