@@ -371,11 +371,12 @@ def seed_vocs(
     seed_rate_str = 'seed_rate'
     description = f'Each strain (including the starting {strains[0].replace("ba", "BA.")} strain) is seeded through ' \
         'a step function that allows the introduction of a constant rate of new infectious ' \
-        f"persons into the {seed_comp} compartment over a fixed seeding duration defined by the `{seed_duration_str}' parameter. " \
-        f"and at a rate defined by the `{seed_rate_str}' parameter. " \
+        f'persons into the {seed_comp} compartment over a fixed seeding duration defined by a single ' \
+        f'{seed_duration_str.replace("_", " ")} parameter. ' \
+        f'and at a rate defined by one {seed_rate_str.replace("_", " ")} parameter. ' \
         'The time of first emergence of each strain into the system is defined by ' \
         'a separate emergence time parameter for each strain. '
-    # tex_doc.add_line(description, 'Stratification')
+    tex_doc.add_line(description, 'Stratification')
 
     for strain in strains:
         voc_seed_func = Function(
