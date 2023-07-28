@@ -106,7 +106,7 @@ def get_pop_data(age_strata) -> tuple:
 def set_starting_conditions(
     model: CompartmentalModel,
     pop_data: pd.DataFrame,
-    tex_doc,
+    tex_doc: StandardTexDoc,
 ) -> str:
     """
     Args:
@@ -126,6 +126,7 @@ def set_starting_conditions(
 
 def add_infection(
     model: CompartmentalModel,
+    tex_doc: StandardTexDoc,
 ) -> str:
     """
     Args:
@@ -137,10 +138,12 @@ def add_infection(
     process = 'infection'
     origin = 'susceptible'
     destination = 'latent'
-    model.add_infection_frequency_flow(process, Parameter('contact_rate'), origin, destination)
-    return f'The {process} process moves people from the {origin} ' \
+    description = f'The {process} process moves people from the {origin} ' \
         f'compartment to the {destination} compartment, ' \
         'under the frequency-dependent transmission assumption. '
+    tex_doc.add_line(description, 'Model Construction')
+
+    model.add_infection_frequency_flow(process, Parameter('contact_rate'), origin, destination)
 
 
 def add_progression(
