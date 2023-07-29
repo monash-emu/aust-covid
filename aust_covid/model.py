@@ -480,28 +480,53 @@ def get_vacc_stratification(
     return vacc_strat
 
 
-def get_spatial_stratification(reopen_date, compartments, infection_processes, model_pops, model):
+def get_spatial_stratification(
+    reopen_date: datetime, 
+    compartments: list, 
+    infection_processes: list, 
+    model_pops: pd.DataFrame, 
+    model: CompartmentalModel,
+    tex_doc: StandardTexDoc,
+) -> Stratification:
+    strata = model_pops.columns
+    wa_reopen_period = 30.0
+    description = 'All model compartments previously described are further ' \
+        f"stratified into strata to represent {strata[0].upper()} and `{strata[1]}' " \
+        'to represent the remaining major jurisdictions of Australia. ' \
+        f'Transmission in {strata[0].upper()} is initially set to zero, ' \
+        f'and subsquently scaled up to being equal to the {strata[1]} ' \
+        f'jurisdictions of Australia over an arbitrary period of {wa_reopen_period} days. '
+    tex_doc.add_line(description, 'Stratification')
+
     spatial_strat = Stratification('states', model_pops.columns, compartments)
     state_props = model_pops.sum() / model_pops.sum().sum()
     spatial_strat.set_population_split(state_props.to_dict())
-
-    wa_reopen_period = 30.0  # This should ideally be Parameter('wa_reopen_period')
 
     reopen_index = model.get_epoch().dti_to_index(reopen_date)
     reopen_func = get_linear_interpolation_function(
         [reopen_index, reopen_index + wa_reopen_period],
         np.array([0.0, 1.0]),
     )
-    infection_adj = {'wa': reopen_func, 'other': None}
+    infection_adj = {strata[0]: reopen_func, strata[1]: None}
     for infection_process in infection_processes:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
+
     return spatial_strat
 
 
-def adjust_state_pops(pop_data, model):
+def adjust_state_pops(
+    model_pops: pd.DataFrame, 
+    model: CompartmentalModel,
+    tex_doc: StandardTexDoc,
+):
+    strata = model_pops.columns
+    description = 'Starting model populations are distributed by ' \
+        f'age and spatial status ({strata[0].upper()}, {strata[1]}) ' \
+        'according to the age distribution in each simulated region. '
+    tex_doc.add_line(description, 'Stratification')
 
-    for state in pop_data.columns:
-        props = pop_data[state] / pop_data[state].sum()
+    for state in model_pops.columns:
+        props = model_pops[state] / model_pops[state].sum()
         props.index = props.index.astype(str)
         model.adjust_population_split('agegroup', {'states': state}, props.to_dict())
 
