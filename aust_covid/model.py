@@ -189,6 +189,7 @@ def plot_mixing_matrices(
         cur_pos = positions[i_loc]
         matrix_fig.add_trace(go.Heatmap(x=strata, y=strata, z=matrices[loc], coloraxis = 'coloraxis'), cur_pos[0], cur_pos[1])
     matrix_fig.update_layout(width=matrix_figsize, height=matrix_figsize * 1.15)
+
     matrix_fig.write_image(SUPPLEMENT_PATH / filename)
     tex_doc.include_figure(
         'Population Mixing', 
@@ -233,6 +234,7 @@ def adapt_gb_matrices_to_aust(
         color='variable', 
         labels={'value': 'population', 'age_group': ''},
     )
+
     input_pop_filename = 'input_population.jpg'
     input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
     tex_doc.include_figure(
@@ -243,9 +245,10 @@ def adapt_gb_matrices_to_aust(
 
     # UK
     raw_uk_data = load_uk_pop_data()
-    uk_pop_filename = 'uk_population.jpg'
     uk_pop_fig = px.bar(raw_uk_data)
     uk_pop_fig.update_layout(showlegend=False)
+
+    uk_pop_filename = 'uk_population.jpg'
     uk_pop_fig.write_image(SUPPLEMENT_PATH / uk_pop_filename)
     tex_doc.include_figure(
         'Population Mixing', 
@@ -457,7 +460,7 @@ def get_spatial_stratification(
         f'Transmission in {strata[0].upper()} is initially set to zero, ' \
         f'and subsquently scaled up to being equal to the {strata[1]} ' \
         f'jurisdictions of Australia over an arbitrary period of {wa_reopen_period} days. '
-    tex_doc.add_line(description, 'Stratification')
+    tex_doc.add_line('Stratification', description)
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)
     state_props = model_pops.sum() / model_pops.sum().sum()
@@ -534,59 +537,71 @@ def get_cdr_values(
 
 def add_notifications_output(
     model: CompartmentalModel,
+    tex_doc: StandardTexDoc,
+    show_figs: bool=False,
 ) -> tuple:
-    
-    # Get data, using test to symptomatic ratio
-    hh_impact = load_household_impacts_data()
-    hh_test_ratio = hh_impact["Proportion testing"] / hh_impact["Proportion symptomatic"]
+    description = 'The extent of community testing following symptomatic infection is likely to have declined ' \
+        'over the course of 2022. To understand these trends, we first considered data from the \href' \
+        '{https://www.abs.gov.au/statistics/people/people-and-communities/household-impacts-covid-19-survey/latest-release}' \
+        '{Australian Bureau of Statistics Household Impacts of COVID-19 surveys} which were undertaken periodically ' \
+        'throughout 2022 with standardised questions at each round ' \
+        '(downloded on the 12\\textsuperscript{th} June 2023). ' \
+        'These surveys reported on several indicators, ' \
+        'including the proportion of households reporting a household member with symptoms of cold, flu or COVID-19, ' \
+        'and the proportion of households reporting a household member has had a COVID-19 test. ' \
+        'We considered that the ratio of the proportion of households reporting having undertaken COVID-19 tests to the ' \
+        'proportion of households with a symptomatic member provided the best available estimate of the decline in ' \
+        'testing over this period. ' \
+        'We define the case detection rate (CDR) as the proportion of all incident COVID-19 episodes ' \
+        '(including asymptomatic and undetected episodes) that are captured through the surveillance data we used in calibration. ' \
+        'In calibration, we varied the starting case detection rate at the time of the first survey through plausible ranges, ' \
+        'which declined thereafter according to the survey estimates descrbied. ' \
+        'The relationship between CDR and our calculated ratio of testing in households to symptomatic persons in households ' \
+        'was defined by an exponential function to ensure that the CDR remained in the domain [0, 1], ' \
+        'dropping to zero when household testing reached zero and approached one as household testing approached very high levels. ' \
+        "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
+        "$s = (1 - e^{-p \\times r})$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
+    tex_doc.add_line('Outputs', description)
 
-    # Do the necessary calculations
-    exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter("start_cdr"))
+    hh_impact = load_household_impacts_data()
+    hh_test_ratio = hh_impact['Proportion testing'] / hh_impact['Proportion symptomatic']
+
+    exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter('start_cdr'))
     cdr_values = get_cdr_values(exp_param, hh_test_ratio.to_numpy())
 
-    # Track case detection rate as an interpolated function of time
     aust_epoch = model.get_epoch()
-    ratio_interp = get_linear_interpolation_function(
-        jnp.array(aust_epoch.datetime_to_number(hh_test_ratio.index)), 
-        cdr_values,
-    )
+    ratio_interp = get_linear_interpolation_function(jnp.array(aust_epoch.datetime_to_number(hh_test_ratio.index)), cdr_values)
     tracked_ratio_interp = model.request_track_modelled_value("ratio_interp", ratio_interp)
     
-    # Delay from incidence to notification
     delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), model.times)
 
-    # Final notification output
     notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput("incidence"), delay]) * tracked_ratio_interp
     model.request_function_output(name="notifications", func=notif_dist_rel_inc)
 
-    survey_fig_name = "survey.jpg"
     survey_fig = hh_impact.plot(labels={"value": "percentage", "index": ""}, markers=True)
-    survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
-    survey_fig_caption = "Raw survey values."
 
-    ratio_fig_name = "ratio.jpg"
+    survey_fig_name = "survey.jpg"
+    survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
+    tex_doc.include_figure(
+        'Outputs', 
+        'Raw survey values from Household Impacts of COVID-19 surveys. ', 
+        survey_fig_name,
+    )
+
     ratio_fig = hh_test_ratio.plot(labels={"value": "ratio", "index": ""}, markers=True)
     ratio_fig.update_layout(showlegend=False)
+
+    ratio_fig_name = "ratio.jpg"
     ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
-    ratio_fig_caption = "Ratio of proportion of households testing to proportion reporting symptoms."
+    tex_doc.include_figure(
+        'Outputs', 
+        'Ratio of proportion of households testing to proportion reporting symptoms.', 
+        survey_fig_name,
+    )
 
-    description = "Notifications are calculated from incidence by first multiplying the raw incidence value " \
-        "by a function of time that is intended to capture the declining proportion of COVID-19 episodes " \
-        "that were captured through surveillance mechanisms due to a declining proportion of symptomatic " \
-        "persons testing over the course of the simulation period, and then applying a convolution." \
-        "The Household Impacts of COVID-19 Survey downloaded from " \
-        "https://www.abs.gov.au/statistics/people/ people-and-communities/" \
-        "household-impacts-covid-19-survey/latest-release on 12th June 2023 " \
-        "reports on three indicators, including the proportion of households reporting a household member with symptoms of cold, flu or COVID-19, " \
-        "and the proportion of households reporting a household member has had a COVID-19 test. " \
-        "The ratio of the second to the first of these indicators was taken as an indicator of declining case detection. " \
-        "A transposed exponential function was used to define the relationship between this ratio and the modelled case detection over time, " \
-        "with the starting case detection rate varied to capture the uncertainty in the true absolute case detection rate " \
-        "proportion of all infection episodes captured through surveillance. " \
-        "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
-        "$s = (1 - e^{-p \\times r})$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
-
-    return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption, description
+    if show_figs:
+        survey_fig.show()
+        ratio_fig.show()
 
 
 def add_death_output(

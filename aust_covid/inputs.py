@@ -136,7 +136,6 @@ def load_uk_pop_data() -> pd.Series:
 
 
 def load_household_impacts_data():
-    "https://www.abs.gov.au/statistics/people/people-and-communities/household-impacts-covid-19-survey/latest-release"
     data = pd.read_csv(
         DATA_PATH / "Australian Households, cold-flu-COVID-19 symptoms, tests, and positive cases in the past four weeks, by time of reporting .csv",
         skiprows=[0] + list(range(5, 12)),
