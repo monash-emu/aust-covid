@@ -396,6 +396,7 @@ def seed_vocs(
             split_imports=True,
         )
 
+
 def add_reinfection(
     model: CompartmentalModel,
     strain_strata: list,
@@ -450,7 +451,15 @@ def get_vacc_stratification(
     infection_processes: list,
     tex_doc: StandardTexDoc,
 ) -> Stratification:
-    description = ''
+    description = 'All compartments and stratifications described are further ' \
+        'stratified into two strata with differing levels of susceptibility to infection. ' \
+        'These are loosely intended to represent persons with and without protection ' \
+        'against infection attributable to vaccination. ' \
+        'One parameter is used to represent the proportion of the population retaining ' \
+        'immunological protection against infection through vaccination, ' \
+        'with a second parameter used to quantify the relative reduction in ' \
+        'the rate of infection and reinfection for those in the stratum with ' \
+        'reduced susceptibility. '
     tex_doc.add_line(description, 'Stratification')
 
     vacc_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
@@ -471,9 +480,10 @@ def get_vacc_stratification(
     return vacc_strat
 
 
-def get_spatial_stratification(reopen_date, compartments, infection_processes, pop_dist, model):
-    spatial_strat = Stratification('states', pop_dist.keys(), compartments)
-    spatial_strat.set_population_split(pop_dist)
+def get_spatial_stratification(reopen_date, compartments, infection_processes, model_pops, model):
+    spatial_strat = Stratification('states', model_pops.columns, compartments)
+    state_props = model_pops.sum() / model_pops.sum().sum()
+    spatial_strat.set_population_split(state_props.to_dict())
 
     wa_reopen_period = 30.0  # This should ideally be Parameter('wa_reopen_period')
 
@@ -488,8 +498,9 @@ def get_spatial_stratification(reopen_date, compartments, infection_processes, p
     return spatial_strat
 
 
-def adjust_state_pops(pop_data, state_pop_dist, model):
-    for state in state_pop_dist.index:
+def adjust_state_pops(pop_data, model):
+
+    for state in pop_data.columns:
         props = pop_data[state] / pop_data[state].sum()
         props.index = props.index.astype(str)
         model.adjust_population_split('agegroup', {'states': state}, props.to_dict())
