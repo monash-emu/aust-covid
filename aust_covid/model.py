@@ -58,7 +58,7 @@ def build_base_model(
         f'representing the following states: {", ".join(compartments)}. ' \
         f"Only the `{infectious_compartment}' compartment contributes to the force of infection. " \
         f'The model is run from {start_date.strftime("%d %B %Y")} to {end_date.strftime("%d %B %Y")}. '
-    tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line('Model Construction', description)
 
     return CompartmentalModel(
         times=(
@@ -87,7 +87,7 @@ def set_starting_conditions(
     total_pop = pop_data.sum().sum()
     description = f'The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, ' \
         'with infectious persons introduced later through strain seeding as described below. '
-    tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line('Model Construction', description)
 
     model.set_initial_population({'susceptible': total_pop})
 
@@ -109,7 +109,7 @@ def add_infection(
     description = f'The {process} process moves people from the {origin} ' \
         f'compartment to the {destination} compartment, ' \
         'under the frequency-dependent transmission assumption. '
-    tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line('Model Construction', description)
 
     model.add_infection_frequency_flow(process, Parameter('contact_rate'), origin, destination)
 
@@ -125,7 +125,7 @@ def add_progression(
     description = f'The {process} process moves ' \
         f'people from the {origin} state to the {destination} compartment, ' \
         f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
-    tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line('Model Construction', description)
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
@@ -141,7 +141,7 @@ def add_recovery(
     description = f'The {process} process moves ' \
         f'people from the {origin} state to the {destination} compartment, ' \
         f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
-    tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line('Model Construction', description)
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
@@ -159,7 +159,7 @@ def add_waning(
         f'As these persons lose their infection-induced immunity, they transition from the ' \
         f'{origin} compartment to the {destination} compartment at a rate equal to the reciprocal of the ' \
         f'{parameter_name.replace("_", " ")}. '
-    tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line('Model Construction', description)
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
@@ -191,8 +191,8 @@ def plot_mixing_matrices(
     matrix_fig.update_layout(width=matrix_figsize, height=matrix_figsize * 1.15)
     matrix_fig.write_image(SUPPLEMENT_PATH / filename)
     tex_doc.include_figure(
-        f'Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace("_", " ").replace(".jpg", "")}. ', 
         'Population Mixing', 
+        f'Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace("_", " ").replace(".jpg", "")}. ', 
         filename,
     )
     return matrix_fig
@@ -221,7 +221,7 @@ def adapt_gb_matrices_to_aust(
         'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
         'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
         'from the \href{https://ec.europa.eu/eurostat}{Eurostat database}. '
-    tex_doc.add_line(description, 'Population Mixing')
+    tex_doc.add_line('Population Mixing', description)
 
     # Australia
     aust_props_disp = copy(pop_data)
@@ -236,8 +236,8 @@ def adapt_gb_matrices_to_aust(
     input_pop_filename = 'input_population.jpg'
     input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
     tex_doc.include_figure(
-        'Australian population sizes implemented in the model obtained from Australia Bureau of Statistics.', 
         'Model Construction', 
+        'Australian population sizes implemented in the model obtained from Australia Bureau of Statistics.', 
         input_pop_filename,
     )
 
@@ -248,8 +248,8 @@ def adapt_gb_matrices_to_aust(
     uk_pop_fig.update_layout(showlegend=False)
     uk_pop_fig.write_image(SUPPLEMENT_PATH / uk_pop_filename)
     tex_doc.include_figure(
-        'United Kingdom population sizes used in matrix weighting.', 
         'Population Mixing', 
+        'United Kingdom population sizes used in matrix weighting.', 
         uk_pop_filename,
     )
 
@@ -300,7 +300,7 @@ def get_age_stratification(
         'These age brackets were chosen to match those used by the POLYMOD survey and so fit with the mixing data available. ' \
         'The population distribution by age group was informed by the data from the Australian ' \
         'Bureau of Statistics introduced previously. '
-    tex_doc.add_line(description, 'Stratification')
+    tex_doc.add_line('Stratification', description)
 
     age_strat = Stratification('agegroup', age_strata, compartments)
     age_strat.set_mixing_matrix(matrix)
@@ -317,7 +317,7 @@ def get_strain_stratification(
     description = f'We stratified the following compartments according to strain: {", ".join(compartments_to_stratify)}, ' \
         f'including compartments to represent strains: {", ".join(strain_strings)}. ' \
         f"This was implemented using summer's `{StrainStratification.__name__}' class. "
-    tex_doc.add_line(description, 'Stratification')
+    tex_doc.add_line('Stratification', description)
 
     return StrainStratification('strain', strain_strata, compartments_to_stratify)
 
@@ -337,7 +337,7 @@ def seed_vocs(
         f'and at a rate defined by one {seed_rate_str.replace("_", " ")} parameter. ' \
         'The time of first emergence of each strain into the system is defined by ' \
         'a separate emergence time parameter for each strain. '
-    tex_doc.add_line(description, 'Stratification')
+    tex_doc.add_line('Stratification', description)
 
     for strain in strains:
         voc_seed_func = Function(
@@ -379,7 +379,7 @@ def add_reinfection(
         'for fully susceptible persons. ' \
         'As for the first infection process, all reinfection processes transition individuals ' \
         'to the latent compartment corresponding to the infecting strain. '
-    tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line('Model Construction', description)
 
     for dest_strain in strain_strata:
         for source_strain in strain_strata:
@@ -421,7 +421,7 @@ def get_vacc_stratification(
         'with a second parameter used to quantify the relative reduction in ' \
         'the rate of infection and reinfection for those in the stratum with ' \
         'reduced susceptibility. '
-    tex_doc.add_line(description, 'Stratification')
+    tex_doc.add_line('Stratification', description)
 
     vacc_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
     for infection_process in infection_processes:
@@ -484,7 +484,7 @@ def adjust_state_pops(
     description = 'Starting model populations are distributed by ' \
         f'age and spatial status ({strata[0].upper()}, {strata[1]}) ' \
         'according to the age distribution in each simulated region. '
-    tex_doc.add_line(description, 'Stratification')
+    tex_doc.add_line('Stratification', description)
 
     for state in model_pops.columns:
         props = model_pops[state] / model_pops[state].sum()
@@ -503,7 +503,7 @@ def track_incidence(
         'This modelled incident infection quantity is not used explicitly in the calibration process, ' \
         'but tracking this process is necessary for the calculation of several other  ' \
         'model outputs, as described below. '
-    tex_doc.add_line(description, 'Outputs')
+    tex_doc.add_line('Outputs', description)
 
     for age in age_strata:
         age_str = f'Xagegroup_{age}'

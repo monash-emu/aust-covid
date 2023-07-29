@@ -9,7 +9,7 @@ class TexDoc:
         self.title = title
         self.prepared = False
 
-    def add_line(self, line, section):
+    def add_line(self, section, line):
         if section in self.content:
             self.content[section].append(line)
         else:
@@ -46,27 +46,27 @@ class TexDoc:
             final_text += f'{line}\n'
         return final_text
 
-    def include_figure(self, caption, section, filename):
-        self.add_line('\\begin{figure}', section)
-        self.add_line(f'\\caption{{{caption}}}', section)
-        self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}}}', section)
-        self.add_line('\\end{figure}', section)
+    def include_figure(self, section, caption, filename):
+        self.add_line(section, '\\begin{figure}')
+        self.add_line(section, f'\\caption{{{caption}}}')
+        self.add_line(section, f'\\includegraphics[width=\\textwidth]{{{filename}}}')
+        self.add_line(section, '\\end{figure}')
                 
 
 class StandardTexDoc(TexDoc):
     def prepare_doc(self):
         self.prepared = True
-        self.add_line('\\documentclass{article}', 'preamble')
-        self.add_line('\\usepackage{biblatex}', 'preamble')
-        self.add_line('\\usepackage{hyperref}', 'preamble')
-        self.add_line('\\usepackage{graphicx}', 'preamble')
-        self.add_line('\\graphicspath{ {./images/} }', 'preamble')
+        self.add_line('preamble', '\\documentclass{article}')
+        self.add_line('preamble', '\\usepackage{biblatex}')
+        self.add_line('preamble', '\\usepackage{hyperref}')
+        self.add_line('preamble', '\\usepackage{graphicx}')
+        self.add_line('preamble', '\\graphicspath{ {./images/} }')
 
-        self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
-        self.add_line(f'\\title{{{self.title}}}', 'preamble')
-        self.add_line('\\begin{document}', 'preamble')
-        self.add_line('\maketitle', 'preamble')
+        self.add_line('preamble', f'\\addbibresource{{{self.bib_filename}.bib}}')
+        self.add_line('preamble', f'\\title{{{self.title}}}')
+        self.add_line('preamble', '\\begin{document}')
+        self.add_line('preamble', '\maketitle')
         
-        self.add_line('\\printbibliography', 'endings')
-        self.add_line('\\end{document}', 'endings')
+        self.add_line('endings', '\\printbibliography')
+        self.add_line('endings', '\\end{document}')
             
