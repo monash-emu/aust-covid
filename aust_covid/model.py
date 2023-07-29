@@ -35,22 +35,6 @@ in the documentation is best description of the code's function.
 """
 
 
-def get_param_to_exp_plateau(
-    input_request: float, 
-    output_request: float,
-) -> float:
-    """
-    Get the parameter needed to ensure the function:
-    output = 1 - exp(-param * input)
-    passes through the requested input and output.
-    
-    Args:
-        input_request: Independent variable at known point
-        output_request: Dependent variable at known point
-    """
-    return 0.0 - np.log(1.0 - output_request) / input_request
-
-
 def build_base_model(
     ref_date: datetime,
     compartments: list,
@@ -85,29 +69,6 @@ def build_base_model(
         infectious_compartments=[infectious_compartment],
         ref_date=ref_date,
     )
-
-
-def get_pop_data(age_strata) -> tuple:
-    """
-    Returns:
-        Dataframe containing the relevant population data with description
-    """
-    raw_data, sheet_name = load_pop_data()
-    pop_data = pd.DataFrame(
-        {
-            'wa': raw_data['Western Australia'], 
-            'other': raw_data[[col for col in raw_data.columns if col not in ['Western Australia', 'Australia']]].sum(axis=1),
-        }
-    )
-
-    model_pop_data = pd.concat([pop_data.loc[:'70-74'], pd.DataFrame([pop_data.loc['75-79':].sum()])])
-    model_pop_data.index = age_strata
-
-    sheet_name = sheet_name.replace('_', '\\textunderscore')
-    description = f'For estimates of the Australian population, the {sheet_name} spreadsheet was downloaded ' \
-        'from the Australian Bureau of Statistics website on the 1st of March 2023 \cite{abs2022}. ' \
-        'Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory are excluded from data. '
-    return model_pop_data, description
 
 
 def set_starting_conditions(
@@ -531,18 +492,37 @@ def adjust_state_pops(
         model.adjust_population_split('agegroup', {'states': state}, props.to_dict())
 
 
-def add_incidence_output(
+def track_incidence(
     model: CompartmentalModel,
     infection_processes: list,
-) -> str:
-    output = 'incidence'
-    for process in infection_processes:
-        model.request_output_for_flow(f'{process}_onset', process, save_results=False)
-    total_infection_processes = sum([DerivedOutput(f'{process}_onset') for process in infection_processes])
-    model.request_function_output(output, func=total_infection_processes)
-    return f'Modelled {output} is calculated as ' \
-        f'the absolute rate of {" or ".join([process.replace("_", " ") for process in infection_processes])} ' \
-        'in the community. '
+    age_strata: list,
+    tex_doc: StandardTexDoc,
+):
+    description = 'Age group-specific and overall incidence of infection with SARS-CoV-2 ' \
+        '(including episodes that are never detected) is first tracked. ' \
+        'This modelled incident infection quantity is not used explicitly in the calibration process, ' \
+        'but tracking this process is necessary for the calculation of several other  ' \
+        'model outputs, as described below. '
+    tex_doc.add_line(description, 'Outputs')
+
+    for age in age_strata:
+        age_str = f'Xagegroup_{age}'
+        for process in infection_processes:
+            model.request_output_for_flow(
+                f'{process}_onset{age_str}', 
+                process, 
+                source_strata={'agegroup': str(age)},
+                save_results=False,
+            )
+        model.request_function_output(
+            f'incidence{age_str}',
+            func=sum([DerivedOutput(f'{process}_onset{age_str}') for process in infection_processes]),
+            save_results=False,
+        )
+    model.request_function_output(
+        'incidence',
+        func=sum([DerivedOutput(f'incidence{age_str}') for age in age_strata]),
+    )
 
 
 def get_cdr_values(
@@ -609,25 +589,6 @@ def add_notifications_output(
     return hh_test_ratio, survey_fig, survey_fig_name, survey_fig_caption, ratio_fig, ratio_fig_name, ratio_fig_caption, description
 
 
-def track_age_specific_incidence(
-    model: CompartmentalModel,
-    infection_processes: list,
-):
-    for age in model.stratifications["agegroup"].strata:
-        for process in infection_processes:
-            model.request_output_for_flow(
-                f"{process}_onsetXagegroup_{age}", 
-                process, 
-                source_strata={"agegroup": age},
-                save_results=False,
-            )
-        model.request_function_output(
-            f"incidenceXagegroup_{age}",
-            func=sum([DerivedOutput(f"{process}_onsetXagegroup_{age}") for process in infection_processes]),
-            save_results=False,
-        )
-
-
 def add_death_output(
     model: CompartmentalModel,
 ) -> str:
@@ -691,6 +652,22 @@ def track_reproduction_number(model, infection_processes):
         model.request_output_for_flow(process, process, save_results=False)
     model.request_function_output("all_infection", sum([DerivedOutput(process) for process in infection_processes]), save_results=False)
     model.request_function_output("reproduction_number", DerivedOutput("all_infection") / DerivedOutput("n_infectious") * Parameter("infectious_period"))
+
+
+def get_param_to_exp_plateau(
+    input_request: float, 
+    output_request: float,
+) -> float:
+    """
+    Get the parameter needed to ensure the function:
+    output = 1 - exp(-param * input)
+    passes through the requested input and output.
+    
+    Args:
+        input_request: Independent variable at known point
+        output_request: Dependent variable at known point
+    """
+    return 0.0 - np.log(1.0 - output_request) / input_request
 
 
 def show_cdr_profiles(
