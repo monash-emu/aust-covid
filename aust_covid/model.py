@@ -381,7 +381,7 @@ def add_reinfection(
         'such that the rate of reinfection for these persons is the same as the rate of infection ' \
         'for fully susceptible persons. ' \
         'As for the first infection process, all reinfection processes transition individuals ' \
-        'to the latent compartment corresponding to the infecting strain. '
+        'to the latent compartment corresponding to the infecting strain.\n'
     tex_doc.add_line('Model Construction', description)
 
     for dest_strain in strain_strata:
@@ -423,7 +423,7 @@ def get_vacc_stratification(
         'immunological protection against infection through vaccination, ' \
         'with a second parameter used to quantify the relative reduction in ' \
         'the rate of infection and reinfection for those in the stratum with ' \
-        'reduced susceptibility. '
+        'reduced susceptibility.\n'
     tex_doc.add_line('Stratification', description)
 
     vacc_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
@@ -505,7 +505,7 @@ def track_incidence(
         '(including episodes that are never detected) is first tracked. ' \
         'This modelled incident infection quantity is not used explicitly in the calibration process, ' \
         'but tracking this process is necessary for the calculation of several other  ' \
-        'model outputs, as described below. '
+        'model outputs, as described below.\n'
     tex_doc.add_line('Outputs', description)
 
     for age in age_strata:
@@ -560,7 +560,7 @@ def add_notifications_output(
         'was defined by an exponential function to ensure that the CDR remained in the domain [0, 1], ' \
         'dropping to zero when household testing reached zero and approached one as household testing approached very high levels. ' \
         "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
-        "$s = (1 - e^{-p \\times r})$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. "
+        "$s = (1 - e^{-p \\times r})$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value.\n"
     tex_doc.add_line('Outputs', description)
 
     hh_impact = load_household_impacts_data()
@@ -615,7 +615,7 @@ def add_death_output(
         'Specifically, for each age group, we first multiply the age-specific incidence ' \
         'by the infection fataliry rate for that group. ' \
         'Next, we convolve this rate with a gamma distribution ' \
-        'to obtain the daily rate of deaths for each age group, and lastly sum over age groups. '
+        'to obtain the daily rate of deaths for each age group, and lastly sum over age groups.\n'
     tex_doc.add_line('Outputs', description)
     
     agegroups = model.stratifications['agegroup'].strata
@@ -630,44 +630,44 @@ def add_death_output(
     )
 
 
-def track_sero_prevalence(
+def track_child_adult_seroprev(
     compartments: list, 
     model: CompartmentalModel,
+    adult_cut_off: int,
+    tex_doc: StandardTexDoc,
 ) -> str:
-    seropos_comps = [comp for comp in compartments if comp != "susceptible"]
-    model.request_output_for_compartments("total_pop", compartments)
-    model.request_output_for_compartments("seropos", seropos_comps)
-    model.request_function_output("seropos_prop", DerivedOutput("seropos") / DerivedOutput("total_pop"))
-    return "Seroprevalence is calculated as the proportion of the population ever leaving the susceptible compartment. "
+    never_infected_comp = 'susceptible'
+    description = 'The proportion of the overall population in any ' \
+        f'compartment other than the {never_infected_comp} in those aged 15 years and above ' \
+        "is used to estimate the adult `seropositive' proportion.\n"
+    tex_doc.add_line('Outputs', description)
 
-
-def track_child_adult_sero_prevalence(
-    compartments: list, 
-    model: CompartmentalModel,
-    adult_cut_off,
-) -> str:    
-    seropos_comps = [comp for comp in compartments if comp != "susceptible"]
-    age_strata = model.stratifications["agegroup"].strata
+    seropos_comps = [comp for comp in compartments if comp != 'susceptible']
+    age_strata = model.stratifications['agegroup'].strata
     filters = {
-        "child": {"agegroup": age for age in age_strata if int(age) < adult_cut_off},
-        "adult": {"agegroup": age for age in age_strata if int(age) >= adult_cut_off},
+        'child': {'agegroup': age for age in age_strata if int(age) < adult_cut_off},
+        'adult': {'agegroup': age for age in age_strata if int(age) >= adult_cut_off},
     }
-    for age_cat in ["child", "adult"]:
-        model.request_output_for_compartments(f"{age_cat}_pop", compartments, strata=filters[age_cat], save_results=False)
-        model.request_output_for_compartments(f"{age_cat}_seropos", seropos_comps, strata=filters[age_cat], save_results=False)
-        model.request_function_output(f"{age_cat}_seropos_prop", DerivedOutput(f"{age_cat}_seropos") / DerivedOutput(f"{age_cat}_pop"))
+    for age_cat in ['child', 'adult']:
+        model.request_output_for_compartments(f'{age_cat}_pop', compartments, strata=filters[age_cat], save_results=False)
+        model.request_output_for_compartments(f'{age_cat}_seropos', seropos_comps, strata=filters[age_cat], save_results=False)
+        model.request_function_output(f'{age_cat}_seropos_prop', DerivedOutput(f'{age_cat}_seropos') / DerivedOutput(f'{age_cat}_pop'))
 
 
 def track_strain_prop(
-    strain_strata: list, 
     model: CompartmentalModel,
+    tex_doc: StandardTexDoc,
 ) -> tuple:
-    model.request_output_for_compartments("prev", ["infectious"], save_results=False)
-    for strain in strain_strata:
-        model.request_output_for_compartments(f"{strain}_prev", ["infectious"], {"strain": strain}, save_results=False)
-        model.request_function_output(f"{strain}_prop", DerivedOutput(f"{strain}_prev") / DerivedOutput("prev"))
-    return "Proportionate prevalence by strain is tracked as the proportion of the population currently in " \
-        "the infectious compartment that is infected with the modelled strain of interest. "
+    description = 'Proportional prevalence of each Omicron sub-variant ' \
+        'is tracked as the proportion of the population currently in ' \
+        'the infectious compartment that is infected with the modelled strain of interest ' \
+        '(noting that simultaneous infection with multiple strains is not modelled). '
+    tex_doc.add_line('Outputs', description)
+
+    model.request_output_for_compartments('prev', ['infectious'], save_results=False)
+    for strain in model.stratifications['strain'].strata:
+        model.request_output_for_compartments(f'{strain}_prev', ['infectious'], {'strain': strain}, save_results=False)
+        model.request_function_output(f'{strain}_prop', DerivedOutput(f'{strain}_prev') / DerivedOutput('prev'))
 
 
 def track_reproduction_number(model, infection_processes):
@@ -716,44 +716,44 @@ def show_cdr_profiles(
     return modelled_cdr_fig, modelled_cdr_fig_name, modelled_cdr_fig_caption
 
 
-def show_strain_props(
-    strain_strata: list, 
-    plot_start_time: datetime.date,
-    model: CompartmentalModel,
-) -> tuple:
-    """
-    Args:
-        strain_strata: Names of sub-variants
-        plot_start_time: Request for left-hand end point for x-axis
-        model: Working model
+# def show_strain_props(
+#     strain_strata: list, 
+#     plot_start_time: datetime.date,
+#     model: CompartmentalModel,
+# ) -> tuple:
+#     """
+#     Args:
+#         strain_strata: Names of sub-variants
+#         plot_start_time: Request for left-hand end point for x-axis
+#         model: Working model
 
-    Returns:
-        Output figure, name used to save figure, caption for figure
-    """
+#     Returns:
+#         Output figure, name used to save figure, caption for figure
+#     """
     
-    end_date = model.get_epoch().index_to_dti([model.times[-1]])  # Plot to end of simulation
-    strain_props = [f"{strain}_prop" for strain in strain_strata]
-    strain_prop_fig_name = "strain_prop.jpg"
-    strain_prop_fig = model.get_derived_outputs_df()[strain_props].plot.area(labels={"value": "proportion", "index": ""})
-    voc_emerge_df = pd.DataFrame(
-        {
-            "ba1": [datetime(2021, 11, 22), datetime(2021, 11, 29), datetime(2021, 12, 20), "blue"],
-            "ba2": [datetime(2021, 11, 29), datetime(2022, 1, 10), datetime(2022, 3, 7), "red"], 
-            "ba5": [datetime(2022, 3, 28), datetime(2022, 5, 16), datetime(2022, 6, 27), "green"],
-        },
-        index=["any", ">1%", ">50%", "colour"]
-    )
-    lag = timedelta(days=3.5)  # Dates are given as first day of week in which VoC was first detected
-    for voc in voc_emerge_df:
-        voc_info = voc_emerge_df[voc]
-        colour = voc_info["colour"]
-        strain_prop_fig.add_vline(voc_info["any"] + lag, line_dash="dot", line_color=colour)
-        strain_prop_fig.add_vline(voc_info[">1%"] + lag, line_dash="dash", line_color=colour)
-        strain_prop_fig.add_vline(voc_info[">50%"] + lag, line_color=colour)
-    strain_prop_fig.update_xaxes(range=(plot_start_time, end_date[0]))
-    strain_prop_fig.update_yaxes(range=(0.0, 1.0))
-    strain_prop_fig.write_image(SUPPLEMENT_PATH / strain_prop_fig_name)
-    strain_prop_fig_caption = "Proportion of prevalent cases by sub-variant, with first sequence proportion times. " \
-        "Dotted line, first isolate of VoC; dashed line, first time VoC represents more than 1% of all isolates; " \
-        "solid line, first time VoC represnets more than 50% of all isolates. "
-    return strain_prop_fig, strain_prop_fig_name, strain_prop_fig_caption
+#     end_date = model.get_epoch().index_to_dti([model.times[-1]])  # Plot to end of simulation
+#     strain_props = [f"{strain}_prop" for strain in strain_strata]
+#     strain_prop_fig_name = "strain_prop.jpg"
+#     strain_prop_fig = model.get_derived_outputs_df()[strain_props].plot.area(labels={"value": "proportion", "index": ""})
+#     voc_emerge_df = pd.DataFrame(
+#         {
+#             "ba1": [datetime(2021, 11, 22), datetime(2021, 11, 29), datetime(2021, 12, 20), "blue"],
+#             "ba2": [datetime(2021, 11, 29), datetime(2022, 1, 10), datetime(2022, 3, 7), "red"], 
+#             "ba5": [datetime(2022, 3, 28), datetime(2022, 5, 16), datetime(2022, 6, 27), "green"],
+#         },
+#         index=["any", ">1%", ">50%", "colour"]
+#     )
+#     lag = timedelta(days=3.5)  # Dates are given as first day of week in which VoC was first detected
+#     for voc in voc_emerge_df:
+#         voc_info = voc_emerge_df[voc]
+#         colour = voc_info["colour"]
+#         strain_prop_fig.add_vline(voc_info["any"] + lag, line_dash="dot", line_color=colour)
+#         strain_prop_fig.add_vline(voc_info[">1%"] + lag, line_dash="dash", line_color=colour)
+#         strain_prop_fig.add_vline(voc_info[">50%"] + lag, line_color=colour)
+#     strain_prop_fig.update_xaxes(range=(plot_start_time, end_date[0]))
+#     strain_prop_fig.update_yaxes(range=(0.0, 1.0))
+#     strain_prop_fig.write_image(SUPPLEMENT_PATH / strain_prop_fig_name)
+#     strain_prop_fig_caption = "Proportion of prevalent cases by sub-variant, with first sequence proportion times. " \
+#         "Dotted line, first isolate of VoC; dashed line, first time VoC represents more than 1% of all isolates; " \
+#         "solid line, first time VoC represnets more than 50% of all isolates. "
+#     return strain_prop_fig, strain_prop_fig_name, strain_prop_fig_caption
