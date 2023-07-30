@@ -606,17 +606,26 @@ def add_notifications_output(
 
 def add_death_output(
     model: CompartmentalModel,
+    tex_doc: StandardTexDoc,
 ) -> str:
-    agegroups = model.stratifications["agegroup"].strata
+    description = 'Calculation of the COVID-19-specific deaths follows an analogous ' \
+        'approach to that described for notifications, ' \
+        'except that there is no assumption of partial observation and ' \
+        'age-specific infection fatality rates are used. ' \
+        'Specifically, for each age group, we first multiply the age-specific incidence ' \
+        'by the infection fataliry rate for that group. ' \
+        'Next, we convolve this rate with a gamma distribution ' \
+        'to obtain the daily rate of deaths for each age group, and lastly sum over age groups. '
+    tex_doc.add_line('Outputs', description)
+    
+    agegroups = model.stratifications['agegroup'].strata
     for age in agegroups:
-        age_output = f"deathsXagegroup_{age}"
-        output_to_convolve = f"incidenceXagegroup_{age}"
-        delay = build_gamma_dens_interval_func(Parameter("deaths_shape"), Parameter("deaths_mean"), model.times)
-        death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(output_to_convolve), delay]) * Parameter(f"ifr_{age}")
-        model.request_function_output(name=age_output, func=death_dist_rel_inc)
-    output = "deaths"
+        age_str = f'Xagegroup_{age}'
+        delay = build_gamma_dens_interval_func(Parameter('deaths_shape'), Parameter('deaths_mean'), model.times)
+        death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(f'incidence{age_str}'), delay]) * Parameter(f"ifr_{age}")
+        model.request_function_output(name=f'deaths{age_str}', func=death_dist_rel_inc)
     model.request_function_output(
-        output,
+        'deaths',
         func=sum([DerivedOutput(f"deathsXagegroup_{age}") for age in agegroups]),
     )
 
