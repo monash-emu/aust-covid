@@ -9,11 +9,18 @@ class TexDoc:
         self.title = title
         self.prepared = False
 
-    def add_line(self, section, line):
-        if section in self.content:
-            self.content[section].append(line)
+    def add_line(self, line, section, subsection=None):
+        if section not in self.content:
+            self.content[section] = {}
+        if not subsection:
+            if '' not in self.content[section]:
+                self.content[section][''] = []
+            self.content[section][''].append(line)
         else:
-            self.content[section] = [line]
+            if subsection not in self.content[section]:
+                self.content[section][subsection] = []
+            self.content[section][subsection].append(line)
+
         
     def prepare_doc(self):
         self.prepared = True
@@ -36,37 +43,41 @@ class TexDoc:
         if not self.prepared:
             self.prepare_doc()
         final_text = ''
-        for line in self.content['preamble']:
+        for line in self.content['preamble']['']:
             final_text += f'{line}\n'
         for section in [k for k in self.content.keys() if k not in ['preamble', 'endings']]:
             final_text += f'\n\\section{{{section}}}\n'
-            for line in self.content[section]:
-                final_text += f'{line}\n'
-        for line in self.content['endings']:
+            if '' in self.content[section]:
+                for line in self.content[section]['']:
+                    final_text += f'{line}\n'
+            for subsection in [k for k in self.content[section].keys() if k != '']:
+                final_text += f'\n\\subsection{{{subsection}}}\n'
+                for line in self.content[section][subsection]:
+                    final_text += f'{line}\n'
+        for line in self.content['endings']['']:
             final_text += f'{line}\n'
         return final_text
 
-    def include_figure(self, section, caption, filename):
-        self.add_line(section, '\\begin{figure}')
-        self.add_line(section, f'\\caption{{{caption}}}')
-        self.add_line(section, f'\\includegraphics[width=\\textwidth]{{{filename}}}')
-        self.add_line(section, '\\end{figure}')
+    def include_figure(self, caption, filename, section, subsection=None):
+        self.add_line('\\begin{figure}', section, subsection)
+        self.add_line(f'\\caption{{{caption}}}', section, subsection)
+        self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}}}', section, subsection)
+        self.add_line('\\end{figure}', section, subsection)
                 
 
 class StandardTexDoc(TexDoc):
     def prepare_doc(self):
         self.prepared = True
-        self.add_line('preamble', '\\documentclass{article}')
-        self.add_line('preamble', '\\usepackage{biblatex}')
-        self.add_line('preamble', '\\usepackage{hyperref}')
-        self.add_line('preamble', '\\usepackage{graphicx}')
-        self.add_line('preamble', '\\graphicspath{ {./images/} }')
-
-        self.add_line('preamble', f'\\addbibresource{{{self.bib_filename}.bib}}')
-        self.add_line('preamble', f'\\title{{{self.title}}}')
-        self.add_line('preamble', '\\begin{document}')
-        self.add_line('preamble', '\maketitle')
+        self.add_line('\\documentclass{article}', 'preamble')
+        self.add_line('\\usepackage{biblatex}', 'preamble')
+        self.add_line('\\usepackage{hyperref}', 'preamble')
+        self.add_line('\\usepackage{graphicx}', 'preamble')
+        self.add_line('\\graphicspath{ {./images/} }', 'preamble')
+        self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
+        self.add_line(f'\\title{{{self.title}}}', 'preamble')
+        self.add_line('\\begin{document}', 'preamble')
+        self.add_line('\maketitle', 'preamble')
         
-        self.add_line('endings', '\\printbibliography')
-        self.add_line('endings', '\\end{document}')
+        self.add_line('\\printbibliography', 'endings')
+        self.add_line('\\end{document}', 'endings')
             

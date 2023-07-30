@@ -21,7 +21,7 @@ def load_calibration_targets(
         'The final calibration target for cases was constructed as the OWID data for 2021 ' \
         'concatenated with the Australian Government data for 2022. ' \
         f'These daily case data were then smoothed using a {window}-day moving average. '
-    tex_doc.add_line('Targets', description)
+    tex_doc.add_line(description, 'Targets')
 
     # Australian national data
     national_data = pd.read_csv(DATA_PATH / 'Aus_covid_data.csv', index_col='date')
@@ -49,7 +49,7 @@ def load_who_data(
         '{Coronavirus (COVID-19) Dashboard} downloaded on 18\\textsuperscript{th} July 2023. ' \
         f'These daily deaths data were then smoothed using a {window}-day ' \
         'moving average. '
-    tex_doc.add_line('Targets', description)
+    tex_doc.add_line(description, 'Targets')
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
     processed_data = raw_data[raw_data['Country'] == 'Australia']
@@ -93,7 +93,7 @@ def load_pop_data(
         '(i.e. Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory) are excluded from data, ' \
         'These much smaller jurisdictions likely contribute little to overall COVID-19 epidemiology ' \
         'and are unlikely to mix homogeneously with the larger states/territories. '
-    tex_doc.add_line('Model Construction', description)
+    tex_doc.add_line(description, 'Model Construction')
 
     skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
     for group in range(16):

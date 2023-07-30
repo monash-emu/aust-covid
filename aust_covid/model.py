@@ -47,7 +47,7 @@ def build_base_model(
         f'representing the following states: {", ".join(compartments)}. ' \
         f"Only the `{infectious_compartment}' compartment contributes to the force of infection. " \
         f'The model is run from {start_date.strftime("%d %B %Y")} to {end_date.strftime("%d %B %Y")}. '
-    tex_doc.add_line('Model Construction', description)
+    tex_doc.add_line(description, 'Model Construction')
 
     return CompartmentalModel(
         times=(
@@ -68,7 +68,7 @@ def set_starting_conditions(
     total_pop = pop_data.sum().sum()
     description = f'The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, ' \
         'with infectious persons introduced later through strain seeding as described below. '
-    tex_doc.add_line('Model Construction', description)
+    tex_doc.add_line(description, 'Model Construction')
 
     model.set_initial_population({'susceptible': total_pop})
 
@@ -83,7 +83,7 @@ def add_infection(
     description = f'The {process} process moves people from the {origin} ' \
         f'compartment to the {destination} compartment, ' \
         'under the frequency-dependent transmission assumption. '
-    tex_doc.add_line('Model Construction', description)
+    tex_doc.add_line(description, 'Model Construction')
 
     model.add_infection_frequency_flow(process, Parameter('contact_rate'), origin, destination)
 
@@ -99,7 +99,7 @@ def add_progression(
     description = f'The {process} process moves ' \
         f'people from the {origin} state to the {destination} compartment, ' \
         f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
-    tex_doc.add_line('Model Construction', description)
+    tex_doc.add_line(description, 'Model Construction')
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
@@ -115,7 +115,7 @@ def add_recovery(
     description = f'The {process} process moves ' \
         f'people from the {origin} state to the {destination} compartment, ' \
         f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
-    tex_doc.add_line('Model Construction', description)
+    tex_doc.add_line(description, 'Model Construction')
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
@@ -133,7 +133,7 @@ def add_waning(
         f'As these persons lose their infection-induced immunity, they transition from the ' \
         f'{origin} compartment to the {destination} compartment at a rate equal to the reciprocal of the ' \
         f'{parameter_name.replace("_", " ")}. '
-    tex_doc.add_line('Model Construction', description)
+    tex_doc.add_line(description, 'Model Construction')
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
@@ -154,9 +154,9 @@ def plot_mixing_matrices(
 
     matrix_fig.write_image(SUPPLEMENT_PATH / filename)
     tex_doc.include_figure(
-        'Population Mixing', 
         f'Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace("_", " ").replace(".jpg", "")}. ', 
         filename,
+        'Population Mixing', 
     )
     return matrix_fig
 
@@ -176,7 +176,7 @@ def adapt_gb_matrices_to_aust(
         'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
         'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
         'from the \href{https://ec.europa.eu/eurostat}{Eurostat database}. '
-    tex_doc.add_line('Population Mixing', description)
+    tex_doc.add_line(description, 'Population Mixing')
 
     # Australia
     aust_props_disp = copy(pop_data)
@@ -192,9 +192,9 @@ def adapt_gb_matrices_to_aust(
     input_pop_filename = 'input_population.jpg'
     input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
     tex_doc.include_figure(
-        'Model Construction', 
         'Australian population sizes implemented in the model obtained from Australia Bureau of Statistics.', 
         input_pop_filename,
+        'Model Construction', 
     )
 
     # UK
@@ -205,9 +205,9 @@ def adapt_gb_matrices_to_aust(
     uk_pop_filename = 'uk_population.jpg'
     uk_pop_fig.write_image(SUPPLEMENT_PATH / uk_pop_filename)
     tex_doc.include_figure(
-        'Population Mixing', 
         'United Kingdom population sizes used in matrix weighting.', 
         uk_pop_filename,
+        'Population Mixing', 
     )
 
     # Make weighting calculations
@@ -252,7 +252,7 @@ def get_age_stratification(
         'These age brackets were chosen to match those used by the POLYMOD survey and so fit with the mixing data available. ' \
         'The population distribution by age group was informed by the data from the Australian ' \
         'Bureau of Statistics introduced previously. '
-    tex_doc.add_line('Stratification', description)
+    tex_doc.add_line(description, 'Stratification', subsection='Age')
 
     age_strat = Stratification('agegroup', age_strata, compartments)
     age_strat.set_mixing_matrix(matrix)
@@ -269,7 +269,7 @@ def get_strain_stratification(
     description = f'We stratified the following compartments according to strain: {", ".join(compartments_to_stratify)}, ' \
         f'including compartments to represent strains: {", ".join(strain_strings)}. ' \
         f"This was implemented using summer's `{StrainStratification.__name__}' class. "
-    tex_doc.add_line('Stratification', description)
+    tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
 
     return StrainStratification('strain', strain_strata, compartments_to_stratify)
 
@@ -289,7 +289,7 @@ def seed_vocs(
         f'and at a rate defined by one {seed_rate_str.replace("_", " ")} parameter. ' \
         'The time of first emergence of each strain into the system is defined by ' \
         'a separate emergence time parameter for each strain. '
-    tex_doc.add_line('Stratification', description)
+    tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
 
     for strain in strains:
         voc_seed_func = Function(
@@ -331,7 +331,7 @@ def add_reinfection(
         'for fully susceptible persons. ' \
         'As for the first infection process, all reinfection processes transition individuals ' \
         'to the latent compartment corresponding to the infecting strain.\n'
-    tex_doc.add_line('Model Construction', description)
+    tex_doc.add_line(description, 'Reinfection')
 
     for dest_strain in strain_strata:
         for source_strain in strain_strata:
@@ -373,7 +373,7 @@ def get_vacc_stratification(
         'with a second parameter used to quantify the relative reduction in ' \
         'the rate of infection and reinfection for those in the stratum with ' \
         'reduced susceptibility.\n'
-    tex_doc.add_line('Stratification', description)
+    tex_doc.add_line(description, 'Stratification', subsection='Vaccination')
 
     vacc_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
     for infection_process in infection_processes:
@@ -409,7 +409,7 @@ def get_spatial_stratification(
         f'Transmission in {strata[0].upper()} is initially set to zero, ' \
         f'and subsquently scaled up to being equal to the {strata[1]} ' \
         f'jurisdictions of Australia over an arbitrary period of {wa_reopen_period} days. '
-    tex_doc.add_line('Stratification', description)
+    tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)
     state_props = model_pops.sum() / model_pops.sum().sum()
@@ -436,7 +436,7 @@ def adjust_state_pops(
     description = 'Starting model populations are distributed by ' \
         f'age and spatial status ({strata[0].upper()}, {strata[1]}) ' \
         'according to the age distribution in each simulated region. '
-    tex_doc.add_line('Stratification', description)
+    tex_doc.add_line(description, 'Stratification', 'Spatial')
 
     for state in model_pops.columns:
         props = model_pops[state] / model_pops[state].sum()
@@ -455,7 +455,7 @@ def track_incidence(
         'This modelled incident infection quantity is not used explicitly in the calibration process, ' \
         'but tracking this process is necessary for the calculation of several other  ' \
         'model outputs, as described below.\n'
-    tex_doc.add_line('Outputs', description)
+    tex_doc.add_line(description, 'Outputs', subsection='Notifications')
 
     for age in age_strata:
         age_str = f'Xagegroup_{age}'
@@ -517,7 +517,7 @@ def add_notifications_output(
         'dropping to zero when household testing reached zero and approached one as household testing approached very high levels. ' \
         "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
         "$s = (1 - e^{-p \\times r})$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value.\n"
-    tex_doc.add_line('Outputs', description)
+    tex_doc.add_line(description, 'Outputs', 'Notifications')
 
     hh_impact = load_household_impacts_data()
     hh_test_ratio = hh_impact['Proportion testing'] / hh_impact['Proportion symptomatic']
@@ -539,9 +539,10 @@ def add_notifications_output(
     survey_fig_name = "survey.jpg"
     survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
     tex_doc.include_figure(
-        'Outputs', 
         'Raw survey values from Household Impacts of COVID-19 surveys. ', 
         survey_fig_name,
+        'Outputs', 
+        subsection='Notifications',
     )
 
     ratio_fig = hh_test_ratio.plot(labels={"value": "ratio", "index": ""}, markers=True)
@@ -550,9 +551,10 @@ def add_notifications_output(
     ratio_fig_name = "ratio.jpg"
     ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
     tex_doc.include_figure(
-        'Outputs', 
         'Ratio of proportion of households testing to proportion reporting symptoms.', 
         survey_fig_name,
+        'Outputs', 
+        subsection='Notifications',
     )
 
     if show_figs:
@@ -572,7 +574,7 @@ def add_death_output(
         'by the infection fataliry rate for that group. ' \
         'Next, we convolve this rate with a gamma distribution ' \
         'to obtain the daily rate of deaths for each age group, and lastly sum over age groups.\n'
-    tex_doc.add_line('Outputs', description)
+    tex_doc.add_line(description, 'Outputs', subsection='Deaths')
     
     agegroups = model.stratifications['agegroup'].strata
     for age in agegroups:
@@ -596,7 +598,7 @@ def track_adult_seroprev(
     description = 'The proportion of the overall population in any ' \
         f'compartment other than the {never_infected_comp} in those aged 15 years and above ' \
         "is used to estimate the adult `seropositive' proportion.\n"
-    tex_doc.add_line('Outputs', description)
+    tex_doc.add_line(description, 'Outputs', 'Seroprevalence')
 
     seropos_comps = [comp for comp in compartments if comp != 'susceptible']
     age_strata = model.stratifications['agegroup'].strata
@@ -618,7 +620,7 @@ def track_strain_prop(
         'is tracked as the proportion of the population currently in ' \
         'the infectious compartment that is infected with the modelled strain of interest ' \
         '(noting that simultaneous infection with multiple strains is not modelled).\n'
-    tex_doc.add_line('Outputs', description)
+    tex_doc.add_line(description, 'Outputs', subsection='Sub-variants')
 
     model.request_output_for_compartments('prev', ['infectious'], save_results=False)
     for strain in model.stratifications['strain'].strata:
@@ -636,7 +638,7 @@ def track_reproduction_number(
         'the rate of all infections (including both first infection and reinfection) ' \
         f'divided by the prevalence of infectious persons (i.e. in the {infectious_comp}) ' \
         'multiplied by the duration of the infectious period.\n'
-    tex_doc.add_line('Outputs', description)
+    tex_doc.add_line(description, 'Outputs', subsection='Reproduction Number')
 
     model.request_output_for_compartments('n_infectious', [infectious_comp])
     for process in infection_processes:
