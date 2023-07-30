@@ -35,6 +35,59 @@ in the documentation is best description of the code's function.
 """
 
 
+def build_model(
+    ref_date: datetime, 
+    start_date: datetime, 
+    end_date: datetime, 
+    tex_doc: StandardTexDoc,
+):
+    
+    # Model construction
+    compartments = ['susceptible', 'latent', 'infectious', 'recovered', 'waned']    
+    age_strata = list(range(0, 80, 5))
+    strain_strata = ['ba1', 'ba2', 'ba5']
+    infection_processes = ['infection', 'early_reinfection', 'late_reinfection']
+
+    aust_model = build_base_model(ref_date, compartments, start_date, end_date, tex_doc)
+    model_pops = load_pop_data(age_strata, tex_doc)
+    set_starting_conditions(aust_model, model_pops, tex_doc)
+    add_infection(aust_model, tex_doc)
+    add_progression(aust_model, tex_doc)
+    add_recovery(aust_model, tex_doc)
+    add_waning(aust_model, tex_doc)
+
+    # Age and heterogeneous mixing
+    raw_matrices = {i: pd.read_csv(DATA_PATH / f'{i}.csv', index_col=0).to_numpy() for i in MATRIX_LOCATIONS}
+    adjusted_matrices = adapt_gb_matrices_to_aust(age_strata, raw_matrices, model_pops, tex_doc)
+    mixing_matrix = sum(list(adjusted_matrices.values()))
+    age_strat = get_age_stratification(compartments, age_strata, mixing_matrix, tex_doc)
+    aust_model.stratify_with(age_strat)
+
+    # Other stratifications and reinfection
+    strain_strat = get_strain_stratification(compartments, strain_strata, tex_doc)
+    aust_model.stratify_with(strain_strat)
+    seed_vocs(aust_model, tex_doc)
+
+    add_reinfection(aust_model, strain_strata, tex_doc)
+
+    vacc_strat = get_vacc_stratification(compartments, infection_processes, tex_doc)
+    aust_model.stratify_with(vacc_strat)
+
+    spatial_strat = get_spatial_stratification(datetime(2022, 3, 3), compartments, infection_processes, model_pops, aust_model, tex_doc)
+    aust_model.stratify_with(spatial_strat)
+    adjust_state_pops(model_pops, aust_model, tex_doc)
+
+    # Outputs
+    track_incidence(aust_model, infection_processes, age_strata, tex_doc)
+    add_notifications_output(aust_model, tex_doc)
+    add_death_output(aust_model, tex_doc)
+    track_adult_seroprev(compartments, aust_model, 15, tex_doc)
+    track_strain_prop(aust_model, tex_doc)
+    track_reproduction_number(aust_model, infection_processes, tex_doc)
+    
+    return aust_model
+
+
 def build_base_model(
     ref_date: datetime,
     compartments: list,
