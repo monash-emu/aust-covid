@@ -42,17 +42,6 @@ def build_base_model(
     end_date: datetime,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    """
-    Args:
-        ref_date: Arbitrary reference date
-        compartments: Starting unstratified compartments
-        start_date: Start date for analysis
-        end_date: End date for analysis
-
-    Returns:
-        Simple model starting point for extension through the following functions
-        with text description of the process.
-    """
     infectious_compartment = 'infectious'
     description = f'The base model consists of {len(compartments)} states, ' \
         f'representing the following states: {", ".join(compartments)}. ' \
@@ -76,14 +65,6 @@ def set_starting_conditions(
     pop_data: pd.DataFrame,
     tex_doc: StandardTexDoc,
 ) -> str:
-    """
-    Args:
-        model: Working compartmental model
-        pop_data: Data on the Australian population
-
-    Returns:
-        Description of data being used
-    """
     total_pop = pop_data.sum().sum()
     description = f'The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, ' \
         'with infectious persons introduced later through strain seeding as described below. '
@@ -96,13 +77,6 @@ def add_infection(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
 ) -> str:
-    """
-    Args:
-        model: Working compartmental model
-
-    Returns:
-        Description of process added
-    """
     process = 'infection'
     origin = 'susceptible'
     destination = 'latent'
@@ -170,18 +144,6 @@ def plot_mixing_matrices(
     filename: str,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    """
-    Visualise the mixing matrices (either raw or adjusted).
-
-    Args:
-        matrices: Collection of arrays containing the age-specific contact rates for each location
-        locations: A string for each epidemiological setting/venue in which transmission can occur
-        strata: Age stratification breakpoints
-        filename: Name for the file to save the plot output
-    
-    Returns:
-        Outputs for visualisation
-    """
     matrix_figsize = 800
     matrix_fig = make_subplots(rows=2, cols=2, subplot_titles=MATRIX_LOCATIONS)
     positions = [[1, 1], [1, 2], [2, 1], [2, 2]]
@@ -206,14 +168,6 @@ def adapt_gb_matrices_to_aust(
     tex_doc: StandardTexDoc,
     show_figs: bool=False,
 ) -> tuple:
-    """
-    Args:
-        age_strata: The age breakpoints being used in the model
-        unadjusted_matrices: The unadjusted matrices
-        pop_data: ABS population numbers
-    Returns:
-        Outputs and graphs for use in the model and through the notebook
-    """
     description = 'Matrices were adjusted to account for the differences in the age distribution of the ' \
         'Australian population distribution in 2022 compared to the population of Great Britain in 2000. ' \
         'The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices and the diagonal matrix ' \
@@ -291,11 +245,6 @@ def get_age_stratification(
     matrix: np.array,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    """
-    Args:
-        pop_splits: The proportion of the population to assign to each age group
-        matrix: The mixing matrix to apply
-    """
     description = 'We stratified all compartments of the base model ' \
         'into sequential age brackets in five year ' \
         f'bands from age {age_strata[0]} to {age_strata[0] + 4} through to age {age_strata[-2]} to {age_strata[-2] + 4} ' \
@@ -535,6 +484,13 @@ def get_cdr_values(
     return 1.0 - np.exp(0.0 - param * test_ratios)
 
 
+def get_param_to_exp_plateau(
+    input_request: float, 
+    output_request: float,
+) -> float:
+    return 0.0 - np.log(1.0 - output_request) / input_request
+
+
 def add_notifications_output(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
@@ -630,7 +586,7 @@ def add_death_output(
     )
 
 
-def track_child_adult_seroprev(
+def track_adult_seroprev(
     compartments: list, 
     model: CompartmentalModel,
     adult_cut_off: int,
@@ -661,7 +617,7 @@ def track_strain_prop(
     description = 'Proportional prevalence of each Omicron sub-variant ' \
         'is tracked as the proportion of the population currently in ' \
         'the infectious compartment that is infected with the modelled strain of interest ' \
-        '(noting that simultaneous infection with multiple strains is not modelled). '
+        '(noting that simultaneous infection with multiple strains is not modelled).\n'
     tex_doc.add_line('Outputs', description)
 
     model.request_output_for_compartments('prev', ['infectious'], save_results=False)
@@ -670,52 +626,45 @@ def track_strain_prop(
         model.request_function_output(f'{strain}_prop', DerivedOutput(f'{strain}_prev') / DerivedOutput('prev'))
 
 
-def track_reproduction_number(model, infection_processes):
-    model.request_output_for_compartments("n_infectious", ["infectious"])
+def track_reproduction_number(
+    model: CompartmentalModel,
+    infection_processes: list,
+    tex_doc: StandardTexDoc,
+):
+    infectious_comp = 'infectious'
+    description = 'The time-varying effective reproduction number is calculated as ' \
+        'the rate of all infections (including both first infection and reinfection) ' \
+        f'divided by the prevalence of infectious persons (i.e. in the {infectious_comp}) ' \
+        'multiplied by the duration of the infectious period.\n'
+    tex_doc.add_line('Outputs', description)
+
+    model.request_output_for_compartments('n_infectious', [infectious_comp])
     for process in infection_processes:
         model.request_output_for_flow(process, process, save_results=False)
-    model.request_function_output("all_infection", sum([DerivedOutput(process) for process in infection_processes]), save_results=False)
-    model.request_function_output("reproduction_number", DerivedOutput("all_infection") / DerivedOutput("n_infectious") * Parameter("infectious_period"))
+    model.request_function_output('all_infection', sum([DerivedOutput(process) for process in infection_processes]), save_results=False)
+    model.request_function_output('reproduction_number', DerivedOutput('all_infection') / DerivedOutput('n_infectious') * Parameter('infectious_period'))
 
 
-def get_param_to_exp_plateau(
-    input_request: float, 
-    output_request: float,
-) -> float:
-    """
-    Get the parameter needed to ensure the function:
-    output = 1 - exp(-param * input)
-    passes through the requested input and output.
-    
-    Args:
-        input_request: Independent variable at known point
-        output_request: Dependent variable at known point
-    """
-    return 0.0 - np.log(1.0 - output_request) / input_request
+# Have left these last two functions for now because they are or should be more related to
+# the calibration process.
 
+# def show_cdr_profiles(
+#     start_cdr_samples: pd.Series, 
+#     hh_test_ratio: pd.Series,
+# ) -> tuple:
+#     cdr_values = pd.DataFrame()
+#     for start_cdr in start_cdr_samples:
+#         exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
+#         cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
 
-def show_cdr_profiles(
-    start_cdr_samples: pd.Series, 
-    hh_test_ratio: pd.Series,
-) -> tuple:
-    """
-    Args:
-        start_cdr_samples: The CDR parameter values to feed through the algorithm
-        hh_test_ratio: The ratio values over time that are fed into the algorithm
-    """
-    cdr_values = pd.DataFrame()
-    for start_cdr in start_cdr_samples:
-        exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
-        cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
+#     modelled_cdr_fig_name = "modelled_cdr.jpg"
+#     modelled_cdr_fig = cdr_values.plot(markers=True, labels={"value": "case detection ratio", "index": ""})
+#     modelled_cdr_fig.write_image(SUPPLEMENT_PATH / modelled_cdr_fig_name)
+#     modelled_cdr_fig_caption = "Example case detection rates implemented in randomly selected model runs."
 
-    modelled_cdr_fig_name = "modelled_cdr.jpg"
-    modelled_cdr_fig = cdr_values.plot(markers=True, labels={"value": "case detection ratio", "index": ""})
-    modelled_cdr_fig.write_image(SUPPLEMENT_PATH / modelled_cdr_fig_name)
-    modelled_cdr_fig_caption = "Example case detection rates implemented in randomly selected model runs."
-
-    return modelled_cdr_fig, modelled_cdr_fig_name, modelled_cdr_fig_caption
-
-
+#     return modelled_cdr_fig, modelled_cdr_fig_name, modelled_cdr_fig_caption
+#
+#
 # def show_strain_props(
 #     strain_strata: list, 
 #     plot_start_time: datetime.date,
