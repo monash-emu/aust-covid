@@ -59,10 +59,21 @@ def load_who_data(
     death_data = processed_data['New_deaths']
     death_data = death_data.rolling(window=window).mean().dropna()
 
-    return death_data, description
+    return death_data
 
 
-def load_serosurvey_data(immunity_lag):
+def load_serosurvey_data(
+    immunity_lag: float,
+    tex_doc: StandardTexDoc,
+) -> pd.Series:
+
+    description = 'We obtained estimates of the seroprevalence of antibodies to ' \
+        'nucleocapsid antigen from Australia blood donors from Kirby Institute serosurveillance reports. ' \
+        'Data are available from round 4 survey, available at https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf. ' \
+        'Information on assay sensitivity is available at: https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf' \
+        f'We lagged these estimates by {immunity_lag} days to account for the delay between infection and seroconversion. '
+    tex_doc.add_line(description, 'Targets', subsection='Seroprevalence')
+
     data = pd.Series(
         {
             datetime(2022, 2, 26): 0.207,
@@ -73,13 +84,7 @@ def load_serosurvey_data(immunity_lag):
     )
     data.index = data.index - timedelta(days=immunity_lag)
 
-    description = 'We obtained estimates of the seroprevalence of antibodies to ' \
-        'nucleocapsid antigen from Australia blood donors from Kirby Institute serosurveillance reports. ' \
-        'Data are available from round 4 survey, available at https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf. ' \
-        'Information on assay sensitivity is available at: https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf' \
-        f'We lagged these estimates by {immunity_lag} to account for the delay between infection and seroconversion. '
-
-    return data, description
+    return data
 
 
 def load_pop_data(
