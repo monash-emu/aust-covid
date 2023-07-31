@@ -9,6 +9,8 @@ import matplotlib as mpl
 
 from estival.model import BayesianCompartmentalModel
 
+from general_utils.tex_utils import StandardTexDoc
+
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / "supplement"
 
@@ -103,6 +105,8 @@ def get_prior_dist_support(
 def plot_param_progression(
     idata: az.data.inference_data.InferenceData, 
     param_info: pd.DataFrame, 
+    tex_doc: StandardTexDoc,
+    show_fig: bool=False,
 ) -> mpl.figure.Figure:
     """
     Plot progression of parameters over model iterations with posterior density plots.
@@ -114,23 +118,32 @@ def plot_param_progression(
     Returns:
         Formatted figure object created from arviz plotting command
     """
-    mpl.rcParams["axes.titlesize"] = 25
+    mpl.rcParams['axes.titlesize'] = 25
     trace_plot = az.plot_trace(
         idata, 
         figsize=(16, 3 * len(idata.posterior)), 
         compact=False, 
         legend=True,
-        labeller=MapLabeller(var_name_map=param_info["descriptions"]),
+        labeller=MapLabeller(var_name_map=param_info['descriptions']),
     )
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
-    return trace_fig
+
+    filename = 'traces.jpg'
+    trace_fig.savefig(SUPPLEMENT_PATH / filename)
+    tex_doc.include_figure(
+        'Parameter posteriors and traces by chain.', 
+        filename,
+        'Calibration', 
+    )
+    if show_fig:
+        trace_fig.show()
 
 
 def plot_param_posterior(
     idata: az.data.inference_data.InferenceData, 
     param_info: pd.DataFrame, 
-    grid_request: tuple=None,
+    tex_doc: StandardTexDoc,
 ) -> mpl.figure.Figure:
     """
     Plot posterior distribution of parameters.
@@ -138,18 +151,24 @@ def plot_param_posterior(
     Args:
         idata: Formatted outputs from calibration
         param_info: Collated information on the parameter values (excluding calibration/priors-related)
-        grid_request: How the subplots should be arranged
+        tex_doc: 
             
     Returns:
         Formatted figure object created from arviz plotting command
     """
     posterior_plot = az.plot_posterior(
         idata,
-        labeller=MapLabeller(var_name_map=param_info["descriptions"]),
-        grid=grid_request,
+        labeller=MapLabeller(var_name_map=param_info['descriptions']),
     )
-    posterior_plot = posterior_plot[0, 0].figure
-    return posterior_plot
+    posterior_fig = posterior_plot[0, 0].figure;
+    
+    filename = 'posteriors.jpg'
+    posterior_fig.savefig(SUPPLEMENT_PATH / filename)
+    tex_doc.include_figure(
+        'Parameter posteriors, chains combined.', 
+        filename,
+        'Calibration', 
+    )
 
 
 def tabulate_parameters(
