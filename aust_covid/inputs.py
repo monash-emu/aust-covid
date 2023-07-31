@@ -69,9 +69,11 @@ def load_serosurvey_data(
 
     description = 'We obtained estimates of the seroprevalence of antibodies to ' \
         'nucleocapsid antigen from Australia blood donors from Kirby Institute serosurveillance reports. ' \
-        'Data are available from round 4 survey, available at https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf. ' \
-        'Information on assay sensitivity is available at: https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf' \
-        f'We lagged these estimates by {immunity_lag} days to account for the delay between infection and seroconversion. '
+        'Data are available from \href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf}' \
+        '{the round 4 serosurvey}, with ' \
+        '\href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf}' \
+        '{information on assay sensitivity also available}.' \
+        f'We lagged these empiric estimates by {immunity_lag} days to account for the delay between infection and seroconversion. '
     tex_doc.add_line(description, 'Targets', subsection='Seroprevalence')
 
     data = pd.Series(
