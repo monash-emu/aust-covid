@@ -86,7 +86,10 @@ def build_model(
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
     track_strain_prop(aust_model, infectious_compartments, tex_doc)
     track_reproduction_number(aust_model, infection_processes, infectious_compartments, tex_doc)
-    
+
+    for comp in compartments:
+        aust_model.request_output_for_compartments(comp, [comp])
+
     return aust_model
 
 
@@ -176,7 +179,7 @@ def add_infectious_transition(
         origin = infectious_compartments[i_comp]
         destination = infectious_compartments[i_comp + 1]
         model.add_transition_flow(f'transition_{str(i_comp)}', rate, origin, destination)
-    model.add_transition_flow('recovery', rate, origin, final_dest)
+    model.add_transition_flow('recovery', rate, destination, final_dest)
 
 
 def add_waning(
@@ -653,10 +656,11 @@ def add_death_output(
             strain_str = f'Xstrain_{strain}'
             delay = build_gamma_dens_interval_func(Parameter('deaths_shape'), Parameter('deaths_mean'), model.times)
             death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(f'incidence{age_str}{strain_str}'), delay]) * Parameter(f'ifr_{age}') * strain_rel_death
-            model.request_function_output(name=f'deaths{age_str}{strain_str}', func=death_dist_rel_inc)
+            model.request_function_output(name=f'deaths{age_str}{strain_str}', func=death_dist_rel_inc, save_results=False)
         model.request_function_output(
             f'deaths{age_str}',
             func=sum([DerivedOutput(f'deaths{age_str}Xstrain_{strain}') for strain in strain_strata]),
+            save_results=False,
         )
     model.request_function_output(
         'deaths',
