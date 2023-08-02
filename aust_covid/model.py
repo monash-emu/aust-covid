@@ -54,11 +54,8 @@ def build_model(
     model_pops = load_pop_data(age_strata, tex_doc)
     set_starting_conditions(aust_model, model_pops, tex_doc)
     add_infection(aust_model, tex_doc)
-    add_progression(aust_model, tex_doc)
-
+    add_progression(aust_model, infectious_compartments, tex_doc)
     add_infectious_transition(aust_model, n_infectious_comps, infectious_compartments, tex_doc)
-
-    # add_recovery(aust_model, n_infectious_comps, tex_doc)
     add_waning(aust_model, tex_doc)
 
     # Age and heterogeneous mixing
@@ -148,11 +145,12 @@ def add_infection(
 
 def add_progression(
     model: CompartmentalModel,
+    infectious_comps: list,
     tex_doc: StandardTexDoc,
 ) -> str:
     process = 'progression'
     origin = 'latent'
-    destination = 'infectious_0'
+    destination = infectious_comps[0]
     parameter_name = 'latent_period'
     description = f'The {process} process moves ' \
         f'people from the {origin} state to the {destination} compartment, ' \
@@ -168,28 +166,17 @@ def add_infectious_transition(
     infectious_compartments: list,
     tex_doc: StandardTexDoc,
 ):
-    rate = 1.0 / Parameter('infectious_period') * n_inf_comps
+    parameter_name = 'infectious_period'
+    final_dest = 'recovered'
+    description = ''  # Need to comment properly
+    tex_doc.add_line(description, 'Model Construction')
+
+    rate = 1.0 / Parameter(parameter_name) * n_inf_comps
     for i_comp in range(len(infectious_compartments) - 1):
         origin = infectious_compartments[i_comp]
         destination = infectious_compartments[i_comp + 1]
         model.add_transition_flow(f'transition_{str(i_comp)}', rate, origin, destination)
-    model.add_transition_flow('recovery', rate, origin, destination)
-
-
-# def add_recovery(
-#     model: CompartmentalModel,
-#     n_infectious_comps: int,
-#     tex_doc: StandardTexDoc,
-# ) -> str:
-#     process = 'recovery'
-#     origin = f'infectious_{n_infectious_comps - 1}'
-#     destination = 'recovered'
-#     parameter_name = 'infectious_period'
-#     description = f'The {process} process moves ' \
-#         f'people from the {origin} state to the {destination} compartment, ' \
-#         f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
-#     tex_doc.add_line(description, 'Model Construction')
-
+    model.add_transition_flow('recovery', rate, origin, final_dest)
 
 
 def add_waning(
