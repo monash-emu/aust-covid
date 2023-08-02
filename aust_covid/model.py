@@ -43,17 +43,22 @@ def build_model(
 ):
     
     # Model construction
-    compartments = ['susceptible', 'latent', 'infectious', 'recovered', 'waned']    
+    n_infectious_comps = 2
+    infectious_compartments = [f'infectious_{i}' for i in range(n_infectious_comps)]
+    compartments = ['susceptible', 'latent', 'recovered', 'waned'] + infectious_compartments
     age_strata = list(range(0, 80, 5))
     strain_strata = ['ba1', 'ba2', 'ba5']
     infection_processes = ['infection', 'early_reinfection', 'late_reinfection']
 
-    aust_model = build_base_model(ref_date, compartments, start_date, end_date, tex_doc)
+    aust_model = build_base_model(ref_date, compartments, infectious_compartments, start_date, end_date, tex_doc)
     model_pops = load_pop_data(age_strata, tex_doc)
     set_starting_conditions(aust_model, model_pops, tex_doc)
     add_infection(aust_model, tex_doc)
     add_progression(aust_model, tex_doc)
-    add_recovery(aust_model, tex_doc)
+
+    add_infectious_transition(aust_model, n_infectious_comps, infectious_compartments, tex_doc)
+
+    # add_recovery(aust_model, n_infectious_comps, tex_doc)
     add_waning(aust_model, tex_doc)
 
     # Age and heterogeneous mixing
@@ -82,8 +87,8 @@ def build_model(
     add_notifications_output(aust_model, tex_doc)
     add_death_output(aust_model, tex_doc)
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
-    track_strain_prop(aust_model, tex_doc)
-    track_reproduction_number(aust_model, infection_processes, tex_doc)
+    track_strain_prop(aust_model, infectious_compartments, tex_doc)
+    track_reproduction_number(aust_model, infection_processes, infectious_compartments, tex_doc)
     
     return aust_model
 
@@ -91,14 +96,14 @@ def build_model(
 def build_base_model(
     ref_date: datetime,
     compartments: list,
+    infectious_compartments: list,
     start_date: datetime,
     end_date: datetime,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    infectious_compartment = 'infectious'
     description = f'The base model consists of {len(compartments)} states, ' \
         f'representing the following states: {", ".join(compartments)}. ' \
-        f"Only the `{infectious_compartment}' compartment contributes to the force of infection. " \
+        f"Only the infectious compartment compartment contributes to the force of infection. " \
         f'The model is run from {start_date.strftime("%d %B %Y")} to {end_date.strftime("%d %B %Y")}. '
     tex_doc.add_line(description, 'Model Construction')
 
@@ -108,7 +113,7 @@ def build_base_model(
             (end_date - ref_date).days,
         ),
         compartments=compartments,
-        infectious_compartments=[infectious_compartment],
+        infectious_compartments=infectious_compartments,
         ref_date=ref_date,
     )
 
@@ -147,7 +152,7 @@ def add_progression(
 ) -> str:
     process = 'progression'
     origin = 'latent'
-    destination = 'infectious'
+    destination = 'infectious_0'
     parameter_name = 'latent_period'
     description = f'The {process} process moves ' \
         f'people from the {origin} state to the {destination} compartment, ' \
@@ -157,20 +162,34 @@ def add_progression(
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
 
-def add_recovery(
+def add_infectious_transition(
     model: CompartmentalModel,
+    n_inf_comps: int,
+    infectious_compartments: list,
     tex_doc: StandardTexDoc,
-) -> str:
-    process = 'recovery'
-    origin = 'infectious'
-    destination = 'recovered'
-    parameter_name = 'infectious_period'
-    description = f'The {process} process moves ' \
-        f'people from the {origin} state to the {destination} compartment, ' \
-        f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
-    tex_doc.add_line(description, 'Model Construction')
+):
+    rate = 1.0 / Parameter('infectious_period') * n_inf_comps
+    for i_comp in range(len(infectious_compartments) - 1):
+        origin = infectious_compartments[i_comp]
+        destination = infectious_compartments[i_comp + 1]
+        model.add_transition_flow(f'transition_{str(i_comp)}', rate, origin, destination)
+    model.add_transition_flow('recovery', rate, origin, destination)
 
-    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
+
+# def add_recovery(
+#     model: CompartmentalModel,
+#     n_infectious_comps: int,
+#     tex_doc: StandardTexDoc,
+# ) -> str:
+#     process = 'recovery'
+#     origin = f'infectious_{n_infectious_comps - 1}'
+#     destination = 'recovered'
+#     parameter_name = 'infectious_period'
+#     description = f'The {process} process moves ' \
+#         f'people from the {origin} state to the {destination} compartment, ' \
+#         f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
+#     tex_doc.add_line(description, 'Model Construction')
+
 
 
 def add_waning(
@@ -596,32 +615,32 @@ def add_notifications_output(
     notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput('incidence'), delay]) * tracked_ratio_interp
     model.request_function_output(name='notifications', func=notif_dist_rel_inc)
 
-    survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
-
-    survey_fig_name = 'survey.jpg'
-    survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
-    tex_doc.include_figure(
-        'Raw survey values from Household Impacts of COVID-19 surveys. ', 
-        survey_fig_name,
-        'Outputs', 
-        subsection='Notifications',
-    )
-
-    ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
-    ratio_fig.update_layout(showlegend=False)
-
-    ratio_fig_name = 'ratio.jpg'
-    ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
-    tex_doc.include_figure(
-        'Ratio of proportion of households testing to proportion reporting symptoms.', 
-        survey_fig_name,
-        'Outputs', 
-        subsection='Notifications',
-    )
-
-    if show_figs:
-        survey_fig.show()
-        ratio_fig.show()
+    # survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
+    # 
+    # survey_fig_name = 'survey.jpg'
+    # survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
+    # tex_doc.include_figure(
+    #     'Raw survey values from Household Impacts of COVID-19 surveys. ', 
+    #     survey_fig_name,
+    #     'Outputs', 
+    #     subsection='Notifications',
+    # )
+    # 
+    # ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
+    # ratio_fig.update_layout(showlegend=False)
+    #
+    # ratio_fig_name = 'ratio.jpg'
+    # ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
+    # tex_doc.include_figure(
+    #     'Ratio of proportion of households testing to proportion reporting symptoms.', 
+    #     survey_fig_name,
+    #     'Outputs', 
+    #     subsection='Notifications',
+    # )
+    #
+    # if show_figs:
+    #     survey_fig.show()
+    #     ratio_fig.show()
 
 
 def add_death_output(
@@ -684,6 +703,7 @@ def track_adult_seroprev(
 
 def track_strain_prop(
     model: CompartmentalModel,
+    infectious_compartments: list,
     tex_doc: StandardTexDoc,
 ) -> tuple:
     description = 'Proportional prevalence of each Omicron sub-variant ' \
@@ -692,25 +712,25 @@ def track_strain_prop(
         '(noting that simultaneous infection with multiple strains is not modelled).\n'
     tex_doc.add_line(description, 'Outputs', subsection='Sub-variants')
 
-    model.request_output_for_compartments('prev', ['infectious'], save_results=False)
+    model.request_output_for_compartments('prev', infectious_compartments, save_results=False)
     for strain in model.stratifications['strain'].strata:
-        model.request_output_for_compartments(f'{strain}_prev', ['infectious'], {'strain': strain}, save_results=False)
+        model.request_output_for_compartments(f'{strain}_prev', infectious_compartments, {'strain': strain}, save_results=False)
         model.request_function_output(f'{strain}_prop', DerivedOutput(f'{strain}_prev') / DerivedOutput('prev'))
 
 
 def track_reproduction_number(
     model: CompartmentalModel,
     infection_processes: list,
+    infectious_compartments: list,
     tex_doc: StandardTexDoc,
 ):
-    infectious_comp = 'infectious'
     description = 'The time-varying effective reproduction number is calculated as ' \
         'the rate of all infections (including both first infection and reinfection) ' \
-        f'divided by the prevalence of infectious persons (i.e. in the {infectious_comp}) ' \
+        'divided by the prevalence of infectious persons (i.e. in the infectious compartments) ' \
         'multiplied by the duration of the infectious period.\n'
     tex_doc.add_line(description, 'Outputs', subsection='Reproduction Number')
 
-    model.request_output_for_compartments('n_infectious', [infectious_comp])
+    model.request_output_for_compartments('n_infectious', infectious_compartments)
     for process in infection_processes:
         model.request_output_for_flow(process, process, save_results=False)
     model.request_function_output('all_infection', sum([DerivedOutput(process) for process in infection_processes]), save_results=False)
