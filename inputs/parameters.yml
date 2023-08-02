@@ -1,111 +1,111 @@
 descriptions:
-  contact_rate: "Effective contact rate"
-  infectious_period: "Infectious period"
-  latent_period: "Latent period"
-  start_cdr: "Case detection rate"
-  seed_rate: "New variant seeding rate"
-  seed_duration: "New variant seeding duration"
-  ba1_seed_time: "BA.1 seed start time"
-  ba2_seed_time: "BA.2 seed start time"
-  ba5_seed_time: "BA.5 seed start time"
-  ba2_escape: "BA.2 escape BA.1 immunity"
-  ba5_escape: "BA.5 escape BA.1 or BA.2 immunity"
-  notifs_shape: "Gamma distribution shape, infection to notification delay"
-  notifs_mean: "Gamma distribution mean, infection to notification delay"
-  natural_immunity_period: "Natural immunity period"
-  vacc_infect_protect: "Vaccination infection protection"
-  vacc_prop: "Proportion vaccinated"
-  rural_susc_adj: "Rural susceptibility adjustment"
+  contact_rate: 'Effective contact rate'
+  infectious_period: 'Infectious period'
+  latent_period: 'Latent period'
+  start_cdr: 'Case detection rate'
+  seed_rate: 'New variant seeding rate'
+  seed_duration: 'New variant seeding duration'
+  ba1_seed_time: 'BA.1 seed start time'
+  ba2_seed_time: 'BA.2 seed start time'
+  ba5_seed_time: 'BA.5 seed start time'
+  ba2_escape: 'BA.2 escape BA.1 immunity'
+  ba5_escape: 'BA.5 escape BA.1 or BA.2 immunity'
+  notifs_shape: 'Gamma distribution shape, infection to notification delay'
+  notifs_mean: 'Gamma distribution mean, infection to notification delay'
+  natural_immunity_period: 'Natural immunity period'
+  vacc_infect_protect: 'Vaccination infection protection'
+  vacc_prop: 'Proportion vaccinated'
   wa_reopen_period: 'Time to WA fully mixing with rest of country'
-  deaths_shape: "Gamma distribution shape, infection to death delay"
-  deaths_mean: "Gamma distribution mean, infection to death delay"
-  ifr_0: "IFR, ages 0 to 4"
-  ifr_5: "IFR, ages 5 to 9"
-  ifr_10: "IFR, ages 10 to 14"
-  ifr_15: "IFR, ages 15 to 19"
-  ifr_20: "IFR, ages 20 to 24"
-  ifr_25: "IFR, ages 25 to 29"
-  ifr_30: "IFR, ages 30 to 34"
-  ifr_35: "IFR, ages 35 to 39"
-  ifr_40: "IFR, ages 40 to 44"
-  ifr_45: "IFR, ages 45 to 49"
-  ifr_50: "IFR, ages 50 to 54"
-  ifr_55: "IFR, ages 55 to 59"
-  ifr_60: "IFR, ages 60 to 64"
-  ifr_65: "IFR, ages 65 to 69"
-  ifr_70: "IFR, ages 70 to 74"
+  deaths_shape: 'Gamma distribution shape, infection to death delay'
+  deaths_mean: 'Gamma distribution mean, infection to death delay'
+  ifr_0: 'IFR, ages 0 to 4'
+  ifr_5: 'IFR, ages 5 to 9'
+  ifr_10: 'IFR, ages 10 to 14'
+  ifr_15: 'IFR, ages 15 to 19'
+  ifr_20: 'IFR, ages 20 to 24'
+  ifr_25: 'IFR, ages 25 to 29'
+  ifr_30: 'IFR, ages 30 to 34'
+  ifr_35: 'IFR, ages 35 to 39'
+  ifr_40: 'IFR, ages 40 to 44'
+  ifr_45: 'IFR, ages 45 to 49'
+  ifr_50: 'IFR, ages 50 to 54'
+  ifr_55: 'IFR, ages 55 to 59'
+  ifr_60: 'IFR, ages 60 to 64'
+  ifr_65: 'IFR, ages 65 to 69'
+  ifr_70: 'IFR, ages 70 to 74'
   ifr_75: 'IFR, ages 75 and above'
+  ba2_rel_ifr: 'Relative IFR for BA.2 compared to BA.1 and BA.5'
 units:
-  contact_rate: "contacts per person per day"
-  infectious_period: "days"
-  latent_period: "days"
-  start_cdr: ""
-  seed_rate: "persons per day"
-  seed_duration: "days"
-  ba1_seed_time: ""
-  ba2_seed_time: ""
-  ba5_seed_time: ""
-  ba2_escape: ""
-  ba5_escape: ""
-  notifs_shape: ""
-  notifs_mean: "days"
-  natural_immunity_period: "days"
-  vacc_infect_protect: ""
-  vacc_prop: ""
-  rural_susc_adj: ""
+  contact_rate: 'contacts per person per day'
+  infectious_period: 'days'
+  latent_period: 'days'
+  start_cdr: ''
+  seed_rate: 'persons per day'
+  seed_duration: 'days'
+  ba1_seed_time: ''
+  ba2_seed_time: ''
+  ba5_seed_time: ''
+  ba2_escape: ''
+  ba5_escape: ''
+  notifs_shape: ''
+  notifs_mean: 'days'
+  natural_immunity_period: 'days'
+  vacc_infect_protect: ''
+  vacc_prop: ''
   wa_reopen_period: 'days'
-  deaths_shape: ""
-  deaths_mean: "days"
-  ifr_0: ""
-  ifr_5: ""
-  ifr_10: ""
-  ifr_15: ""
-  ifr_20: ""
-  ifr_25: ""
-  ifr_30: ""
-  ifr_35: ""
-  ifr_40: ""
-  ifr_45: ""
-  ifr_50: ""
-  ifr_55: ""
-  ifr_60: ""
-  ifr_65: ""
-  ifr_70: ""
+  deaths_shape: ''
+  deaths_mean: 'days'
+  ifr_0: ''
+  ifr_5: ''
+  ifr_10: ''
+  ifr_15: ''
+  ifr_20: ''
+  ifr_25: ''
+  ifr_30: ''
+  ifr_35: ''
+  ifr_40: ''
+  ifr_45: ''
+  ifr_50: ''
+  ifr_55: ''
+  ifr_60: ''
+  ifr_65: ''
+  ifr_70: ''
   ifr_75: ''
+  ba2_rel_ifr: ''
 evidence:
-  contact_rate: "Calibrated within plausible range"
-  infectious_period: "This quantity is difficult to estimate, given that identified cases are typically quarantined. Studies in settings of high case ascertainment and an effective public health response have suggested a duration of greater than 5.5 days \\cite{bi2020}. PCR positivity, which may continue for up to two to three weeks from the point of symptom onset \\cite{he2020} \\cite{byrne2020} does not necessarily indicate infectiousness. The duration infectious for asymptomatic persons has also been estimated at 6.5 to 9.5 days \\cite{byrne2020}."
-  latent_period: "Assumed"
-  start_cdr: "Assumed"
-  seed_rate: "Assumed"
-  seed_duration: "Assumed"
-  ba1_seed_time: "Assumed"
-  ba2_seed_time: "Assumed"
-  ba5_seed_time: "Assumed"
-  ba2_escape: "Assumed"
-  ba5_escape: "Assumed"
-  notifs_shape: "Assumed"
-  notifs_mean: "Assumed"
-  natural_immunity_period: "Assumed"
-  vacc_infect_protect: "Assumed"
-  vacc_prop: "Assumed"
-  rural_susc_adj: "Assumed"
+  contact_rate: 'Calibrated within plausible range'
+  infectious_period: 'This quantity is difficult to estimate, given that identified cases are typically quarantined. Studies in settings of high case ascertainment and an effective public health response have suggested a duration of greater than 5.5 days \\cite{bi2020}. PCR positivity, which may continue for up to two to three weeks from the point of symptom onset \\cite{he2020} \\cite{byrne2020} does not necessarily indicate infectiousness. The duration infectious for asymptomatic persons has also been estimated at 6.5 to 9.5 days \\cite{byrne2020}.'
+  latent_period: 'Assumed'
+  start_cdr: 'Assumed'
+  seed_rate: 'Assumed'
+  seed_duration: 'Assumed'
+  ba1_seed_time: 'Assumed'
+  ba2_seed_time: 'Assumed'
+  ba5_seed_time: 'Assumed'
+  ba2_escape: 'Assumed'
+  ba5_escape: 'Assumed'
+  notifs_shape: 'Assumed'
+  notifs_mean: 'Assumed'
+  natural_immunity_period: 'Assumed'
+  vacc_infect_protect: 'Assumed'
+  vacc_prop: 'Assumed'
   wa_reopen_period: 'Assumed'
-  deaths_shape: ""
-  deaths_mean: "days"
-  ifr_0: ""
-  ifr_5: ""
-  ifr_10: ""
-  ifr_15: ""
-  ifr_20: ""
-  ifr_25: ""
-  ifr_30: ""
-  ifr_35: ""
-  ifr_40: ""
-  ifr_45: ""
-  ifr_50: ""
-  ifr_55: ""
-  ifr_60: ""
-  ifr_65: ""
-  ifr_70: ""
+  deaths_shape: ''
+  deaths_mean: 'days'
+  ifr_0: ''
+  ifr_5: ''
+  ifr_10: ''
+  ifr_15: ''
+  ifr_20: ''
+  ifr_25: ''
+  ifr_30: ''
+  ifr_35: ''
+  ifr_40: ''
+  ifr_45: ''
+  ifr_50: ''
+  ifr_55: ''
+  ifr_60: ''
+  ifr_65: ''
+  ifr_70: ''
   ifr_75: ''
+  ba2_rel_ifr: 'Assumed'
