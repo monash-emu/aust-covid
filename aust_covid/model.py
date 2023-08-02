@@ -78,7 +78,7 @@ def build_model(
     adjust_state_pops(model_pops, aust_model, tex_doc)
 
     # Outputs
-    track_incidence(aust_model, infection_processes, age_strata, tex_doc)
+    track_incidence(aust_model, infection_processes, tex_doc)
     add_notifications_output(aust_model, tex_doc)
     add_death_output(aust_model, tex_doc)
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
@@ -391,15 +391,15 @@ def add_reinfection(
             process = 'early_reinfection'
             origin = 'recovered'
             destination = 'latent'
-            if int(dest_strain[-1]) > int(source_strain[-1]): 
-                model.add_infection_frequency_flow(
-                    process, 
-                    Parameter('contact_rate') * Parameter(f'{dest_strain}_escape'),
-                    origin, 
-                    destination,
-                    source_strata={'strain': source_strain},
-                    dest_strata={'strain': dest_strain},
-                )
+            escape = Parameter(f'{dest_strain}_escape') if int(dest_strain[-1]) > int(source_strain[-1]) else 0.0
+            model.add_infection_frequency_flow(
+                process, 
+                Parameter('contact_rate') * escape,
+                origin, 
+                destination,
+                source_strata={'strain': source_strain},
+                dest_strata={'strain': dest_strain},
+            )
             process = 'late_reinfection'
             origin = 'waned'
             model.add_infection_frequency_flow(
@@ -500,32 +500,41 @@ def adjust_state_pops(
 def track_incidence(
     model: CompartmentalModel,
     infection_processes: list,
-    age_strata: list,
     tex_doc: StandardTexDoc,
 ):
-    description = 'Age group-specific and overall incidence of infection with SARS-CoV-2 ' \
+    description = 'Age group and strain-specific and overall incidence of infection with SARS-CoV-2 ' \
         '(including episodes that are never detected) is first tracked. ' \
         'This modelled incident infection quantity is not used explicitly in the calibration process, ' \
         'but tracking this process is necessary for the calculation of several other  ' \
         'model outputs, as described below.\n'
     tex_doc.add_line(description, 'Outputs', subsection='Notifications')
 
+    age_strata = model.stratifications['agegroup'].strata
+    strain_strata = model.stratifications['strain'].strata
     for age in age_strata:
         age_str = f'Xagegroup_{age}'
-        for process in infection_processes:
-            model.request_output_for_flow(
-                f'{process}_onset{age_str}', 
-                process, 
-                source_strata={'agegroup': str(age)},
+        for strain in strain_strata:
+            strain_str = f'Xstrain_{strain}'
+            for process in infection_processes:
+                model.request_output_for_flow(
+                    f'{process}_onset{age_str}{strain_str}', 
+                    process, 
+                    source_strata={'agegroup': age},
+                    dest_strata={'strain': strain},
+                    save_results=False,
+                )
+            model.request_function_output(
+                f'incidence{age_str}{strain_str}',
+                func=sum([DerivedOutput(f'{process}_onset{age_str}{strain_str}') for process in infection_processes]),
                 save_results=False,
             )
         model.request_function_output(
             f'incidence{age_str}',
-            func=sum([DerivedOutput(f'{process}_onset{age_str}') for process in infection_processes]),
+            func=sum([DerivedOutput(f'incidence{age_str}Xstrain_{strain}') for strain in strain_strata]),
             save_results=False,
         )
     model.request_function_output(
-        'incidence',
+        f'incidence',
         func=sum([DerivedOutput(f'incidenceXagegroup_{age}') for age in age_strata]),
     )
 
@@ -630,11 +639,19 @@ def add_death_output(
     tex_doc.add_line(description, 'Outputs', subsection='Deaths')
     
     agegroups = model.stratifications['agegroup'].strata
+    strain_strata = model.stratifications['strain'].strata
     for age in agegroups:
         age_str = f'Xagegroup_{age}'
-        delay = build_gamma_dens_interval_func(Parameter('deaths_shape'), Parameter('deaths_mean'), model.times)
-        death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(f'incidence{age_str}'), delay]) * Parameter(f'ifr_{age}')
-        model.request_function_output(name=f'deaths{age_str}', func=death_dist_rel_inc)
+        for strain in strain_strata:
+            strain_rel_death = Parameter('ba2_rel_ifr') if strain == 'ba2' else 1.0
+            strain_str = f'Xstrain_{strain}'
+            delay = build_gamma_dens_interval_func(Parameter('deaths_shape'), Parameter('deaths_mean'), model.times)
+            death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(f'incidence{age_str}{strain_str}'), delay]) * Parameter(f'ifr_{age}') * strain_rel_death
+            model.request_function_output(name=f'deaths{age_str}{strain_str}', func=death_dist_rel_inc)
+        model.request_function_output(
+            f'deaths{age_str}',
+            func=sum([DerivedOutput(f'deaths{age_str}Xstrain_{strain}') for strain in strain_strata]),
+        )
     model.request_function_output(
         'deaths',
         func=sum([DerivedOutput(f'deathsXagegroup_{age}') for age in agegroups]),
