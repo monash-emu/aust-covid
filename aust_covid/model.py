@@ -526,7 +526,7 @@ def track_incidence(
         )
     model.request_function_output(
         'incidence',
-        func=sum([DerivedOutput(f'incidenceXagegroup_{age_str}') for age_str in age_strata]),
+        func=sum([DerivedOutput(f'incidenceXagegroup_{age}') for age in age_strata]),
     )
 
 
