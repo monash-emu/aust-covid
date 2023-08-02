@@ -6,10 +6,11 @@ import pandas as pd
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+pd.options.plotting.backend = 'plotly'
 from copy import copy
 
 from summer2.functions.time import get_linear_interpolation_function
-from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply, Overwrite
+from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
 from aust_covid.model_utils import triangle_wave_func, convolve_probability, build_gamma_dens_interval_func
@@ -605,32 +606,32 @@ def add_notifications_output(
     notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput('incidence'), delay]) * tracked_ratio_interp
     model.request_function_output(name='notifications', func=notif_dist_rel_inc)
 
-    # survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
-    # 
-    # survey_fig_name = 'survey.jpg'
-    # survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
-    # tex_doc.include_figure(
-    #     'Raw survey values from Household Impacts of COVID-19 surveys. ', 
-    #     survey_fig_name,
-    #     'Outputs', 
-    #     subsection='Notifications',
-    # )
-    # 
-    # ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
-    # ratio_fig.update_layout(showlegend=False)
-    #
-    # ratio_fig_name = 'ratio.jpg'
-    # ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
-    # tex_doc.include_figure(
-    #     'Ratio of proportion of households testing to proportion reporting symptoms.', 
-    #     survey_fig_name,
-    #     'Outputs', 
-    #     subsection='Notifications',
-    # )
-    #
-    # if show_figs:
-    #     survey_fig.show()
-    #     ratio_fig.show()
+    survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
+    
+    survey_fig_name = 'survey.jpg'
+    survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
+    tex_doc.include_figure(
+        'Raw survey values from Household Impacts of COVID-19 surveys. ', 
+        survey_fig_name,
+        'Outputs', 
+        subsection='Notifications',
+    )
+    
+    ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
+    ratio_fig.update_layout(showlegend=False)
+    
+    ratio_fig_name = 'ratio.jpg'
+    ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
+    tex_doc.include_figure(
+        'Ratio of proportion of households testing to proportion reporting symptoms.', 
+        survey_fig_name,
+        'Outputs', 
+        subsection='Notifications',
+    )
+    
+    if show_figs:
+        survey_fig.show()
+        ratio_fig.show()
 
 
 def add_death_output(
@@ -660,7 +661,6 @@ def add_death_output(
         model.request_function_output(
             f'deaths{age_str}',
             func=sum([DerivedOutput(f'deaths{age_str}Xstrain_{strain}') for strain in strain_strata]),
-            save_results=False,
         )
     model.request_function_output(
         'deaths',
