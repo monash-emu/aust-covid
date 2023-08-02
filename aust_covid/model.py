@@ -526,7 +526,7 @@ def track_incidence(
         )
     model.request_function_output(
         'incidence',
-        func=sum([DerivedOutput(f'incidence{age_str}') for age in age_strata]),
+        func=sum([DerivedOutput(f'incidenceXagegroup_{age}') for age in age_strata]),
     )
 
 
@@ -582,14 +582,14 @@ def add_notifications_output(
     ratio_interp = get_linear_interpolation_function(jnp.array(aust_epoch.datetime_to_number(hh_test_ratio.index)), cdr_values)
     tracked_ratio_interp = model.request_track_modelled_value("ratio_interp", ratio_interp)
     
-    delay = build_gamma_dens_interval_func(Parameter("notifs_shape"), Parameter("notifs_mean"), model.times)
+    delay = build_gamma_dens_interval_func(Parameter('notifs_shape'), Parameter('notifs_mean'), model.times)
 
-    notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput("incidence"), delay]) * tracked_ratio_interp
-    model.request_function_output(name="notifications", func=notif_dist_rel_inc)
+    notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput('incidence'), delay]) * tracked_ratio_interp
+    model.request_function_output(name='notifications', func=notif_dist_rel_inc)
 
-    survey_fig = hh_impact.plot(labels={"value": "percentage", "index": ""}, markers=True)
+    survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
 
-    survey_fig_name = "survey.jpg"
+    survey_fig_name = 'survey.jpg'
     survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
     tex_doc.include_figure(
         'Raw survey values from Household Impacts of COVID-19 surveys. ', 
@@ -598,10 +598,10 @@ def add_notifications_output(
         subsection='Notifications',
     )
 
-    ratio_fig = hh_test_ratio.plot(labels={"value": "ratio", "index": ""}, markers=True)
+    ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
     ratio_fig.update_layout(showlegend=False)
 
-    ratio_fig_name = "ratio.jpg"
+    ratio_fig_name = 'ratio.jpg'
     ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
     tex_doc.include_figure(
         'Ratio of proportion of households testing to proportion reporting symptoms.', 
@@ -633,11 +633,11 @@ def add_death_output(
     for age in agegroups:
         age_str = f'Xagegroup_{age}'
         delay = build_gamma_dens_interval_func(Parameter('deaths_shape'), Parameter('deaths_mean'), model.times)
-        death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(f'incidence{age_str}'), delay]) * Parameter(f"ifr_{age}")
+        death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(f'incidence{age_str}'), delay]) * Parameter(f'ifr_{age}')
         model.request_function_output(name=f'deaths{age_str}', func=death_dist_rel_inc)
     model.request_function_output(
         'deaths',
-        func=sum([DerivedOutput(f"deathsXagegroup_{age}") for age in agegroups]),
+        func=sum([DerivedOutput(f'deathsXagegroup_{age}') for age in agegroups]),
     )
 
 
