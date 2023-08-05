@@ -73,6 +73,7 @@ class StandardTexDoc(TexDoc):
         self.add_line('\\usepackage{hyperref}', 'preamble')
         self.add_line('\\usepackage{graphicx}', 'preamble')
         self.add_line('\\usepackage{longtable}', 'preamble')
+        self.add_line('\\usepackage{booktabs}', 'preamble')
         self.add_line('\\graphicspath{ {./images/} }', 'preamble')
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
