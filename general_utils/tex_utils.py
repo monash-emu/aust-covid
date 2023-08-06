@@ -63,7 +63,19 @@ class TexDoc:
         self.add_line(f'\\caption{{{caption}}}', section, subsection)
         self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}}}', section, subsection)
         self.add_line('\\end{figure}', section, subsection)
-                
+
+    def include_table(self, table, section, subsection=None, widths=None, table_width=10.0, longtable=False):
+        n_cols = table.shape[1] + 1
+        ave_col_width = round(table_width / n_cols, 2)
+        col_widths = widths if widths else [ave_col_width] * n_cols
+        col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
+        table_text = table.style.to_latex(
+            column_format=col_format_str,
+            hrules=True,
+        )
+        table_text = table_text.replace('{tabular}', '{longtable}') if longtable else table_text
+        self.add_line(table_text, section, subsection=subsection)
+
 
 class StandardTexDoc(TexDoc):
     def prepare_doc(self):
