@@ -77,6 +77,7 @@ class StandardTexDoc(TexDoc):
             'graphicx',
             'longtable',
             'booktabs',
+            'array',
         ]
         for package in standard_packages:
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')

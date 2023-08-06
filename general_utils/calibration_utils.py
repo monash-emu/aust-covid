@@ -30,6 +30,25 @@ def round_sigfig(
     return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1))
 
 
+def param_table_to_tex(
+    param_info: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Process parameter info dataframe into the actual parameter information
+
+    Args:
+        param_info: Dataframe with parameter information
+
+    Returns:
+        Version of param_info ready to write into LaTeX document
+    """
+    param_table = param_info.iloc[:, 1:]
+    param_table.index = param_info['descriptions']
+    param_table.columns = param_table.columns.str.replace('_', ' ').str.capitalize()
+    param_table.index.name = None
+    return param_table
+
+
 def get_fixed_param_value_text(
     param: str,
     parameters: dict,
