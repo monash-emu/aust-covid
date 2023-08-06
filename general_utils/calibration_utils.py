@@ -46,6 +46,7 @@ def param_table_to_tex(
     param_table.index = param_info['descriptions']
     param_table.columns = param_table.columns.str.replace('_', ' ').str.capitalize()
     param_table.index.name = None
+    param_table['Manual values'] = param_table['Manual values'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))
     return param_table
 
 
