@@ -69,11 +69,18 @@ class StandardTexDoc(TexDoc):
     def prepare_doc(self):
         self.prepared = True
         self.add_line('\\documentclass{article}', 'preamble')
-        self.add_line('\\usepackage{biblatex}', 'preamble')
-        self.add_line('\\usepackage{hyperref}', 'preamble')
-        self.add_line('\\usepackage{graphicx}', 'preamble')
-        self.add_line('\\usepackage{longtable}', 'preamble')
-        self.add_line('\\usepackage{booktabs}', 'preamble')
+
+        # Packages that don't require arguments
+        standard_packages = [
+            'hyperref',
+            'biblatex',
+            'graphicx',
+            'longtable',
+            'booktabs',
+        ]
+        for package in standard_packages:
+            self.add_line(f'\\usepackage{{{package}}}', 'preamble')
+
         self.add_line('\\graphicspath{ {./images/} }', 'preamble')
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
