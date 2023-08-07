@@ -237,7 +237,7 @@ def tabulate_param_results(
         results_table[col_to_round] = results_table.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
     results_table['hdi'] = results_table.apply(lambda x: f'{x["hdi_3%"]} to {x["hdi_97%"]}', axis=1)    
     results_table = results_table.drop(['mcse_mean', 'mcse_sd', 'hdi_3%', 'hdi_97%'], axis=1)
-    results_table.columns = ['Mean', 'Standard deviation', 'ESS bulk', 'ESS tail', 'Rhat', 'High-density interval']
+    results_table.columns = ['Mean', 'Standard deviation', 'ESS bulk', 'ESS tail', '\\textit{\^{R}}', 'High-density interval']
     return results_table
 
 
