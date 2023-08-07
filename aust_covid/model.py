@@ -58,7 +58,7 @@ def build_model(
     set_starting_conditions(aust_model, model_pops, tex_doc)
     add_infection(aust_model, latent_compartments, tex_doc)
     add_latent_transition(aust_model, latent_compartments, infectious_compartments, tex_doc)
-    add_infectious_transition(aust_model, latent_compartments, infectious_compartments, tex_doc)
+    add_infectious_transition(aust_model, infectious_compartments, tex_doc)
     add_waning(aust_model, tex_doc)
 
     # Age and heterogeneous mixing
@@ -172,13 +172,11 @@ def add_latent_transition(
         origin = latent_compartments[i_comp]
         destination = latent_compartments[i_comp + 1]
         model.add_transition_flow(f'latent_transition_{str(i_comp)}', rate, origin, destination)
-    final_origin = 'susceptible' if n_latent_comps == 1 else destination
-    model.add_transition_flow('progression', rate, final_origin, final_dest)
+    model.add_transition_flow('progression', rate, latent_compartments[-1], final_dest)
 
 
 def add_infectious_transition(
     model: CompartmentalModel,
-    latent_compartments: list,
     infectious_compartments: list,
     tex_doc: StandardTexDoc,
 ):
@@ -198,8 +196,7 @@ def add_infectious_transition(
         origin = infectious_compartments[i_comp]
         destination = infectious_compartments[i_comp + 1]
         model.add_transition_flow(f'inf_transition_{str(i_comp)}', rate, origin, destination)
-    final_origin = latent_compartments[-1] if n_inf_comps == 1 else destination
-    model.add_transition_flow('recovery', rate, final_origin, final_dest)
+    model.add_transition_flow('recovery', rate, infectious_compartments[-1], final_dest)
 
 
 def add_waning(
