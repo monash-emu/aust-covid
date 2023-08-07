@@ -44,9 +44,11 @@ def build_model(
 ):
     
     # Model construction
-    n_infectious_comps = 2
+    n_latent_comps = 2
+    n_infectious_comps = n_latent_comps
+    latent_compartments = [f'latent_{i}' for i in range(n_latent_comps)]
     infectious_compartments = [f'infectious_{i}' for i in range(n_infectious_comps)]
-    compartments = ['susceptible', 'latent', 'recovered', 'waned'] + infectious_compartments
+    compartments = ['susceptible', 'recovered', 'waned'] + infectious_compartments + latent_compartments
     age_strata = list(range(0, 80, 5))
     strain_strata = ['ba1', 'ba2', 'ba5']
     infection_processes = ['infection', 'early_reinfection', 'late_reinfection']
@@ -54,9 +56,9 @@ def build_model(
     aust_model = build_base_model(ref_date, compartments, infectious_compartments, start_date, end_date, tex_doc)
     model_pops = load_pop_data(age_strata, tex_doc)
     set_starting_conditions(aust_model, model_pops, tex_doc)
-    add_infection(aust_model, tex_doc)
-    add_progression(aust_model, infectious_compartments, tex_doc)
-    add_infectious_transition(aust_model, n_infectious_comps, infectious_compartments, tex_doc)
+    add_infection(aust_model, latent_compartments, tex_doc)
+    add_latent_transition(aust_model, latent_compartments, infectious_compartments, tex_doc)
+    add_infectious_transition(aust_model, infectious_compartments, tex_doc)
     add_waning(aust_model, tex_doc)
 
     # Age and heterogeneous mixing
@@ -69,9 +71,9 @@ def build_model(
     # Other stratifications and reinfection
     strain_strat = get_strain_stratification(compartments, strain_strata, tex_doc)
     aust_model.stratify_with(strain_strat)
-    seed_vocs(aust_model, tex_doc)
+    seed_vocs(aust_model, latent_compartments, tex_doc)
 
-    add_reinfection(aust_model, strain_strata, tex_doc)
+    add_reinfection(aust_model, strain_strata, latent_compartments, tex_doc)
 
     vacc_strat = get_vacc_stratification(compartments, infection_processes, tex_doc)
     aust_model.stratify_with(vacc_strat)
@@ -134,11 +136,12 @@ def set_starting_conditions(
 
 def add_infection(
     model: CompartmentalModel,
+    latent_compartments: list,
     tex_doc: StandardTexDoc,
 ) -> str:
     process = 'infection'
     origin = 'susceptible'
-    destination = 'latent'
+    destination = latent_compartments[0]
     description = f'The {process} process moves people from the {origin} ' \
         f'compartment to the {destination} compartment, ' \
         'under the frequency-dependent transmission assumption. '
@@ -147,39 +150,42 @@ def add_infection(
     model.add_infection_frequency_flow(process, Parameter('contact_rate'), origin, destination)
 
 
-def add_progression(
+def add_latent_transition(
     model: CompartmentalModel,
-    infectious_comps: list,
+    latent_compartments: list,
+    infectious_compartments: list,
     tex_doc: StandardTexDoc,
-) -> str:
-    process = 'progression'
-    origin = 'latent'
-    destination = infectious_comps[0]
+):
     parameter_name = 'latent_period'
-    description = f'The {process} process moves ' \
-        f'people from the {origin} state to the {destination} compartment, ' \
-        f'with the transition rate calculated as the reciprocal of the {parameter_name.replace("_", " ")}. '
+    final_dest = infectious_compartments[0]
+    n_latent_comps = len(latent_compartments)
+    description = ''  # Need to comment properly
     tex_doc.add_line(description, 'Model Construction')
 
-    model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
+    rate = 1.0 / Parameter(parameter_name) * n_latent_comps
+    for i_comp in range(n_latent_comps - 1):
+        origin = latent_compartments[i_comp]
+        destination = latent_compartments[i_comp + 1]
+        model.add_transition_flow(f'latent_transition_{str(i_comp)}', rate, origin, destination)
+    model.add_transition_flow('progression', rate, destination, final_dest)
 
 
 def add_infectious_transition(
     model: CompartmentalModel,
-    n_inf_comps: int,
     infectious_compartments: list,
     tex_doc: StandardTexDoc,
 ):
     parameter_name = 'infectious_period'
     final_dest = 'recovered'
+    n_inf_comps = range(len(infectious_compartments))
     description = ''  # Need to comment properly
     tex_doc.add_line(description, 'Model Construction')
 
     rate = 1.0 / Parameter(parameter_name) * n_inf_comps
-    for i_comp in range(len(infectious_compartments) - 1):
+    for i_comp in range(n_inf_comps - 1):
         origin = infectious_compartments[i_comp]
         destination = infectious_compartments[i_comp + 1]
-        model.add_transition_flow(f'transition_{str(i_comp)}', rate, origin, destination)
+        model.add_transition_flow(f'inf_transition_{str(i_comp)}', rate, origin, destination)
     model.add_transition_flow('recovery', rate, destination, final_dest)
 
 
@@ -339,10 +345,11 @@ def get_strain_stratification(
 
 def seed_vocs(
     model: CompartmentalModel,
+    latent_compartments: list,
     tex_doc: StandardTexDoc,
 ) -> str:
     strains = model.stratifications['strain'].strata
-    seed_comp = 'latent'
+    seed_comp = latent_compartments[0]
     seed_duration_str = 'seed_duration'
     seed_rate_str = 'seed_rate'
     description = f'Each strain (including the starting {strains[0].replace("ba", "BA.")} strain) is seeded through ' \
@@ -376,8 +383,10 @@ def seed_vocs(
 def add_reinfection(
     model: CompartmentalModel,
     strain_strata: list,
+    latent_compartments: list,
     tex_doc: StandardTexDoc,
 ) -> str:
+    destination = latent_compartments[0]
     description = 'Reinfection is possible from both the recovered ' \
         'and waned compartments, with these processes termed ' \
         "`early' and `late' reinfection respectively. " \
@@ -400,7 +409,6 @@ def add_reinfection(
         for source_strain in strain_strata:
             process = 'early_reinfection'
             origin = 'recovered'
-            destination = 'latent'
             escape = Parameter(f'{dest_strain}_escape') if int(dest_strain[-1]) > int(source_strain[-1]) else 0.0
             model.add_infection_frequency_flow(
                 process, 
