@@ -1,10 +1,8 @@
-from pylatex.utils import NoEscape
 import arviz as az
 from arviz.labels import MapLabeller
 from pathlib import Path
 import pandas as pd
 import numpy as np
-import plotly.express as px
 import matplotlib as mpl
 
 from estival.model import BayesianCompartmentalModel
