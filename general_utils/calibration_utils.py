@@ -27,7 +27,7 @@ def round_sigfig(
         value: Number to round
         sig_figs: Number of significant figures to round to
     """
-    return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1))
+    return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1)) if value != 0.0 else 0.0
 
 
 def param_table_to_tex(
