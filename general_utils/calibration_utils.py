@@ -12,7 +12,7 @@ from estival.model import BayesianCompartmentalModel
 from general_utils.tex_utils import StandardTexDoc
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
-SUPPLEMENT_PATH = BASE_PATH / "supplement"
+SUPPLEMENT_PATH = BASE_PATH / 'supplement'
 
 
 def round_sigfig(
@@ -32,6 +32,7 @@ def round_sigfig(
 
 def param_table_to_tex(
     param_info: pd.DataFrame,
+    prior_names: list,
 ) -> pd.DataFrame:
     """
     Process aesthetics of the parameter info dataframe into readable information.
@@ -42,40 +43,15 @@ def param_table_to_tex(
     Returns:
         table: Ready to write version of the table
     """
-    table = param_info.iloc[:, 1:]
-    table.index = param_info['descriptions']
+    table = param_info.iloc[:, 1:]  # Drop description for now
+    table['value'] = table['value'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))  # Round value
+    table.loc[[i for i in table.index if i in prior_names], 'value'] = 'Calibrated'  # Suppress value if calibrated
+    table.index = param_info['descriptions']  # Use readable description for row names
     table.columns = table.columns.str.replace('_', ' ').str.capitalize()
     table.index.name = None
-    table['Manual values'] = table['Manual values'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))
-    table = table[['Manual values', 'Evidence', 'Units']]
+    table = table[['Value', 'Units', 'Evidence']]  # Reorder columns
     table['Units'] = table['Units'].str.capitalize()
     return table
-
-
-def get_fixed_param_value_text(
-    param: str,
-    parameters: dict,
-    param_units: dict,
-    prior_names: list,
-    decimal_places=2,
-    calibrated_string="Calibrated, see priors table",
-) -> str:
-    """
-    Get the value of a parameter being used in the model for the parameters table,
-    except indicate that it is calibrated if it's one of the calibration parameters.
-    
-    Args:
-        param: Parameter name
-        parameters: All parameters expected by the model
-        param_units: The units for the parameter being considered
-        prior_names: The names of the parameters used in calibration
-        decimal_places: How many places to round the value to
-        calibrated_string: The text to use if the parameter is calibrated
-
-    Returns:
-        Description of the parameter value
-    """
-    return calibrated_string if param in prior_names else f"{round(parameters[param], decimal_places)} {param_units[param]}"
 
 
 def get_prior_dist_type(
@@ -89,8 +65,8 @@ def get_prior_dist_type(
     Returns:
         Description of the distribution
     """
-    dist_type = str(prior.__class__).replace(">", "").replace("'", "").split(".")[-1].replace("Prior", "")
-    return f"{dist_type} distribution"
+    dist_type = str(prior.__class__).replace('>', '').replace("'", '').split('.')[-1].replace('Prior', '')
+    return f'{dist_type} distribution'
 
 
 def get_prior_dist_param_str(
@@ -106,7 +82,7 @@ def get_prior_dist_param_str(
     Returns:
         The parameters to the prior's distribution joined together
     """
-    return " ".join([f"{param}: {round(prior.distri_params[param], 3)}" for param in prior.distri_params])
+    return ' '.join([f'{param}: {round(prior.distri_params[param], 3)}' for param in prior.distri_params])
 
 
 def get_prior_dist_support(
@@ -121,7 +97,7 @@ def get_prior_dist_support(
     Returns:        
         The bounds to the prior's distribution joined together
     """
-    return " to ".join([str(round_sigfig(i, 3)) for i in prior.bounds()])
+    return ' to '.join([str(round_sigfig(i, 3)) for i in prior.bounds()])
 
 
 def plot_param_progression(
