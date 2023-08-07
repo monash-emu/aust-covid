@@ -34,20 +34,22 @@ def param_table_to_tex(
     param_info: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Process parameter info dataframe into the actual parameter information
+    Process aesthetics of the parameter info dataframe into readable information.
 
     Args:
-        param_info: Dataframe with parameter information
+        param_info: Dataframe with raw parameter information
 
     Returns:
-        Version of param_info ready to write into LaTeX document
+        table: Ready to write version of the table
     """
-    param_table = param_info.iloc[:, 1:]
-    param_table.index = param_info['descriptions']
-    param_table.columns = param_table.columns.str.replace('_', ' ').str.capitalize()
-    param_table.index.name = None
-    param_table['Manual values'] = param_table['Manual values'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))
-    return param_table
+    table = param_info.iloc[:, 1:]
+    table.index = param_info['descriptions']
+    table.columns = table.columns.str.replace('_', ' ').str.capitalize()
+    table.index.name = None
+    table['Manual values'] = table['Manual values'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))
+    table = table[['Manual values', 'Evidence', 'Units']]
+    table['Units'] = table['Units'].str.capitalize()
+    return table
 
 
 def get_fixed_param_value_text(
@@ -191,29 +193,6 @@ def plot_param_posterior(
     )
 
 
-def tabulate_parameters(
-    parameters: dict, 
-    priors: list, 
-    param_info: pd.DataFrame, 
-) -> pd.DataFrame:
-    """
-    Create table of all parameters being consumed by model,
-    with the values being used and evidence to support them.
-
-    Args:
-        parameters: All parameter values, even if calibrated
-        priors: Priors for use in calibration algorithm
-        param_info: Collated information on the parameter values (excluding calibration/priors-related)
-
-    Returns:
-        Formatted table combining the information listed above
-    """
-    values_column = [get_fixed_param_value_text(i, parameters, param_info["units"], priors) for i in parameters]
-    evidence_column = [NoEscape(param_info["evidence"][i]) for i in parameters]
-    names_column = [param_info["descriptions"][i] for i in parameters]
-    return pd.DataFrame({"Value": values_column, "Evidence": evidence_column}, index=names_column)
-
-
 def tabulate_priors(
     priors: list, 
     param_info: pd.DataFrame, 
@@ -229,11 +208,11 @@ def tabulate_priors(
     Returns:
         Formatted table combining the information listed above
     """
-    names = [param_info["descriptions"][i.name] for i in priors]
+    names = [param_info['descriptions'][i.name] for i in priors]
     distributions = [get_prior_dist_type(i) for i in priors]
     parameters = [get_prior_dist_param_str(i) for i in priors]
     support = [get_prior_dist_support(i) for i in priors]
-    return pd.DataFrame({"Distribution": distributions, "Parameters": parameters, "Support": support}, index=names)
+    return pd.DataFrame({'Distribution': distributions, 'Parameters': parameters, 'Support': support}, index=names)
 
 
 def tabulate_param_results(
