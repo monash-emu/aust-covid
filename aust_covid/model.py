@@ -177,7 +177,7 @@ def add_infectious_transition(
 ):
     parameter_name = 'infectious_period'
     final_dest = 'recovered'
-    n_inf_comps = range(len(infectious_compartments))
+    n_inf_comps = len(infectious_compartments)
     description = ''  # Need to comment properly
     tex_doc.add_line(description, 'Model Construction')
 
