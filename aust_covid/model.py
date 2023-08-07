@@ -161,7 +161,10 @@ def add_latent_transition(
     n_latent_comps = len(latent_compartments)
     description = 'Following infection, infected persons enter a series of latent compartments. ' \
         f'These are chained in series, with a total of {n_latent_comps} linked together in sequence. ' \
-        'To achieve the same '
+        'To achieve the same mean sojourn time in the composite latent stage, ' \
+        'the rate of transition between each latent compartment and out of the last latent compartment ' \
+        f'is multiplied by the number of serial compartments (i.e. {n_latent_comps}). ' \
+        'As persons exit the final latent compartment, they enter the first infectious compartment. '
     tex_doc.add_line(description, 'Model Construction')
 
     rate = 1.0 / Parameter(parameter_name) * n_latent_comps
@@ -182,7 +185,12 @@ def add_infectious_transition(
     parameter_name = 'infectious_period'
     final_dest = 'recovered'
     n_inf_comps = len(infectious_compartments)
-    description = ''  # Need to comment properly
+    description = 'Following latency, persons enter a series of infectious compartments. ' \
+        f'As for the latent compartments, these are also chained in series, ' \
+        'with a total of {n_inf_comps} linked together in sequence. ' \
+        'As for the latent compartments, ' \
+        f'the transition rate is multiplied by {n_inf_comps}). ' \
+        'As persons exit the final infectious compartment, they enter the recovered compartment. '    
     tex_doc.add_line(description, 'Model Construction')
 
     rate = 1.0 / Parameter(parameter_name) * n_inf_comps
