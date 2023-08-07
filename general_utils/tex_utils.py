@@ -74,7 +74,9 @@ class TexDoc:
             hrules=True,
         )
         table_text = table_text.replace('{tabular}', '{longtable}') if longtable else table_text
+        self.add_line('\\begin{center}', section, subsection=subsection)
         self.add_line(table_text, section, subsection=subsection)
+        self.add_line('\end{center}', section, subsection=subsection)
 
 
 class StandardTexDoc(TexDoc):
