@@ -44,7 +44,7 @@ def build_model(
 ):
     
     # Model construction
-    n_latent_comps = 1
+    n_latent_comps = 3
     n_infectious_comps = n_latent_comps
     latent_compartments = [f'latent_{i}' for i in range(n_latent_comps)]
     infectious_compartments = [f'infectious_{i}' for i in range(n_infectious_comps)]
