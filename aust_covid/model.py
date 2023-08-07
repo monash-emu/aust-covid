@@ -44,7 +44,7 @@ def build_model(
 ):
     
     # Model construction
-    n_latent_comps = 2
+    n_latent_comps = 1
     n_infectious_comps = n_latent_comps
     latent_compartments = [f'latent_{i}' for i in range(n_latent_comps)]
     infectious_compartments = [f'infectious_{i}' for i in range(n_infectious_comps)]
@@ -58,7 +58,7 @@ def build_model(
     set_starting_conditions(aust_model, model_pops, tex_doc)
     add_infection(aust_model, latent_compartments, tex_doc)
     add_latent_transition(aust_model, latent_compartments, infectious_compartments, tex_doc)
-    add_infectious_transition(aust_model, infectious_compartments, tex_doc)
+    add_infectious_transition(aust_model, latent_compartments, infectious_compartments, tex_doc)
     add_waning(aust_model, tex_doc)
 
     # Age and heterogeneous mixing
@@ -159,7 +159,9 @@ def add_latent_transition(
     parameter_name = 'latent_period'
     final_dest = infectious_compartments[0]
     n_latent_comps = len(latent_compartments)
-    description = ''  # Need to comment properly
+    description = 'Following infection, infected persons enter a series of latent compartments. ' \
+        f'These are chained in series, with a total of {n_latent_comps} linked together in sequence. ' \
+        'To achieve the same '
     tex_doc.add_line(description, 'Model Construction')
 
     rate = 1.0 / Parameter(parameter_name) * n_latent_comps
@@ -167,11 +169,13 @@ def add_latent_transition(
         origin = latent_compartments[i_comp]
         destination = latent_compartments[i_comp + 1]
         model.add_transition_flow(f'latent_transition_{str(i_comp)}', rate, origin, destination)
-    model.add_transition_flow('progression', rate, destination, final_dest)
+    final_origin = 'susceptible' if n_latent_comps == 1 else destination
+    model.add_transition_flow('progression', rate, final_origin, final_dest)
 
 
 def add_infectious_transition(
     model: CompartmentalModel,
+    latent_compartments: list,
     infectious_compartments: list,
     tex_doc: StandardTexDoc,
 ):
@@ -186,7 +190,8 @@ def add_infectious_transition(
         origin = infectious_compartments[i_comp]
         destination = infectious_compartments[i_comp + 1]
         model.add_transition_flow(f'inf_transition_{str(i_comp)}', rate, origin, destination)
-    model.add_transition_flow('recovery', rate, destination, final_dest)
+    final_origin = latent_compartments[-1] if n_inf_comps == 1 else destination
+    model.add_transition_flow('recovery', rate, final_origin, final_dest)
 
 
 def add_waning(
