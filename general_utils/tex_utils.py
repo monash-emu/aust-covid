@@ -25,16 +25,6 @@ class TexDoc:
     def prepare_doc(self):
         self.prepared = True
 
-    def show_doc(self):
-        self.prepare_doc()
-        output = ''
-        for section in self.content:
-            output += f'SECTION: {section}\n'
-            for line in self.content[section]:
-                output += f'{line}\n'
-            output += '\n'
-        return output
-
     def write_doc(self):
         with open(self.path / self.doc_name, 'w') as doc_file:
             doc_file.write(self.emit_doc())
