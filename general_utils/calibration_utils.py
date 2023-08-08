@@ -232,7 +232,8 @@ def sample_idata(
     Returns:
         Sampled data converted to dataframe with columns for parameters and multi-index for chain and draw
     """
-    return az.extract(idata, num_samples=n_samples).to_dataframe()[model.priors.keys()].sort_index(level='draw').sort_index(level='chain')
+    prior_names = [k for k in model.priors.keys() if 'dispersion' not in k]
+    return az.extract(idata, num_samples=n_samples).to_dataframe()[prior_names].sort_index(level='draw').sort_index(level='chain')
 
 
 def get_sampled_outputs(
