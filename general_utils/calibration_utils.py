@@ -1,10 +1,8 @@
-from pylatex.utils import NoEscape
 import arviz as az
 from arviz.labels import MapLabeller
 from pathlib import Path
 import pandas as pd
 import numpy as np
-import plotly.express as px
 import matplotlib as mpl
 
 from estival.model import BayesianCompartmentalModel
@@ -12,7 +10,7 @@ from estival.model import BayesianCompartmentalModel
 from general_utils.tex_utils import StandardTexDoc
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
-SUPPLEMENT_PATH = BASE_PATH / "supplement"
+SUPPLEMENT_PATH = BASE_PATH / 'supplement'
 
 
 def round_sigfig(
@@ -27,33 +25,31 @@ def round_sigfig(
         value: Number to round
         sig_figs: Number of significant figures to round to
     """
-    return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1))
+    return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1)) if value != 0.0 else 0.0
 
 
-def get_fixed_param_value_text(
-    param: str,
-    parameters: dict,
-    param_units: dict,
+def param_table_to_tex(
+    param_info: pd.DataFrame,
     prior_names: list,
-    decimal_places=2,
-    calibrated_string="Calibrated, see priors table",
-) -> str:
+) -> pd.DataFrame:
     """
-    Get the value of a parameter being used in the model for the parameters table,
-    except indicate that it is calibrated if it's one of the calibration parameters.
-    
+    Process aesthetics of the parameter info dataframe into readable information.
+
     Args:
-        param: Parameter name
-        parameters: All parameters expected by the model
-        param_units: The units for the parameter being considered
-        prior_names: The names of the parameters used in calibration
-        decimal_places: How many places to round the value to
-        calibrated_string: The text to use if the parameter is calibrated
+        param_info: Dataframe with raw parameter information
 
     Returns:
-        Description of the parameter value
+        table: Ready to write version of the table
     """
-    return calibrated_string if param in prior_names else f"{round(parameters[param], decimal_places)} {param_units[param]}"
+    table = param_info.iloc[:, 1:]  # Drop description for now
+    table['value'] = table['value'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))  # Round value
+    table.loc[[i for i in table.index if i in prior_names], 'value'] = 'Calibrated'  # Suppress value if calibrated
+    table.index = param_info['descriptions']  # Use readable description for row names
+    table.columns = table.columns.str.replace('_', ' ').str.capitalize()
+    table.index.name = None
+    table = table[['Value', 'Units', 'Evidence']]  # Reorder columns
+    table['Units'] = table['Units'].str.capitalize()
+    return table
 
 
 def get_prior_dist_type(
@@ -67,8 +63,8 @@ def get_prior_dist_type(
     Returns:
         Description of the distribution
     """
-    dist_type = str(prior.__class__).replace(">", "").replace("'", "").split(".")[-1].replace("Prior", "")
-    return f"{dist_type} distribution"
+    dist_type = str(prior.__class__).replace('>', '').replace("'", '').split('.')[-1].replace('Prior', '')
+    return f'{dist_type} distribution'
 
 
 def get_prior_dist_param_str(
@@ -84,7 +80,7 @@ def get_prior_dist_param_str(
     Returns:
         The parameters to the prior's distribution joined together
     """
-    return " ".join([f"{param}: {round(prior.distri_params[param], 3)}" for param in prior.distri_params])
+    return ' '.join([f'{param}: {round(prior.distri_params[param], 3)}' for param in prior.distri_params])
 
 
 def get_prior_dist_support(
@@ -99,7 +95,7 @@ def get_prior_dist_support(
     Returns:        
         The bounds to the prior's distribution joined together
     """
-    return " to ".join([str(round_sigfig(i, 3)) for i in prior.bounds()])
+    return ' to '.join([str(round_sigfig(i, 3)) for i in prior.bounds()])
 
 
 def plot_param_progression(
@@ -171,29 +167,6 @@ def plot_param_posterior(
     )
 
 
-def tabulate_parameters(
-    parameters: dict, 
-    priors: list, 
-    param_info: pd.DataFrame, 
-) -> pd.DataFrame:
-    """
-    Create table of all parameters being consumed by model,
-    with the values being used and evidence to support them.
-
-    Args:
-        parameters: All parameter values, even if calibrated
-        priors: Priors for use in calibration algorithm
-        param_info: Collated information on the parameter values (excluding calibration/priors-related)
-
-    Returns:
-        Formatted table combining the information listed above
-    """
-    values_column = [get_fixed_param_value_text(i, parameters, param_info["units"], priors) for i in parameters]
-    evidence_column = [NoEscape(param_info["evidence"][i]) for i in parameters]
-    names_column = [param_info["descriptions"][i] for i in parameters]
-    return pd.DataFrame({"Value": values_column, "Evidence": evidence_column}, index=names_column)
-
-
 def tabulate_priors(
     priors: list, 
     param_info: pd.DataFrame, 
@@ -209,11 +182,11 @@ def tabulate_priors(
     Returns:
         Formatted table combining the information listed above
     """
-    names = [param_info["descriptions"][i.name] for i in priors]
+    names = [param_info['descriptions'][i.name] for i in priors]
     distributions = [get_prior_dist_type(i) for i in priors]
     parameters = [get_prior_dist_param_str(i) for i in priors]
     support = [get_prior_dist_support(i) for i in priors]
-    return pd.DataFrame({"Distribution": distributions, "Parameters": parameters, "Support": support}, index=names)
+    return pd.DataFrame({'Distribution': distributions, 'Parameters': parameters, 'Support': support}, index=names)
 
 
 def tabulate_param_results(
@@ -233,12 +206,12 @@ def tabulate_param_results(
         Calibration results table in standard format
     """
     results_table = az.summary(idata)
-    results_table.index = [param_info["descriptions"][p.name] for p in priors]
-    for col_to_round in ["mean", "hdi_3%", "hdi_97%"]:
+    results_table.index = [param_info['descriptions'][p.name] for p in priors]
+    for col_to_round in ['mean', 'sd', 'hdi_3%', 'hdi_97%', 'ess_bulk', 'ess_tail', 'r_hat']:
         results_table[col_to_round] = results_table.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
-    results_table["hdi"] = results_table.apply(lambda x: f"{x['hdi_3%']} to {x['hdi_97%']}", axis=1)    
-    results_table = results_table.drop(["mcse_mean", "mcse_sd", "hdi_3%", "hdi_97%"], axis=1)
-    results_table.columns = ["Mean", "Standard deviation", "ESS bulk", "ESS tail", "R_hat", "High-density interval"]
+    results_table['hdi'] = results_table.apply(lambda x: f'{x["hdi_3%"]} to {x["hdi_97%"]}', axis=1)    
+    results_table = results_table.drop(['mcse_mean', 'mcse_sd', 'hdi_3%', 'hdi_97%'], axis=1)
+    results_table.columns = ['Mean', 'Standard deviation', 'ESS bulk', 'ESS tail', '\\textit{\^{R}}', 'High-density interval']
     return results_table
 
 

@@ -63,15 +63,39 @@ class TexDoc:
         self.add_line(f'\\caption{{{caption}}}', section, subsection)
         self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}}}', section, subsection)
         self.add_line('\\end{figure}', section, subsection)
-                
+
+    def include_table(self, table, section, subsection=None, widths=None, table_width=10.0, longtable=False):
+        n_cols = table.shape[1] + 1
+        ave_col_width = round(table_width / n_cols, 2)
+        col_widths = widths if widths else [ave_col_width] * n_cols
+        col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
+        table_text = table.style.to_latex(
+            column_format=col_format_str,
+            hrules=True,
+        )
+        table_text = table_text.replace('{tabular}', '{longtable}') if longtable else table_text
+        self.add_line('\\begin{center}', section, subsection=subsection)
+        self.add_line(table_text, section, subsection=subsection)
+        self.add_line('\end{center}', section, subsection=subsection)
+
 
 class StandardTexDoc(TexDoc):
     def prepare_doc(self):
         self.prepared = True
         self.add_line('\\documentclass{article}', 'preamble')
-        self.add_line('\\usepackage{biblatex}', 'preamble')
-        self.add_line('\\usepackage{hyperref}', 'preamble')
-        self.add_line('\\usepackage{graphicx}', 'preamble')
+
+        # Packages that don't require arguments
+        standard_packages = [
+            'hyperref',
+            'biblatex',
+            'graphicx',
+            'longtable',
+            'booktabs',
+            'array',
+        ]
+        for package in standard_packages:
+            self.add_line(f'\\usepackage{{{package}}}', 'preamble')
+
         self.add_line('\\graphicspath{ {./images/} }', 'preamble')
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
