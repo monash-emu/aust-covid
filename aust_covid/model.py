@@ -105,7 +105,7 @@ def build_base_model(
     tex_doc: StandardTexDoc,
 ) -> tuple:
     description = f'The base model consists of {len(compartments)} states, ' \
-        f'representing the following states: {", ".join(compartments)}. ' \
+        f'representing the following states: {", ".join(compartments).replace("_", "")}. ' \
         f"Only the infectious compartment compartment contributes to the force of infection. " \
         f'The model is run from {start_date.strftime("%d %B %Y")} to {end_date.strftime("%d %B %Y")}. '
     tex_doc.add_line(description, 'Model Construction')
@@ -142,8 +142,8 @@ def add_infection(
     process = 'infection'
     origin = 'susceptible'
     destination = latent_compartments[0]
-    description = f'The {process} process moves people from the {origin} ' \
-        f'compartment to the {destination} compartment, ' \
+    description = f'The {process} process moves people from the {origin.replace("_", "")} ' \
+        f'compartment to the {destination.replace("_", "")} compartment, ' \
         'under the frequency-dependent transmission assumption. '
     tex_doc.add_line(description, 'Model Construction')
 
@@ -185,7 +185,7 @@ def add_infectious_transition(
     n_inf_comps = len(infectious_compartments)
     description = 'Following latency, persons enter a series of infectious compartments. ' \
         f'As for the latent compartments, these are also chained in series, ' \
-        'with a total of {n_inf_comps} linked together in sequence. ' \
+        f'with a total of {n_inf_comps} linked together in sequence. ' \
         'As for the latent compartments, ' \
         f'the transition rate is multiplied by {n_inf_comps}). ' \
         'As persons exit the final infectious compartment, they enter the recovered compartment. '    
@@ -210,7 +210,7 @@ def add_waning(
     description = 'A waned compartment is included in the model ' \
         'to represent persons who no longer have immunity from past natural immunity. ' \
         f'As these persons lose their infection-induced immunity, they transition from the ' \
-        f'{origin} compartment to the {destination} compartment at a rate equal to the reciprocal of the ' \
+        f'{origin.replace("_", "")} compartment to the {destination.replace("_", "")} compartment at a rate equal to the reciprocal of the ' \
         f'{parameter_name.replace("_", " ")}. '
     tex_doc.add_line(description, 'Model Construction')
 
@@ -345,7 +345,7 @@ def get_strain_stratification(
 ) -> tuple:
     strain_strings = [f'{strain.replace("ba", "BA.")}' for strain in strain_strata]
     compartments_to_stratify = [comp for comp in compartments if comp != 'susceptible']
-    description = f'We stratified the following compartments according to strain: {", ".join(compartments_to_stratify)}, ' \
+    description = f'We stratified the following compartments according to strain: {", ".join(compartments_to_stratify).replace("_", "")}, ' \
         f'including compartments to represent strains: {", ".join(strain_strings)}. ' \
         f"This was implemented using summer's `{StrainStratification.__name__}' class. "
     tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
@@ -364,7 +364,7 @@ def seed_vocs(
     seed_rate_str = 'seed_rate'
     description = f'Each strain (including the starting {strains[0].replace("ba", "BA.")} strain) is seeded through ' \
         'a step function that allows the introduction of a constant rate of new infectious ' \
-        f'persons into the {seed_comp} compartment over a fixed seeding duration defined by a single ' \
+        f'persons into the {seed_comp.replace("_", "")} compartment over a fixed seeding duration defined by a single ' \
         f'{seed_duration_str.replace("_", " ")} parameter. ' \
         f'and at a rate defined by one {seed_rate_str.replace("_", " ")} parameter. ' \
         'The time of first emergence of each strain into the system is defined by ' \

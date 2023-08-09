@@ -205,14 +205,15 @@ def tabulate_param_results(
     Returns:
         Calibration results table in standard format
     """
-    results_table = az.summary(idata)
-    results_table.index = [param_info['descriptions'][p.name] for p in priors]
+    table = az.summary(idata)
+    table = table[~table.index.str.contains('_dispersion')]
+    table.index = [param_info['descriptions'][p.name] for p in priors]
     for col_to_round in ['mean', 'sd', 'hdi_3%', 'hdi_97%', 'ess_bulk', 'ess_tail', 'r_hat']:
-        results_table[col_to_round] = results_table.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
-    results_table['hdi'] = results_table.apply(lambda x: f'{x["hdi_3%"]} to {x["hdi_97%"]}', axis=1)    
-    results_table = results_table.drop(['mcse_mean', 'mcse_sd', 'hdi_3%', 'hdi_97%'], axis=1)
-    results_table.columns = ['Mean', 'Standard deviation', 'ESS bulk', 'ESS tail', '\\textit{\^{R}}', 'High-density interval']
-    return results_table
+        table[col_to_round] = table.apply(lambda x: str(round_sigfig(x[col_to_round], 3)), axis=1)
+    table['hdi'] = table.apply(lambda x: f'{x["hdi_3%"]} to {x["hdi_97%"]}', axis=1)    
+    table = table.drop(['mcse_mean', 'mcse_sd', 'hdi_3%', 'hdi_97%'], axis=1)
+    table.columns = ['Mean', 'Standard deviation', 'ESS bulk', 'ESS tail', '\\textit{\^{R}}', 'High-density interval']
+    return table
 
 
 def sample_idata(
