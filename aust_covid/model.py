@@ -106,9 +106,10 @@ def build_base_model(
 ) -> tuple:
     description = f'The base model consists of {len(compartments)} states, ' \
         f'representing the following states: {", ".join(compartments).replace("_", "")}. ' \
-        f"Only the infectious compartment compartment contributes to the force of infection. " \
-        f'The model is run from {start_date.strftime("%d %B %Y")} to {end_date.strftime("%d %B %Y")}. '
-    tex_doc.add_line(description, 'Model Construction')
+        f"Each of the infectious compartments contribute equally to the force of infection. \n"
+    time_desc =  f'A simulation is run from {start_date.strftime("%d %B %Y")} to {end_date.strftime("%d %B %Y")}. '
+    tex_doc.add_line(description, 'Model Structure')
+    tex_doc.add_line(time_desc, 'Population')
 
     return CompartmentalModel(
         times=(
@@ -128,8 +129,8 @@ def set_starting_conditions(
 ) -> str:
     total_pop = pop_data.sum().sum()
     description = f'The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, ' \
-        'with infectious persons introduced later through strain seeding as described below. '
-    tex_doc.add_line(description, 'Model Construction')
+        'with the infection process triggered through strain seeding as described below. '
+    tex_doc.add_line(description, 'Population')
 
     model.set_initial_population({'susceptible': total_pop})
 
@@ -145,7 +146,7 @@ def add_infection(
     description = f'The {process} process moves people from the {origin.replace("_", "")} ' \
         f'compartment to the {destination.replace("_", "")} compartment, ' \
         'under the frequency-dependent transmission assumption. '
-    tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line(description, 'Model Structure')
 
     model.add_infection_frequency_flow(process, Parameter('contact_rate'), origin, destination)
 
@@ -159,13 +160,14 @@ def add_latent_transition(
     parameter_name = 'latent_period'
     final_dest = infectious_compartments[0]
     n_latent_comps = len(latent_compartments)
-    description = 'Following infection, infected persons enter a series of latent compartments. ' \
-        f'These are chained in series, with a total of {n_latent_comps} linked together in sequence. ' \
+    description = f'Following infection, infected persons enter a series of {n_latent_comps} latent compartments. ' \
+        'These are chained in series, with infected persons transitioning sequentially from ' \
+        f'compartment 0 through to compartment {len(latent_compartments) - 1}. ' \
         'To achieve the same mean sojourn time in the composite latent stage, ' \
-        'the rate of transition between each latent compartment and out of the last latent compartment ' \
+        'the rate of transition between two consecutive latent compartments and out of the last latent compartment ' \
         f'is multiplied by the number of serial compartments (i.e. {n_latent_comps}). ' \
         'As persons exit the final latent compartment, they enter the first infectious compartment. '
-    tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line(description, 'Model Structure')
 
     rate = 1.0 / Parameter(parameter_name) * n_latent_comps
     for i_comp in range(n_latent_comps - 1):
@@ -183,13 +185,12 @@ def add_infectious_transition(
     parameter_name = 'infectious_period'
     final_dest = 'recovered'
     n_inf_comps = len(infectious_compartments)
-    description = 'Following latency, persons enter a series of infectious compartments. ' \
-        f'As for the latent compartments, these are also chained in series, ' \
+    description = f'As for the latent compartments, these are also chained in series, ' \
         f'with a total of {n_inf_comps} linked together in sequence. ' \
         'As for the latent compartments, ' \
-        f'the transition rate is multiplied by {n_inf_comps}). ' \
-        'As persons exit the final infectious compartment, they enter the recovered compartment. '    
-    tex_doc.add_line(description, 'Model Construction')
+        f'the transition rates are again multiplied by {n_inf_comps}. ' \
+        'As persons exit the final infectious compartment, they enter the recovered compartment.\n'    
+    tex_doc.add_line(description, 'Model Structure')
 
     rate = 1.0 / Parameter(parameter_name) * n_inf_comps
     for i_comp in range(n_inf_comps - 1):
@@ -212,7 +213,7 @@ def add_waning(
         f'As these persons lose their infection-induced immunity, they transition from the ' \
         f'{origin.replace("_", "")} compartment to the {destination.replace("_", "")} compartment at a rate equal to the reciprocal of the ' \
         f'{parameter_name.replace("_", " ")}. '
-    tex_doc.add_line(description, 'Model Construction')
+    tex_doc.add_line(description, 'Model Structure')
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
@@ -235,7 +236,7 @@ def plot_mixing_matrices(
     tex_doc.include_figure(
         f'Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace("_", " ").replace(".jpg", "")}. ', 
         filename,
-        'Population Mixing', 
+        'Mixing', 
     )
     return matrix_fig
 
@@ -255,7 +256,7 @@ def adapt_gb_matrices_to_aust(
         'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
         'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
         'from the \href{https://ec.europa.eu/eurostat}{Eurostat database}. '
-    tex_doc.add_line(description, 'Population Mixing')
+    tex_doc.add_line(description, 'Mixing')
 
     # Australia
     aust_props_disp = copy(pop_data)
@@ -273,7 +274,7 @@ def adapt_gb_matrices_to_aust(
     tex_doc.include_figure(
         'Australian population sizes implemented in the model obtained from Australia Bureau of Statistics.', 
         input_pop_filename,
-        'Model Construction', 
+        'Population',
     )
 
     # UK
@@ -328,7 +329,7 @@ def get_age_stratification(
         'into sequential age brackets in five year ' \
         f'bands from age {age_strata[0]} to {age_strata[0] + 4} through to age {age_strata[-2]} to {age_strata[-2] + 4} ' \
         f'with a final age band to represent those aged {age_strata[-1]} and above. ' \
-        'These age brackets were chosen to match those used by the POLYMOD survey and so fit with the mixing data available. ' \
+        'These age brackets were chosen to match those used by the POLYMOD survey \cite{mossong2008} and so fit with the mixing data available. ' \
         'The population distribution by age group was informed by the data from the Australian ' \
         'Bureau of Statistics introduced previously. '
     tex_doc.add_line(description, 'Stratification', subsection='Age')

@@ -60,7 +60,7 @@ class TexDoc:
         """
         self.prepared = True
 
-    def write_doc(self, order=[]):
+    def write_doc(self, order: list=[]):
         """
         Write the compiled document string to disc.
         """
@@ -79,7 +79,7 @@ class TexDoc:
         Returns:
             The final text to write into the document
         """
-        if section_order and list(self.content.keys()).sort() != section_order.sort():
+        if section_order and sorted(list(self.content.keys())) != sorted(section_order):
             msg = 'Sections requested are not those in the current contents'
             raise ValueError(msg)
 
