@@ -60,26 +60,37 @@ class TexDoc:
         """
         self.prepared = True
 
-    def write_doc(self):
+    def write_doc(self, order=[]):
         """
         Write the compiled document string to disc.
         """
         with open(self.path / self.doc_name, 'w') as doc_file:
-            doc_file.write(self.emit_doc())
+            doc_file.write(self.emit_doc(section_order=order))
     
-    def emit_doc(self) -> str:
+    def emit_doc(
+        self, 
+        section_order: list=[],
+    ) -> str:
         """
         Collate all the sections together into the big string to be outputted.
 
+        Arguments:
+            section_order: The order to write the document sections in
         Returns:
             The final text to write into the document
         """
+        if section_order and list(self.content.keys()).sort() != section_order.sort():
+            msg = 'Sections requested are not those in the current contents'
+            raise ValueError(msg)
+
+        order = section_order if section_order else self.content.keys()
+
         if not self.prepared:
             self.prepare_doc()
         final_text = ''
         for line in self.content['preamble']['']:
             final_text += f'{line}\n'
-        for section in [k for k in self.content.keys() if k not in ['preamble', 'endings']]:
+        for section in [k for k in order if k not in ['preamble', 'endings']]:
             final_text += f'\n\\section{{{section}}}\n'
             if '' in self.content[section]:
                 for line in self.content[section]['']:
