@@ -287,7 +287,7 @@ def adapt_gb_matrices_to_aust(
     tex_doc.include_figure(
         'United Kingdom population sizes used in matrix weighting.', 
         uk_pop_filename,
-        'Population Mixing', 
+        'Mixing', 
     )
 
     # Make weighting calculations
@@ -331,7 +331,8 @@ def get_age_stratification(
         f'with a final age band to represent those aged {age_strata[-1]} and above. ' \
         'These age brackets were chosen to match those used by the POLYMOD survey \cite{mossong2008} and so fit with the mixing data available. ' \
         'The population distribution by age group was informed by the data from the Australian ' \
-        'Bureau of Statistics introduced previously. '
+        'Bureau of Statistics introduced previously. ' \
+        'Ageing between sequential bands was not permitted given the time window of the simulation. '
     tex_doc.add_line(description, 'Stratification', subsection='Age')
 
     age_strat = Stratification('agegroup', age_strata, compartments)
@@ -347,11 +348,46 @@ def get_strain_stratification(
     strain_strings = [f'{strain.replace("ba", "BA.")}' for strain in strain_strata]
     compartments_to_stratify = [comp for comp in compartments if comp != 'susceptible']
     description = f'We stratified the following compartments according to strain: {", ".join(compartments_to_stratify).replace("_", "")}, ' \
-        f'including compartments to represent strains: {", ".join(strain_strings)}. ' \
+        'replicating all of these compartments to represent the various major Omicron sub-variants relevant to the 2022 epidemic, ' \
+        f'namely: {", ".join(strain_strings)}. ' \
         f"This was implemented using summer's `{StrainStratification.__name__}' class. "
     tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
 
     return StrainStratification('strain', strain_strata, compartments_to_stratify)
+
+
+def get_vacc_stratification(
+    compartments: list, 
+    infection_processes: list,
+    tex_doc: StandardTexDoc,
+) -> Stratification:
+    description = 'All compartments and stratifications previously described were further ' \
+        'stratified into two strata with differing levels of susceptibility to infection. ' \
+        'These are loosely intended to represent persons with and without protection ' \
+        'against infection attributable to vaccination. ' \
+        'A single parameter is used to represent the proportion of the population retaining ' \
+        'immunological protection against infection through vaccination, ' \
+        'with a second parameter used to quantify the relative reduction in ' \
+        'the rate of infection and reinfection for those in the stratum with ' \
+        'reduced susceptibility. '
+    tex_doc.add_line(description, 'Stratification', subsection='Vaccination')
+
+    vacc_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
+    for infection_process in infection_processes:
+        vacc_strat.set_flow_adjustments(
+            infection_process,
+            {
+                'vacc': Multiply(1.0 - Parameter('vacc_infect_protect')),
+                'unvacc': None,
+            },
+        )
+    vacc_strat.set_population_split(
+        {
+            'vacc': Parameter('vacc_prop'),
+            'unvacc': 1.0 - Parameter('vacc_prop'),
+        }
+    )
+    return vacc_strat
 
 
 def seed_vocs(
@@ -441,40 +477,6 @@ def add_reinfection(
             )
 
 
-def get_vacc_stratification(
-    compartments: list, 
-    infection_processes: list,
-    tex_doc: StandardTexDoc,
-) -> Stratification:
-    description = 'All compartments and stratifications described are further ' \
-        'stratified into two strata with differing levels of susceptibility to infection. ' \
-        'These are loosely intended to represent persons with and without protection ' \
-        'against infection attributable to vaccination. ' \
-        'One parameter is used to represent the proportion of the population retaining ' \
-        'immunological protection against infection through vaccination, ' \
-        'with a second parameter used to quantify the relative reduction in ' \
-        'the rate of infection and reinfection for those in the stratum with ' \
-        'reduced susceptibility.\n'
-    tex_doc.add_line(description, 'Stratification', subsection='Vaccination')
-
-    vacc_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
-    for infection_process in infection_processes:
-        vacc_strat.set_flow_adjustments(
-            infection_process,
-            {
-                'vacc': Multiply(1.0 - Parameter('vacc_infect_protect')),
-                'unvacc': None,
-            },
-        )
-    vacc_strat.set_population_split(
-        {
-            'vacc': Parameter('vacc_prop'),
-            'unvacc': 1.0 - Parameter('vacc_prop'),
-        }
-    )
-    return vacc_strat
-
-
 def get_spatial_stratification(
     reopen_date: datetime, 
     compartments: list, 
@@ -486,10 +488,10 @@ def get_spatial_stratification(
     strata = model_pops.columns
     wa_reopen_period = 30.0
     description = 'All model compartments previously described are further ' \
-        f"stratified into strata to represent {strata[0].upper()} and `{strata[1]}' " \
+        f"stratified into strata to represent Western Australia ({strata[0].upper()}) and `{strata[1]}' " \
         'to represent the remaining major jurisdictions of Australia. ' \
-        f'Transmission in {strata[0].upper()} is initially set to zero, ' \
-        f'and subsquently scaled up to being equal to the {strata[1]} ' \
+        f'Transmission in {strata[0].upper()} was initially set to zero, ' \
+        f'and subsquently scaled up to being equal to that of the {strata[1]} ' \
         f'jurisdictions of Australia over an arbitrary period of {wa_reopen_period} days. '
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
@@ -515,7 +517,7 @@ def adjust_state_pops(
     tex_doc: StandardTexDoc,
 ):
     strata = model_pops.columns
-    description = 'Starting model populations are distributed by ' \
+    description = 'Starting model populations were distributed by ' \
         f'age and spatial status ({strata[0].upper()}, {strata[1]}) ' \
         'according to the age distribution in each simulated region. '
     tex_doc.add_line(description, 'Stratification', 'Spatial')
