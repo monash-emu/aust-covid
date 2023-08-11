@@ -89,11 +89,21 @@ def load_serosurvey_data(
     return data
 
 
+def load_raw_pop_data(
+    sheet_name: str,
+):
+    skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
+    for group in range(16):
+        skip_rows += list(range(228 + group * 6, 233 + group * 6))
+    raw_data = pd.read_excel(DATA_PATH / sheet_name, sheet_name='Table_7', skiprows=skip_rows, index_col=[0])
+    return raw_data
+
+
 def load_pop_data(
     age_strata: list,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    sheet_name = "31010do002_202206.xlsx"
+    sheet_name = '31010do002_202206.xlsx'
     description = f'For estimates of the Australian population, the spreadsheet was downloaded ' \
         'from the Australian Bureau of Statistics website on 01 March 2023.\cite{abs2022} ' \
         "Minor jurisdictions other than Australia's eight major state and territories " \
@@ -102,11 +112,7 @@ def load_pop_data(
         'and are also unlikely to mix homogeneously with the larger states/territories. '
     tex_doc.add_line(description, 'Population')
 
-    skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
-    for group in range(16):
-        skip_rows += list(range(228 + group * 6, 233 + group * 6))
-    raw_data = pd.read_excel(DATA_PATH / sheet_name, sheet_name="Table_7", skiprows=skip_rows, index_col=[0])
-
+    raw_data = load_raw_pop_data(sheet_name)
     spatial_pops = pd.DataFrame(
         {
             'wa': raw_data['Western Australia'], 
