@@ -34,6 +34,7 @@ descriptions:
   ifr_65: 'IFR, ages 65 to 69'
   ifr_70: 'IFR, ages 70 to 74'
   ifr_75: 'IFR, ages 75 and above'
+  ifr_adjuster: 'Adjuster applied to all age-specific IFRs'
   ba2_rel_ifr: 'Relative IFR for BA.2 compared to BA.1 and BA.5'
 units:
   contact_rate: 'contacts per person per day'
@@ -71,6 +72,7 @@ units:
   ifr_65: ''
   ifr_70: ''
   ifr_75: ''
+  ifr_adjuster: ''
   ba2_rel_ifr: ''
 evidence:
   contact_rate: 'Calibrated within plausible range'
@@ -108,4 +110,5 @@ evidence:
   ifr_65: ''
   ifr_70: ''
   ifr_75: ''
+  ifr_adjuster: ''
   ba2_rel_ifr: 'Assumed'

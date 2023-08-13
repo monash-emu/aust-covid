@@ -269,7 +269,8 @@ def get_ifrs(tex_doc, show_figs=False):
     # Set age bands back to lower breakpoint values
     model_breakpoint_values = copy(final_values)
     model_breakpoint_values.index = final_values.index - 2.5
-    
+    model_breakpoint_values.index = model_breakpoint_values.index.map(lambda i: f'ifr_{int(i)}')
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=odriscoll.index, y=odriscoll, name="O'Driscoll"))
     fig.add_trace(go.Scatter(x=erikstrup.index, y=erikstrup, name='Erikstrup'))
@@ -291,4 +292,4 @@ def get_ifrs(tex_doc, show_figs=False):
     if show_figs:
         fig.show()
 
-    return model_breakpoint_values
+    return model_breakpoint_values.to_dict()

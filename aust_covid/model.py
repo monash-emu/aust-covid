@@ -677,7 +677,10 @@ def add_death_output(
             strain_rel_death = Parameter('ba2_rel_ifr') if strain == 'ba2' else 1.0
             strain_str = f'Xstrain_{strain}'
             delay = build_gamma_dens_interval_func(Parameter('deaths_shape'), Parameter('deaths_mean'), model.times)
-            death_dist_rel_inc = Function(convolve_probability, [DerivedOutput(f'incidence{age_str}{strain_str}'), delay]) * Parameter(f'ifr_{age}') * strain_rel_death
+            death_dist_rel_inc = Function(
+                convolve_probability, 
+                [DerivedOutput(f'incidence{age_str}{strain_str}'), delay]
+            ) * Parameter(f'ifr_{age}') * strain_rel_death * Parameter('ifr_adjuster')
             model.request_function_output(name=f'deaths{age_str}{strain_str}', func=death_dist_rel_inc, save_results=False)
         model.request_function_output(
             f'deaths{age_str}',
