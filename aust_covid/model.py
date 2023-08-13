@@ -645,7 +645,7 @@ def add_notifications_output(
     ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
     tex_doc.include_figure(
         'Ratio of proportion of households testing to proportion reporting symptoms.', 
-        survey_fig_name,
+        ratio_fig_name,
         'Outputs', 
         subsection='Notifications',
     )
