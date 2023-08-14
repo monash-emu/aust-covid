@@ -119,7 +119,7 @@ def plot_param_progression(
         idata, 
         figsize=(16, 3 * len(idata.posterior)), 
         compact=False, 
-        legend=True,
+        legend=False,
         labeller=MapLabeller(var_name_map=param_info['descriptions']),
     )
     trace_fig = trace_plot[0, 0].figure
