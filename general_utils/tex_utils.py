@@ -91,7 +91,7 @@ class TexDoc:
         for line in self.content['preamble']['']:
             final_text += f'{line}\n'
         for section in [k for k in order if k not in ['preamble', 'endings']]:
-            final_text += f'\n\\section{{{section}}}\n'
+            final_text += f'\n\\section{{{section}}} \\label{{{section.lower()}}}\n'
             if '' in self.content[section]:
                 for line in self.content[section]['']:
                     final_text += f'{line}\n'
