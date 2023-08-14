@@ -664,7 +664,7 @@ def add_death_output(
         'except that there is no assumption of partial observation and ' \
         'age-specific infection fatality rates are used. ' \
         'Specifically, for each age group, we first multiply the age-specific incidence ' \
-        'by the infection fataliry rate for that group. ' \
+        'by the infection fatality rate for that group. ' \
         'Next, we convolve this rate with a gamma distribution ' \
         'to obtain the daily rate of deaths for each age group, and lastly sum over age groups.\n'
     tex_doc.add_line(description, 'Outputs', subsection='Deaths')
