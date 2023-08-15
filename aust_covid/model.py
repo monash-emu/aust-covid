@@ -715,7 +715,7 @@ def track_adult_seroprev(
         model.request_output_for_compartments(f'{age_cat}_seropos', seropos_comps, strata=filters[age_cat], save_results=False)
         model.request_function_output(f'{age_cat}_seropos_prop', DerivedOutput(f'{age_cat}_seropos') / DerivedOutput(f'{age_cat}_pop'))
 
-    model.request_function_output('adult_seropos_prop2', DerivedOutput('adult_seropos_prop'))
+    model.request_function_output('adult_seropos_prop_copy', DerivedOutput('adult_seropos_prop') * 1.0)
 
 
 def track_strain_prop(
