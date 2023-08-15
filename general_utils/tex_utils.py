@@ -91,12 +91,12 @@ class TexDoc:
         for line in self.content['preamble']['']:
             final_text += f'{line}\n'
         for section in [k for k in order if k not in ['preamble', 'endings']]:
-            final_text += f'\n\\section{{{section}}} \\label{{{section.lower()}}}\n'
+            final_text += f'\n\\section{{{section}}} \\label{{{section.lower().replace(" ", "_")}}}\n'
             if '' in self.content[section]:
                 for line in self.content[section]['']:
                     final_text += f'{line}\n'
             for subsection in [k for k in self.content[section].keys() if k != '']:
-                final_text += f'\n\\subsection{{{subsection}}}\n'
+                final_text += f'\n\\subsection{{{subsection}}} \\label{{{subsection.lower().replace(" ", "_")}}}\n'
                 for line in self.content[section][subsection]:
                     final_text += f'{line}\n'
         for line in self.content['endings']['']:
