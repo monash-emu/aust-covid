@@ -76,7 +76,7 @@ units:
   ba2_rel_ifr: ''
 evidence:
   contact_rate: 'Calibrated within plausible range'
-  infectious_period: 'This quantity is difficult to estimate, given that identified cases are typically quarantined. Studies in settings of high case ascertainment and an effective public health response have suggested a duration of greater than 5.5 days \cite{bi2020}. PCR positivity, which may continue for up to two to three weeks from the point of symptom onset \cite{he2020} \cite{byrne2020} does not necessarily indicate infectiousness. The duration infectious for asymptomatic persons has also been estimated at 6.5 to 9.5 days \cite{byrne2020}.'
+  infectious_period: 'Multiple studies have found a shorter serial interval for Omicron compared to previous variants \cite{anderheiden2022, delaguilamejia}, with values of 5 to 6 days or less implying short effective latent and infectious periods. A systematic review and meta-analysis focused on the Omicron variant and reported the time from symptom onset or first positive PCR result to the day after the last positive viral culture to be 5.16 days \(95\% CI: 4.18-6.14\) \cite{wu2023}. We take this as an upper limit of the effective infectious duration because of the likelihood that infected persons will modify their behaviour to reduce infectiousness later in the illness course after symptoms emerge.'
   latent_period: 'Assumed'
   start_cdr: 'Assumed'
   seed_rate: 'Assumed'
