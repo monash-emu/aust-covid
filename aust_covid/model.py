@@ -10,6 +10,7 @@ pd.options.plotting.backend = 'plotly'
 from copy import copy
 
 from summer2.functions.time import get_linear_interpolation_function
+from summer2.functions.derived import get_rolling_reduction
 from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply
 from summer2.parameters import Parameter, DerivedOutput, Function, Time
 
@@ -41,6 +42,7 @@ def build_model(
     start_date: datetime, 
     end_date: datetime, 
     tex_doc: StandardTexDoc,
+    moving_average_window: int,
 ):
     
     # Model construction
@@ -84,8 +86,8 @@ def build_model(
 
     # Outputs
     track_incidence(aust_model, infection_processes, tex_doc)
-    add_notifications_output(aust_model, tex_doc)
-    add_death_output(aust_model, tex_doc)
+    add_notifications_output(aust_model, tex_doc, moving_average_window)
+    add_death_output(aust_model, tex_doc, moving_average_window)
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
     track_strain_prop(aust_model, infectious_compartments, tex_doc)
     track_reproduction_number(aust_model, infection_processes, infectious_compartments, tex_doc)
@@ -486,13 +488,12 @@ def get_spatial_stratification(
     tex_doc: StandardTexDoc,
 ) -> Stratification:
     strata = model_pops.columns
-    wa_reopen_period = 30.0
     description = 'All model compartments previously described are further ' \
         f"stratified into strata to represent Western Australia ({strata[0].upper()}) and `{strata[1]}' " \
         'to represent the remaining major jurisdictions of Australia. ' \
         f'Transmission in {strata[0].upper()} was initially set to zero, ' \
         f'and subsquently scaled up to being equal to that of the {strata[1]} ' \
-        f'jurisdictions of Australia over an arbitrary period of {wa_reopen_period} days. '
+        f'jurisdictions of Australia over a period of time that is varied through the calibration process. '
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)
@@ -501,9 +502,10 @@ def get_spatial_stratification(
 
     reopen_index = model.get_epoch().dti_to_index(reopen_date)
     reopen_func = get_linear_interpolation_function(
-        [reopen_index, reopen_index + wa_reopen_period],
+        [reopen_index, reopen_index + Parameter('wa_reopen_period')],
         np.array([0.0, 1.0]),
     )
+
     infection_adj = {strata[0]: reopen_func, strata[1]: None}
     for infection_process in infection_processes:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
@@ -556,17 +558,17 @@ def track_incidence(
                 )
             model.request_function_output(
                 f'incidence{age_str}{strain_str}',
-                func=sum([DerivedOutput(f'{process}_onset{age_str}{strain_str}') for process in infection_processes]),
+                sum([DerivedOutput(f'{process}_onset{age_str}{strain_str}') for process in infection_processes]),
                 save_results=False,
             )
         model.request_function_output(
             f'incidence{age_str}',
-            func=sum([DerivedOutput(f'incidence{age_str}Xstrain_{strain}') for strain in strain_strata]),
+            sum([DerivedOutput(f'incidence{age_str}Xstrain_{strain}') for strain in strain_strata]),
             save_results=False,
         )
     model.request_function_output(
         f'incidence',
-        func=sum([DerivedOutput(f'incidenceXagegroup_{age}') for age in age_strata]),
+        sum([DerivedOutput(f'incidenceXagegroup_{age}') for age in age_strata]),
     )
 
 
@@ -587,6 +589,7 @@ def get_param_to_exp_plateau(
 def add_notifications_output(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
+    moving_average_window: int,
     show_figs: bool=False,
 ) -> tuple:
     description = 'The extent of community testing following symptomatic infection is likely to have declined ' \
@@ -625,7 +628,8 @@ def add_notifications_output(
     delay = build_gamma_dens_interval_func(Parameter('notifs_shape'), Parameter('notifs_mean'), model.times)
 
     notif_dist_rel_inc = Function(convolve_probability, [DerivedOutput('incidence'), delay]) * tracked_ratio_interp
-    model.request_function_output(name='notifications', func=notif_dist_rel_inc)
+    model.request_function_output('notifications', notif_dist_rel_inc)
+    model.request_function_output('notifications_ma', Function(get_rolling_reduction(jnp.mean, moving_average_window), [DerivedOutput('notifications')]))
 
     survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
     
@@ -658,6 +662,7 @@ def add_notifications_output(
 def add_death_output(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
+    moving_average_window: int,
 ) -> str:
     description = 'Calculation of the COVID-19-specific deaths follows an analogous ' \
         'approach to that described for notifications, ' \
@@ -681,14 +686,18 @@ def add_death_output(
                 convolve_probability, 
                 [DerivedOutput(f'incidence{age_str}{strain_str}'), delay]
             ) * Parameter(f'ifr_{age}') * strain_rel_death * Parameter('ifr_adjuster')
-            model.request_function_output(name=f'deaths{age_str}{strain_str}', func=death_dist_rel_inc, save_results=False)
+            model.request_function_output(f'deaths{age_str}{strain_str}', death_dist_rel_inc, save_results=False)
         model.request_function_output(
             f'deaths{age_str}',
-            func=sum([DerivedOutput(f'deaths{age_str}Xstrain_{strain}') for strain in strain_strata]),
+            sum([DerivedOutput(f'deaths{age_str}Xstrain_{strain}') for strain in strain_strata]),
         )
     model.request_function_output(
         'deaths',
-        func=sum([DerivedOutput(f'deathsXagegroup_{age}') for age in agegroups]),
+        sum([DerivedOutput(f'deathsXagegroup_{age}') for age in agegroups]),
+    )
+    model.request_function_output(
+        'deaths_ma',
+        Function(get_rolling_reduction(jnp.mean, moving_average_window), [DerivedOutput('deaths')])
     )
 
 
@@ -714,6 +723,8 @@ def track_adult_seroprev(
         model.request_output_for_compartments(f'{age_cat}_pop', compartments, strata=filters[age_cat], save_results=False)
         model.request_output_for_compartments(f'{age_cat}_seropos', seropos_comps, strata=filters[age_cat], save_results=False)
         model.request_function_output(f'{age_cat}_seropos_prop', DerivedOutput(f'{age_cat}_seropos') / DerivedOutput(f'{age_cat}_pop'))
+
+    model.request_function_output('adult_seropos_prop_copy', DerivedOutput('adult_seropos_prop') * 1.0)
 
 
 def track_strain_prop(
