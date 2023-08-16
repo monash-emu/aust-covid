@@ -750,23 +750,4 @@ def track_reproduction_number(
         model.request_output_for_flow(process, process, save_results=False)
     model.request_function_output('all_infection', sum([DerivedOutput(process) for process in infection_processes]), save_results=False)
     model.request_function_output('reproduction_number', DerivedOutput('all_infection') / DerivedOutput('n_infectious') * Parameter('infectious_period'))
-
-
-# Have left this last function for now because it is or should be more related to the calibration process.
-
-# def show_cdr_profiles(
-#     start_cdr_samples: pd.Series, 
-#     hh_test_ratio: pd.Series,
-# ) -> tuple:
-#     cdr_values = pd.DataFrame()
-#     for start_cdr in start_cdr_samples:
-#         exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
-#         cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
-
-#     modelled_cdr_fig_name = "modelled_cdr.jpg"
-#     modelled_cdr_fig = cdr_values.plot(markers=True, labels={"value": "case detection ratio", "index": ""})
-#     modelled_cdr_fig.write_image(SUPPLEMENT_PATH / modelled_cdr_fig_name)
-#     modelled_cdr_fig_caption = "Example case detection rates implemented in randomly selected model runs."
-
-#     return modelled_cdr_fig, modelled_cdr_fig_name, modelled_cdr_fig_caption
-#
+    
