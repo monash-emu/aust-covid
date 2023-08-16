@@ -697,7 +697,7 @@ def add_death_output(
     )
     model.request_function_output(
         'deaths_ma',
-        Function(get_rolling_reduction(jnp.mean, moving_average_window), [DerivedOutput('notifications')])
+        Function(get_rolling_reduction(jnp.mean, moving_average_window), [DerivedOutput('deaths')])
     )
 
 
