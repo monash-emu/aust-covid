@@ -488,13 +488,12 @@ def get_spatial_stratification(
     tex_doc: StandardTexDoc,
 ) -> Stratification:
     strata = model_pops.columns
-    wa_reopen_period = 30.0
     description = 'All model compartments previously described are further ' \
         f"stratified into strata to represent Western Australia ({strata[0].upper()}) and `{strata[1]}' " \
         'to represent the remaining major jurisdictions of Australia. ' \
         f'Transmission in {strata[0].upper()} was initially set to zero, ' \
         f'and subsquently scaled up to being equal to that of the {strata[1]} ' \
-        f'jurisdictions of Australia over an arbitrary period of {wa_reopen_period} days. '
+        f'jurisdictions of Australia over a period of time that is varied through the calibration process. '
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)
@@ -503,9 +502,10 @@ def get_spatial_stratification(
 
     reopen_index = model.get_epoch().dti_to_index(reopen_date)
     reopen_func = get_linear_interpolation_function(
-        [reopen_index, reopen_index + wa_reopen_period],
+        [reopen_index, reopen_index + Parameter('wa_reopen_period')],
         np.array([0.0, 1.0]),
     )
+
     infection_adj = {strata[0]: reopen_func, strata[1]: None}
     for infection_process in infection_processes:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
