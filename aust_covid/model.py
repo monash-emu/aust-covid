@@ -1,5 +1,5 @@
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from jax import numpy as jnp
 import numpy as np
 import pandas as pd
@@ -761,66 +761,4 @@ def track_reproduction_number(
         model.request_output_for_flow(process, process, save_results=False)
     model.request_function_output('all_infection', sum([DerivedOutput(process) for process in infection_processes]), save_results=False)
     model.request_function_output('reproduction_number', DerivedOutput('all_infection') / DerivedOutput('n_infectious') * Parameter('infectious_period'))
-
-
-# Have left these last two functions for now because they are or should be more related to
-# the calibration process.
-
-# def show_cdr_profiles(
-#     start_cdr_samples: pd.Series, 
-#     hh_test_ratio: pd.Series,
-# ) -> tuple:
-#     cdr_values = pd.DataFrame()
-#     for start_cdr in start_cdr_samples:
-#         exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
-#         cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
-
-#     modelled_cdr_fig_name = "modelled_cdr.jpg"
-#     modelled_cdr_fig = cdr_values.plot(markers=True, labels={"value": "case detection ratio", "index": ""})
-#     modelled_cdr_fig.write_image(SUPPLEMENT_PATH / modelled_cdr_fig_name)
-#     modelled_cdr_fig_caption = "Example case detection rates implemented in randomly selected model runs."
-
-#     return modelled_cdr_fig, modelled_cdr_fig_name, modelled_cdr_fig_caption
-#
-#
-# def show_strain_props(
-#     strain_strata: list, 
-#     plot_start_time: datetime.date,
-#     model: CompartmentalModel,
-# ) -> tuple:
-#     """
-#     Args:
-#         strain_strata: Names of sub-variants
-#         plot_start_time: Request for left-hand end point for x-axis
-#         model: Working model
-
-#     Returns:
-#         Output figure, name used to save figure, caption for figure
-#     """
     
-#     end_date = model.get_epoch().index_to_dti([model.times[-1]])  # Plot to end of simulation
-#     strain_props = [f"{strain}_prop" for strain in strain_strata]
-#     strain_prop_fig_name = "strain_prop.jpg"
-#     strain_prop_fig = model.get_derived_outputs_df()[strain_props].plot.area(labels={"value": "proportion", "index": ""})
-#     voc_emerge_df = pd.DataFrame(
-#         {
-#             "ba1": [datetime(2021, 11, 22), datetime(2021, 11, 29), datetime(2021, 12, 20), "blue"],
-#             "ba2": [datetime(2021, 11, 29), datetime(2022, 1, 10), datetime(2022, 3, 7), "red"], 
-#             "ba5": [datetime(2022, 3, 28), datetime(2022, 5, 16), datetime(2022, 6, 27), "green"],
-#         },
-#         index=["any", ">1%", ">50%", "colour"]
-#     )
-#     lag = timedelta(days=3.5)  # Dates are given as first day of week in which VoC was first detected
-#     for voc in voc_emerge_df:
-#         voc_info = voc_emerge_df[voc]
-#         colour = voc_info["colour"]
-#         strain_prop_fig.add_vline(voc_info["any"] + lag, line_dash="dot", line_color=colour)
-#         strain_prop_fig.add_vline(voc_info[">1%"] + lag, line_dash="dash", line_color=colour)
-#         strain_prop_fig.add_vline(voc_info[">50%"] + lag, line_color=colour)
-#     strain_prop_fig.update_xaxes(range=(plot_start_time, end_date[0]))
-#     strain_prop_fig.update_yaxes(range=(0.0, 1.0))
-#     strain_prop_fig.write_image(SUPPLEMENT_PATH / strain_prop_fig_name)
-#     strain_prop_fig_caption = "Proportion of prevalent cases by sub-variant, with first sequence proportion times. " \
-#         "Dotted line, first isolate of VoC; dashed line, first time VoC represents more than 1% of all isolates; " \
-#         "solid line, first time VoC represnets more than 50% of all isolates. "
-#     return strain_prop_fig, strain_prop_fig_name, strain_prop_fig_caption
