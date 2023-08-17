@@ -106,6 +106,8 @@ def plot_param_progression(
     param_info: pd.DataFrame, 
     tex_doc: StandardTexDoc,
     show_fig: bool=False,
+    request_vars=None,
+    name_ext: str='',
 ) -> mpl.figure.Figure:
     """
     Plot progression of parameters over model iterations with posterior density plots.
@@ -120,15 +122,16 @@ def plot_param_progression(
     mpl.rcParams['axes.titlesize'] = 25
     trace_plot = az.plot_trace(
         idata, 
-        figsize=(16, 3 * len(idata.posterior)), 
+        figsize=(16, 3 * len(request_vars)), 
         compact=False, 
         legend=False,
         labeller=MapLabeller(var_name_map=param_info['descriptions']),
+        var_names=request_vars,
     )
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
 
-    filename = 'traces.jpg'
+    filename = f'traces{name_ext}.jpg'
     trace_fig.savefig(SUPPLEMENT_PATH / filename)
     tex_doc.include_figure(
         'Parameter posteriors and traces by chain.', 
