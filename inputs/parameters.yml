@@ -77,7 +77,7 @@ units:
 evidence:
   contact_rate: 'Calibrated within plausible range'
   infectious_period: 'Multiple studies have found a shorter serial interval or generation time for Omicron compared to previous variants \cite{anderheiden2022, delaguilamejia2022, ito2022, xin2023}, with values of five to seven days or less implying short latent and infectious periods. Taking duration of culturable virus as the best proxy for the infectious period, a systematic review and meta-analysis focused on the Omicron variant and reported the time from symptom onset or first positive PCR result to the day after the last positive viral culture to be 5.16 days \(95\% CI: 4.18-6.14\) \cite{wu2023}. We take this as an upper limit of the effective infectious duration because this quantity may be modified as symptomatic persons modify their behaviour to reduce contacts whilst infectious \cite{xin2023}.'
-  latent_period: 'The shorter serial interval for Omicron compared to previous variants would also be consistent with a shorter latent period \cite{anderheiden2022, delaguilamejia2022, ito2023}. Transmission pairs were identified through contact tracing from an outbreak of BA.1.1 in Hangzhou (China) in early 2022, through which the latent period was estimated at 3.1 days \(95\% CI: 2.8-3.5\) \cite{xin2023}. The analysis used censoring to account for uncertainty in the time of infection and infectiousness onset from their data on time of contact with the assumed index case and the time of first positive PCR result.'
+  latent_period: 'The shorter serial interval for Omicron compared to previous variants would also be consistent with a shorter latent period \cite{anderheiden2022, delaguilamejia2022, ito2022}. Transmission pairs were identified through contact tracing from an outbreak of BA.1.1 in Hangzhou (China) in early 2022, through which the latent period was estimated at 3.1 days \(95\% CI: 2.8-3.5\) \cite{xin2023}. The analysis used censoring to account for uncertainty in the time of infection and infectiousness onset from their data on time of contact with the assumed index case and the time of first positive PCR result.'
   start_cdr: ''
   seed_rate: 'Assumed'
   seed_duration: 'Assumed'
@@ -110,5 +110,5 @@ evidence:
   ifr_65: 'See Section \ref{infection_fatality_rates} text.'
   ifr_70: 'See Section \ref{infection_fatality_rates} text.'
   ifr_75: 'See Section \ref{infection_fatality_rates} text.'
-  ifr_adjuster: 'Adjustment applied to all age-specific base IFR estimates.'
+  ifr_adjuster: 'Adjustment applied to all age-specific base IFR estimates, see \ref{infection_fatality_rates}.'
   ba2_rel_ifr: 'Assumed'

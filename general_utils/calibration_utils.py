@@ -99,7 +99,7 @@ def get_prior_dist_support(
 
 
 def plot_param_progression(
-    idata: az.data.inference_data.InferenceData, 
+    idata: az.InferenceData, 
     param_info: pd.DataFrame, 
     tex_doc: StandardTexDoc,
     show_fig: bool=False,
