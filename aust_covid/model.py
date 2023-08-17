@@ -46,7 +46,7 @@ def build_model(
 ):
     
     # Model construction
-    n_latent_comps = 3
+    n_latent_comps = 4
     n_infectious_comps = n_latent_comps
     latent_compartments = [f'latent_{i}' for i in range(n_latent_comps)]
     infectious_compartments = [f'infectious_{i}' for i in range(n_infectious_comps)]
@@ -168,7 +168,11 @@ def add_latent_transition(
         'To achieve the same mean sojourn time in the composite latent stage, ' \
         'the rate of transition between two consecutive latent compartments and out of the last latent compartment ' \
         f'is multiplied by the number of serial compartments (i.e. {n_latent_comps}). ' \
-        'As persons exit the final latent compartment, they enter the first infectious compartment. '
+        'As persons exit the final latent compartment, they enter the first infectious compartment. ' \
+        'An Erlang-distributed infectious and latent duration appears to reflect epidemiological evidence ' \
+        'and our intuition around this quantity. The serial interval \cite{anderheiden2022} and generation time \cite{ito2022} appear to ' \
+        'well represented by a gamma distribution, with multiple past modelling studies choosing ' \
+        'a shape parameter of four or five having been previously used to fit this distribution \cite{davies2020b,davies2020c}. '
     tex_doc.add_line(description, 'Model Structure')
 
     rate = 1.0 / Parameter(parameter_name) * n_latent_comps
