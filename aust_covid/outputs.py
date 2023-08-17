@@ -41,7 +41,12 @@ def plot_key_outputs(
         death_targets: Death series for comparison
         show_fig: Whether to display the figure now
     """
-    fig = make_subplots(rows=3, cols=1, subplot_titles=outputs)
+    title_dict = {
+        'notifications_ma': 'cases (moving average)',
+        'adult_seropos_prop': 'adult seropositive proportion',
+        'deaths_ma': 'deaths (moving average)',    
+    }
+    fig = make_subplots(rows=3, cols=1, subplot_titles=[title_dict[o] for o in outputs])
     for i_out, out in enumerate(outputs):
         spaghetti = melt_spaghetti(output_results, out, sampled_idata)
         lines = px.line(spaghetti, y='value', color='chain', line_group='draw', hover_data=spaghetti.columns)
@@ -92,6 +97,8 @@ def plot_key_outputs(
     )
     if show_fig:
         fig.show()
+
+    return fig
 
 
 def plot_subvariant_props(

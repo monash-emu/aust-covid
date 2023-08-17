@@ -122,7 +122,7 @@ def plot_param_progression(
     mpl.rcParams['axes.titlesize'] = 25
     trace_plot = az.plot_trace(
         idata, 
-        figsize=(16, 3 * len(request_vars)), 
+        figsize=(16, 21), 
         compact=False, 
         legend=False,
         labeller=MapLabeller(var_name_map=param_info['descriptions']),
@@ -146,6 +146,8 @@ def plot_param_posterior(
     idata: az.data.inference_data.InferenceData, 
     param_info: pd.DataFrame, 
     tex_doc: StandardTexDoc,
+    request_vars=None,
+    name_ext: str='',
 ) -> mpl.figure.Figure:
     """
     Plot posterior distribution of parameters.
@@ -160,11 +162,13 @@ def plot_param_posterior(
     """
     posterior_plot = az.plot_posterior(
         idata,
+        figsize=(16, 21), 
         labeller=MapLabeller(var_name_map=param_info['descriptions']),
+        var_names=request_vars,
     )
     posterior_fig = posterior_plot[0, 0].figure;
     
-    filename = 'posteriors.jpg'
+    filename = f'posteriors{name_ext}.jpg'
     posterior_fig.savefig(SUPPLEMENT_PATH / filename)
     tex_doc.include_figure(
         'Parameter posteriors, chains combined.', 
