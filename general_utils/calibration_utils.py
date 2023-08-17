@@ -146,6 +146,7 @@ def plot_param_posterior(
     idata: az.data.inference_data.InferenceData, 
     param_info: pd.DataFrame, 
     tex_doc: StandardTexDoc,
+    show_fig: bool=False,
     request_vars=None,
     name_ext: str='',
 ) -> mpl.figure.Figure:
@@ -160,21 +161,24 @@ def plot_param_posterior(
     Returns:
         Formatted figure object created from arviz plotting command
     """
-    posterior_plot = az.plot_posterior(
+    plot = az.plot_posterior(
         idata,
         figsize=(16, 21), 
         labeller=MapLabeller(var_name_map=param_info['descriptions']),
         var_names=request_vars,
     )
-    posterior_fig = posterior_plot[0, 0].figure;
+    fig = plot[0, 0].figure;
     
     filename = f'posteriors{name_ext}.jpg'
-    posterior_fig.savefig(SUPPLEMENT_PATH / filename)
+    fig.savefig(SUPPLEMENT_PATH / filename)
     tex_doc.include_figure(
         'Parameter posteriors, chains combined.', 
         filename,
         'Calibration', 
     )
+
+    if show_fig:
+        fig.show()
 
 
 def tabulate_priors(
