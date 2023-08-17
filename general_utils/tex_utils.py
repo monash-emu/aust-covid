@@ -131,7 +131,7 @@ class TexDoc:
         section: str, 
         subsection: str='', 
         widths=None, 
-        table_width=10.0, 
+        table_width=15.0, 
         longtable=False,
     ):
         """
@@ -146,7 +146,7 @@ class TexDoc:
             longtable: Whether to use the longtable module to span pages
         """
         n_cols = table.shape[1] + 1
-        ave_col_width = round(table_width / n_cols, 2)
+        ave_col_width = round(table_width / n_cols, 4)
         col_widths = widths if widths else [ave_col_width] * n_cols
         col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
         table_text = table.style.to_latex(
@@ -180,6 +180,7 @@ class StandardTexDoc(TexDoc):
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')
 
         self.add_line('\\graphicspath{ {./images/} }', 'preamble')
+        self.add_line(r'\usepackage[a4paper, total={15cm, 20cm}]{geometry}', 'preamble')
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
         self.add_line('\\begin{document}', 'preamble')

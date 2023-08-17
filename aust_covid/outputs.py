@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import datetime, timedelta
 import pandas as pd
+from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import plotly.express as px
 
@@ -11,6 +12,86 @@ from general_utils.calibration_utils import melt_spaghetti
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'
+
+
+def plot_key_outputs(
+    sampled_idata: pd.DataFrame, 
+    output_results: pd.DataFrame, 
+    start_date: datetime, 
+    end_date: datetime,
+    tex_doc: StandardTexDoc, 
+    outputs: list,
+    case_targets: pd.Series,
+    serosurvey_targets: pd.Series,
+    death_targets: pd.Series,
+    show_fig: bool=False,
+):
+    """
+    Create spaghetti plot of key outputs over sequential model runs.
+
+    Args:
+        sampled_idata: Sample from the inference data
+        output_results: Outputs that have been run through the model
+        start_date: Start date for plot
+        end_date: End date for plot
+        tex_doc: TeX documentation object
+        outputs: Names of outputs to plot
+        case_targets: Notification series for comparison
+        serosurvey_targets: Serosurvey values for comparison
+        death_targets: Death series for comparison
+        show_fig: Whether to display the figure now
+    """
+    fig = make_subplots(rows=3, cols=1, subplot_titles=outputs)
+    for i_out, out in enumerate(outputs):
+        spaghetti = melt_spaghetti(output_results, out, sampled_idata)
+        lines = px.line(spaghetti, y='value', color='chain', line_group='draw', hover_data=spaghetti.columns)
+        fig.add_traces(lines.data, rows=i_out + 1, cols=1)
+    fig.add_trace(
+        go.Scatter(
+            x=case_targets.index, 
+            y=case_targets, 
+            name='reported cases',
+            mode='markers',
+            marker={'color': 'LightBlue', 'size': 4, 'line': {'color': 'black', 'width': 1}},
+        ), 
+        row=1, 
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=serosurvey_targets.index, 
+            y=serosurvey_targets, 
+            name='serosurveys',
+            mode='markers',
+            marker={'color': 'white', 'size': 20, 'line': {'color': 'black', 'width': 1}},
+        ), 
+        row=2, 
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=death_targets.index, 
+            y=death_targets, 
+            name='reported deaths ma', 
+            mode='markers',
+            marker={'color': 'Red', 'size': 4, 'line': {'color': 'black', 'width': 1}},
+        ),
+        row=3, 
+        col=1,
+    )
+    fig.update_xaxes(range=(start_date, end_date))
+    fig.update_layout(height=1000, width=1000)
+
+    filename = 'key_outputs.jpg'
+    fig.write_image(SUPPLEMENT_PATH / filename)
+    caption = 'Key results for randomly sampled runs from calibration algorithm.'
+    tex_doc.include_figure(
+        caption, 
+        filename,
+        'Results',
+    )
+    if show_fig:
+        fig.show()
 
 
 def plot_subvariant_props(
@@ -30,6 +111,8 @@ def plot_subvariant_props(
         output_results: Outputs that have been run through the model
         start_date: Start date for plot
         end_date: End date for plot
+        tex_doc: TeX documentation object
+        show_fig: Whether to display the figure now
     """
     fig = go.Figure()
     ba1_results = melt_spaghetti(output_results, 'ba1_prop', sampled_idata)

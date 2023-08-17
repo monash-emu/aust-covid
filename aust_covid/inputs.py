@@ -162,7 +162,7 @@ def load_household_impacts_data():
     index_map = {
         "A household member has symptoms of cold, flu or COVID-19 (a)": "Proportion symptomatic",
         "A household member has had a COVID-19 test (b)": "Proportion testing",
-        "A household member who tested for COVID-19 was positive (c)(d)": "Proportion diagnosed with COVID-19",
+        "A household member who tested for COVID-19 was positive (c)(d)": "Prop diagnosed with COVID-19",
     }
     data = data.rename(index=index_map)
     data = data.transpose()
