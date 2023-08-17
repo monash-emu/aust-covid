@@ -181,6 +181,7 @@ class StandardTexDoc(TexDoc):
 
         self.add_line('\\graphicspath{ {./images/} }', 'preamble')
         self.add_line(r'\usepackage[a4paper, total={15cm, 20cm}]{geometry}', 'preamble')
+        self.add_line(r'\usepackage[labelfont=bf,it]{caption}', 'preamble')
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
         self.add_line('\\begin{document}', 'preamble')
