@@ -26,6 +26,7 @@ class TexDoc:
         self.bib_filename = bib_filename
         self.title = title
         self.prepared = False
+        self.standard_sections = ['preamble', 'endings']
 
     def add_line(
         self, 
@@ -52,7 +53,6 @@ class TexDoc:
             if subsection not in self.content[section]:
                 self.content[section][subsection] = []
             self.content[section][subsection].append(line)
-
         
     def prepare_doc(self):
         """
@@ -79,7 +79,8 @@ class TexDoc:
         Returns:
             The final text to write into the document
         """
-        if section_order and sorted(list(self.content.keys())) != sorted(section_order):
+        content_sections = sorted([s for s in self.content if s not in self.standard_sections])
+        if section_order and sorted(section_order) != content_sections:
             msg = 'Sections requested are not those in the current contents'
             raise ValueError(msg)
 
@@ -90,7 +91,7 @@ class TexDoc:
         final_text = ''
         for line in self.content['preamble']['']:
             final_text += f'{line}\n'
-        for section in [k for k in order if k not in ['preamble', 'endings']]:
+        for section in [k for k in order if k not in self.standard_sections]:
             final_text += f'\n\\section{{{section}}} \\label{{{section.lower().replace(" ", "_")}}}\n'
             if '' in self.content[section]:
                 for line in self.content[section]['']:
