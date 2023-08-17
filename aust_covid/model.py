@@ -1,5 +1,5 @@
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 from jax import numpy as jnp
 import numpy as np
 import pandas as pd
@@ -765,4 +765,3 @@ def track_reproduction_number(
         model.request_output_for_flow(process, process, save_results=False)
     model.request_function_output('all_infection', sum([DerivedOutput(process) for process in infection_processes]), save_results=False)
     model.request_function_output('reproduction_number', DerivedOutput('all_infection') / DerivedOutput('n_infectious') * Parameter('infectious_period'))
-    
