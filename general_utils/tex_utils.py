@@ -130,8 +130,8 @@ class TexDoc:
         table: pd.DataFrame, 
         section: str, 
         subsection: str='', 
-        widths=None, 
-        table_width=15.0, 
+        col_splits=None, 
+        table_width=14.0, 
         longtable=False,
     ):
         """
@@ -146,8 +146,13 @@ class TexDoc:
             longtable: Whether to use the longtable module to span pages
         """
         n_cols = table.shape[1] + 1
-        ave_col_width = round(table_width / n_cols, 4)
-        col_widths = widths if widths else [ave_col_width] * n_cols
+        if not col_splits:
+            splits = [round(1.0 / n_cols, 4)] * n_cols
+        elif len(col_splits) != n_cols:
+            raise ValueError('Wrong number of proportion column splits requested')
+        else:
+            splits = col_splits
+        col_widths = [w * table_width for w in splits]
         col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
         table_text = table.style.to_latex(
             column_format=col_format_str,
