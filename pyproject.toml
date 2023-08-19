@@ -19,7 +19,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.8.0, <4.0.0"
-estival = "==0.3.3"
+estival = "==0.3.6"
 kaleido = ">=0.2.1"
 pylatex = "==1.4.1"
 summerepi2 = ">=1.2.9"
@@ -30,4 +30,3 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 100
-
