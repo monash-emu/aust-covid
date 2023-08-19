@@ -144,7 +144,7 @@ def plot_param_progression(
 
 def plot_param_posterior(
     idata: az.data.inference_data.InferenceData, 
-    param_info: pd.DataFrame, 
+    display_names: dict, 
     tex_doc: StandardTexDoc,
     show_fig: bool=False,
     request_vars=None,
@@ -164,7 +164,7 @@ def plot_param_posterior(
     plot = az.plot_posterior(
         idata,
         figsize=(16, 21), 
-        labeller=MapLabeller(var_name_map=param_info['descriptions']),
+        labeller=MapLabeller(var_name_map=display_names),
         var_names=request_vars,
     )
     fig = plot[0, 0].figure;
