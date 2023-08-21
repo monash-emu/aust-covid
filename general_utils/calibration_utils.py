@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib as mpl
+from scipy import stats
 
 from estival.model import BayesianCompartmentalModel
 import estival.priors as esp
@@ -303,3 +304,17 @@ def melt_spaghetti(
         for param, value in params.iteritems():
             melted_df.loc[(melted_df['chain']==chain) & (melted_df['draw'] == draw), param] = round_sigfig(value, 3)
     return melted_df
+
+
+def get_negbinom_target_widths(targets, idata, model, base_params, output_name, disp_param_name, centiles, prior_names):
+    sample_params = az.extract(idata, num_samples=1)
+    updated_parameters = base_params | {k: sample_params.variables[k].data[0] for k in prior_names}
+    dispersion = sample_params.variables[disp_param_name]
+    model.run(parameters=updated_parameters)
+    modelled_cases = model.get_derived_outputs_df()[output_name]
+    cis = pd.DataFrame(columns=centiles, index=targets.index)
+    for time in targets.index:
+        mu = modelled_cases.loc[time]
+        p = mu / (mu + dispersion)
+        cis.loc[time, :] = stats.nbinom.ppf(centiles, dispersion, 1.0 - p)
+    return cis
