@@ -98,8 +98,6 @@ def plot_key_outputs(
     if show_fig:
         fig.show()
 
-    return fig
-
 
 def plot_subvariant_props(
     sampled_idata: pd.DataFrame, 
