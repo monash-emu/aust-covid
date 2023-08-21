@@ -26,6 +26,7 @@ class TexDoc:
         self.bib_filename = bib_filename
         self.title = title
         self.prepared = False
+        self.standard_sections = ['preamble', 'endings']
 
     def add_line(
         self, 
@@ -52,7 +53,6 @@ class TexDoc:
             if subsection not in self.content[section]:
                 self.content[section][subsection] = []
             self.content[section][subsection].append(line)
-
         
     def prepare_doc(self):
         """
@@ -79,7 +79,8 @@ class TexDoc:
         Returns:
             The final text to write into the document
         """
-        if section_order and sorted(list(self.content.keys())) != sorted(section_order):
+        content_sections = sorted([s for s in self.content if s not in self.standard_sections])
+        if section_order and sorted(section_order) != content_sections:
             msg = 'Sections requested are not those in the current contents'
             raise ValueError(msg)
 
@@ -90,7 +91,7 @@ class TexDoc:
         final_text = ''
         for line in self.content['preamble']['']:
             final_text += f'{line}\n'
-        for section in [k for k in order if k not in ['preamble', 'endings']]:
+        for section in [k for k in order if k not in self.standard_sections]:
             final_text += f'\n\\section{{{section}}} \\label{{{section.lower().replace(" ", "_")}}}\n'
             if '' in self.content[section]:
                 for line in self.content[section]['']:
@@ -129,8 +130,8 @@ class TexDoc:
         table: pd.DataFrame, 
         section: str, 
         subsection: str='', 
-        widths=None, 
-        table_width=10.0, 
+        col_splits=None, 
+        table_width=14.0, 
         longtable=False,
     ):
         """
@@ -145,8 +146,13 @@ class TexDoc:
             longtable: Whether to use the longtable module to span pages
         """
         n_cols = table.shape[1] + 1
-        ave_col_width = round(table_width / n_cols, 2)
-        col_widths = widths if widths else [ave_col_width] * n_cols
+        if not col_splits:
+            splits = [round(1.0 / n_cols, 4)] * n_cols
+        elif len(col_splits) != n_cols:
+            raise ValueError('Wrong number of proportion column splits requested')
+        else:
+            splits = col_splits
+        col_widths = [w * table_width for w in splits]
         col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
         table_text = table.style.to_latex(
             column_format=col_format_str,
@@ -179,6 +185,8 @@ class StandardTexDoc(TexDoc):
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')
 
         self.add_line('\\graphicspath{ {./images/} }', 'preamble')
+        self.add_line(r'\usepackage[a4paper, total={15cm, 20cm}]{geometry}', 'preamble')
+        self.add_line(r'\usepackage[labelfont=bf,it]{caption}', 'preamble')
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
         self.add_line('\\begin{document}', 'preamble')

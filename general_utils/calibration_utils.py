@@ -25,7 +25,10 @@ def round_sigfig(
         value: Number to round
         sig_figs: Number of significant figures to round to
     """
-    return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1)) if value != 0.0 else 0.0
+    if np.isinf(value):
+        return 'infinity'
+    else:
+        return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1)) if value != 0.0 else 0.0
 
 
 def param_table_to_tex(
@@ -99,10 +102,12 @@ def get_prior_dist_support(
 
 
 def plot_param_progression(
-    idata: az.data.inference_data.InferenceData, 
+    idata: az.InferenceData, 
     param_info: pd.DataFrame, 
     tex_doc: StandardTexDoc,
     show_fig: bool=False,
+    request_vars=None,
+    name_ext: str='',
 ) -> mpl.figure.Figure:
     """
     Plot progression of parameters over model iterations with posterior density plots.
@@ -117,15 +122,16 @@ def plot_param_progression(
     mpl.rcParams['axes.titlesize'] = 25
     trace_plot = az.plot_trace(
         idata, 
-        figsize=(16, 3 * len(idata.posterior)), 
+        figsize=(16, 21), 
         compact=False, 
         legend=False,
         labeller=MapLabeller(var_name_map=param_info['descriptions']),
+        var_names=request_vars,
     )
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
 
-    filename = 'traces.jpg'
+    filename = f'traces{name_ext}.jpg'
     trace_fig.savefig(SUPPLEMENT_PATH / filename)
     tex_doc.include_figure(
         'Parameter posteriors and traces by chain.', 
@@ -138,8 +144,11 @@ def plot_param_progression(
 
 def plot_param_posterior(
     idata: az.data.inference_data.InferenceData, 
-    param_info: pd.DataFrame, 
+    display_names: dict, 
     tex_doc: StandardTexDoc,
+    show_fig: bool=False,
+    request_vars=None,
+    name_ext: str='',
 ) -> mpl.figure.Figure:
     """
     Plot posterior distribution of parameters.
@@ -152,19 +161,24 @@ def plot_param_posterior(
     Returns:
         Formatted figure object created from arviz plotting command
     """
-    posterior_plot = az.plot_posterior(
+    plot = az.plot_posterior(
         idata,
-        labeller=MapLabeller(var_name_map=param_info['descriptions']),
+        figsize=(16, 21), 
+        labeller=MapLabeller(var_name_map=display_names),
+        var_names=request_vars,
     )
-    posterior_fig = posterior_plot[0, 0].figure;
+    fig = plot[0, 0].figure;
     
-    filename = 'posteriors.jpg'
-    posterior_fig.savefig(SUPPLEMENT_PATH / filename)
+    filename = f'posteriors{name_ext}.jpg'
+    fig.savefig(SUPPLEMENT_PATH / filename)
     tex_doc.include_figure(
         'Parameter posteriors, chains combined.', 
         filename,
         'Calibration', 
     )
+
+    if show_fig:
+        fig.show()
 
 
 def tabulate_priors(
