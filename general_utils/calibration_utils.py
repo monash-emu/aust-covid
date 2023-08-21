@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib as mpl
 
 from estival.model import BayesianCompartmentalModel
+import estival.priors as esp
 
 from general_utils.tex_utils import StandardTexDoc
 
@@ -83,7 +84,10 @@ def get_prior_dist_param_str(
     Returns:
         The parameters to the prior's distribution joined together
     """
-    return ' '.join([f'{param}: {round(prior.distri_params[param], 3)}' for param in prior.distri_params])
+    if isinstance(prior, esp.GammaPrior):
+        return f'shape: {round(prior.shape, 3)} scale: {round(prior.scale, 3)}'
+    else:
+        return ' '.join([f'{param}: {round(prior.distri_params[param], 3)}' for param in prior.distri_params])
 
 
 def get_prior_dist_support(
