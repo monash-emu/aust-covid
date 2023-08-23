@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import datetime, timedelta
 import pandas as pd
+import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import plotly.express as px
@@ -8,7 +9,7 @@ import plotly.express as px
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.model import get_param_to_exp_plateau, get_cdr_values
 from general_utils.tex_utils import StandardTexDoc
-from general_utils.calibration_utils import melt_spaghetti
+from general_utils.calibration_utils import melt_spaghetti, get_negbinom_target_widths
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'
@@ -189,3 +190,49 @@ def plot_cdr_examples(
     )
     if show_fig:
         fig.show()
+
+
+def get_count_up_back_list(req_length):
+    counting = list(range(req_length))
+    count_down = range(round(req_length / 2))[::-1]
+    counting[-len(count_down):] = count_down
+    return counting
+
+
+def plot_dispersion_examples(
+    idata,
+    model,
+    base_params,
+    prior_names,
+    targets,
+    analysis_start_date,
+    analysis_end_date,
+    output_colours: dict, 
+    req_centiles: np.ndarray, 
+    n_samples: int=4, 
+    base_alpha: float=0.2, 
+    width: int=1000, 
+    height: int=1200,
+) -> go.Figure:
+    fig = go.Figure(layout=go.Layout(width=width, height=height))
+    outputs = [t.name for t in targets]
+    fig = make_subplots(rows=n_samples, cols=len(outputs), figure=fig, subplot_titles=[' '] * n_samples * len(outputs))
+    up_back_list = get_count_up_back_list(len(req_centiles) - 1)
+    alphas = [(a / max(up_back_list)) * (1.0 - base_alpha) + base_alpha for a in up_back_list]
+    for i_sample in range(n_samples):
+        row = i_sample + 1
+        for i, o in enumerate(outputs):
+            target_extract = targets[i].data.loc[analysis_start_date: analysis_end_date]
+            cis, disps = get_negbinom_target_widths(target_extract, idata, model, base_params, o, req_centiles, prior_names)
+            col = i + 1
+            bottom_trace = go.Scatter(x=cis.index, y=cis.iloc[:, 0], line=dict(width=0.0), name='')
+            fig.add_traces(bottom_trace, rows=row, cols=col)
+            for c, centile in enumerate(cis.columns[1:]):
+                colour = f'rgba({output_colours[o]}, {alphas[c]})'
+                label = f'{round(cis.columns[c] * 100)} to {round(centile * 100)} centile, {o}'
+                middle_trace = go.Scatter(x=cis.index, y=cis[centile], fill='tonexty', line=dict(width=0.0), fillcolor=colour, name=label)
+                fig.add_traces(middle_trace, rows=row, cols=col)
+            target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {o}', mode='markers', marker={'color': f'rgb({outputs[o]})', 'size': 4})
+            fig.add_trace(target_trace, row=row, col=col)
+            fig.layout.annotations[i_sample * 2 + i].update(text=f'{o}, dispersion param: {round(float(disps.data), 1)}')
+    return fig
