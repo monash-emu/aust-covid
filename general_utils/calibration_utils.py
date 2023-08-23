@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib as mpl
 from scipy import stats
 
+from summer2 import CompartmentalModel
 from estival.model import BayesianCompartmentalModel
 import estival.priors as esp
 
@@ -306,10 +307,35 @@ def melt_spaghetti(
     return melted_df
 
 
-def get_negbinom_target_widths(targets, idata, model, base_params, output_name, disp_param_name, centiles, prior_names):
+def get_negbinom_target_widths(
+    targets: pd.Series, 
+    idata: az.InferenceData,
+    model: CompartmentalModel, 
+    base_params: dict, 
+    output_name: str, 
+    centiles: np.array, 
+    prior_names: list,
+) -> tuple:
+    """
+    Get the negative binomial centiles for a given model output 
+    and dispersion parameter.
+
+    Args:
+        targets: Target time series
+        idata: Full inference data
+        model: Epidemiological model
+        base_params: Default values for all parameters to run through model
+        output_name: Name of derived output
+        centiles: Centiles to calculate
+        prior_names: String names for each priors
+
+    Returns:
+        Dataframe with the centiles for the output of interest
+        Dispersion parameter used in calculations
+    """
     sample_params = az.extract(idata, num_samples=1)
     updated_parameters = base_params | {k: sample_params.variables[k].data[0] for k in prior_names}
-    dispersion = sample_params.variables[disp_param_name]
+    dispersion = sample_params.variables[f'{output_name}_dispersion']
     model.run(parameters=updated_parameters)
     modelled_cases = model.get_derived_outputs_df()[output_name]
     cis = pd.DataFrame(columns=centiles, index=targets.index)
