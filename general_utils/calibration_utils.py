@@ -317,4 +317,4 @@ def get_negbinom_target_widths(targets, idata, model, base_params, output_name, 
         mu = modelled_cases.loc[time]
         p = mu / (mu + dispersion)
         cis.loc[time, :] = stats.nbinom.ppf(centiles, dispersion, 1.0 - p)
-    return cis
+    return cis, dispersion
