@@ -258,20 +258,20 @@ def plot_dispersion_examples(
     alphas = [(a / max(up_back_list)) * (1.0 - base_alpha) + base_alpha for a in up_back_list]
     for i_sample in range(n_samples):
         row = i_sample + 1
-        for i, o in enumerate(outputs):
-            target_extract = targets[i].data.loc[analysis_start_date: analysis_end_date]
+        for i_out, o in enumerate(outputs):
+            target_extract = targets[i_out].data.loc[analysis_start_date: analysis_end_date]
             cis, disps = get_negbinom_target_widths(target_extract, idata, model, base_params, o, req_centiles, prior_names)
-            col = i + 1
+            col = i_out + 1
             bottom_trace = go.Scatter(x=cis.index, y=cis.iloc[:, 0], line=dict(width=0.0), name='')
             fig.add_traces(bottom_trace, rows=row, cols=col)
-            for c, centile in enumerate(cis.columns[1:]):
-                colour = f'rgba({output_colours[o]}, {alphas[c]})'
-                label = f'{round(cis.columns[c] * 100)} to {round(centile * 100)} centile, {o}'
-                middle_trace = go.Scatter(x=cis.index, y=cis[centile], fill='tonexty', line=dict(width=0.0), fillcolor=colour, name=label)
-                fig.add_traces(middle_trace, rows=row, cols=col)
+            for i_cent, centile in enumerate(cis.columns[1:]):
+                colour = f'rgba({output_colours[o]}, {alphas[i_cent]})'
+                label = f'{round(cis.columns[i_cent] * 100)} to {round(centile * 100)} centile, {o}'
+                mid_trace = go.Scatter(x=cis.index, y=cis[centile], fill='tonexty', line=dict(width=0.0), fillcolor=colour, name=label)
+                fig.add_traces(mid_trace, rows=row, cols=col)
             target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {o}', mode='markers', marker={'color': f'rgb({outputs[o]})', 'size': 4})
             fig.add_trace(target_trace, row=row, col=col)
-            fig.layout.annotations[i_sample * 2 + i].update(text=f'{o}, dispersion param: {round(float(disps.data), 1)}')
+            fig.layout.annotations[i_sample * len(outputs) + i_out].update(text=f'{o}, dispersion param: {round(float(disps.data), 1)}')
 
     filename = 'dispersion_examples.jpg'
     fig.write_image(SUPPLEMENT_PATH / filename)
