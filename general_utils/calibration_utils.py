@@ -88,6 +88,8 @@ def get_prior_dist_param_str(
     """
     if isinstance(prior, esp.GammaPrior):
         return f'shape: {round(prior.shape, 3)} scale: {round(prior.scale, 3)}'
+    elif isinstance(prior, esp.BetaPrior):
+        return ' '.join([f'{param}: {round(prior.distri_params[param][0], 3)}' for param in prior.distri_params])
     else:
         return ' '.join([f'{param}: {round(prior.distri_params[param], 3)}' for param in prior.distri_params])
 
