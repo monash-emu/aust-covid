@@ -85,7 +85,7 @@ def build_model(
     adjust_state_pops(model_pops, aust_model, tex_doc)
 
     # Outputs
-    track_incidence(aust_model, infection_processes, tex_doc)
+    track_incidence(aust_model, tex_doc)
     add_notifications_output(aust_model, tex_doc, moving_average_window)
     add_death_output(aust_model, tex_doc, moving_average_window)
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
@@ -536,14 +536,19 @@ def adjust_state_pops(
 
 def track_incidence(
     model: CompartmentalModel,
-    infection_processes: list,
     tex_doc: StandardTexDoc,
 ):
-    description = 'Age group and strain-specific and overall incidence of infection with SARS-CoV-2 ' \
+    description = 'Age group and strain-specific and overall incidence of SARS-CoV-2 ' \
         '(including episodes that are never detected) is first tracked. ' \
         'This modelled incident infection quantity is not used explicitly in the calibration process, ' \
         'but tracking this process is necessary for the calculation of several other  ' \
-        'model outputs, as described below.\n'
+        'model outputs, as described below. ' \
+        'The point at which new cases contribute to incidence is taken as ' \
+        'the time at which symptoms begin in those infected persons who develop symptoms. ' \
+        'To account for the observation that infectiousness is often present for ' \
+        'a short period of time prior to the onset of symptoms, ' \
+        'we estimate incidence from the transition from the first to second ' \
+        'chained sequential infectious compartment.\n'
     tex_doc.add_line(description, 'Outputs', subsection='Notifications')
 
     age_strata = model.stratifications['agegroup'].strata
@@ -552,17 +557,11 @@ def track_incidence(
         age_str = f'Xagegroup_{age}'
         for strain in strain_strata:
             strain_str = f'Xstrain_{strain}'
-            for process in infection_processes:
-                model.request_output_for_flow(
-                    f'{process}_onset{age_str}{strain_str}', 
-                    process, 
-                    source_strata={'agegroup': age},
-                    dest_strata={'strain': strain},
-                    save_results=False,
-                )
-            model.request_function_output(
-                f'incidence{age_str}{strain_str}',
-                sum([DerivedOutput(f'{process}_onset{age_str}{strain_str}') for process in infection_processes]),
+            model.request_output_for_flow(
+                f'incidence{age_str}{strain_str}', 
+                'inf_transition_0', 
+                source_strata={'agegroup': age},
+                dest_strata={'strain': strain},
                 save_results=False,
             )
         model.request_function_output(
