@@ -282,3 +282,4 @@ def plot_dispersion_examples(
     )
     if show_fig:
         fig.show()
+        
