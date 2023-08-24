@@ -1,14 +1,18 @@
 from pathlib import Path
 from datetime import datetime, timedelta
 import pandas as pd
+import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import plotly.express as px
+import arviz as az
+
+from summer2 import CompartmentalModel
 
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.model import get_param_to_exp_plateau, get_cdr_values
 from general_utils.tex_utils import StandardTexDoc
-from general_utils.calibration_utils import melt_spaghetti
+from general_utils.calibration_utils import melt_spaghetti, get_negbinom_target_widths
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'
@@ -189,3 +193,93 @@ def plot_cdr_examples(
     )
     if show_fig:
         fig.show()
+
+
+def get_count_up_back_list(
+    req_length: int
+) -> list:
+    """
+    Get a list that counts sequentially up from zero and back down again,
+    with the total length of the list being that requested.
+
+    Args:
+        req_length: Length of requested list
+
+    Returns:
+        List containing the sequential integer values
+    """
+    counting = list(range(req_length))
+    count_down = range(round(req_length / 2))[::-1]
+    counting[-len(count_down):] = count_down
+    return counting
+
+
+def plot_dispersion_examples(
+    idata: az.InferenceData,
+    model: CompartmentalModel,
+    base_params: list,
+    prior_names: list,
+    targets: list,
+    analysis_start_date: datetime,
+    analysis_end_date: datetime,
+    output_colours: dict, 
+    tex_doc: StandardTexDoc,
+    req_centiles: np.ndarray, 
+    n_samples: int=4, 
+    base_alpha: float=0.2, 
+    width: int=1000, 
+    height: int=1200,
+    show_fig: bool=False,
+) -> go.Figure:
+    """
+    Illustrate the range of the density of the negative
+    binomial distribution from some example accepted model
+    iterations.
+
+    Args:
+        idata: The full inference data
+        model: The epidemiological model
+        base_params: Default parameter values
+        prior_names: The priors used in the calibration algorithm
+        targets: The selected targets to consider
+        analysis_start_date: Analysis starting time
+        analysis_end_date: Analysis end time
+        output_colours: Colours for plotting the outputs
+        req_centiles: Centiles to plot
+        n_samples: Number of samples (rows of panels)
+        base_alpha: Minimum alpha/transparency for area plots
+        width: Plot width
+        height: Plot height
+    """
+    fig = go.Figure(layout=go.Layout(width=width, height=height))
+    outputs = [t.name for t in targets]
+    fig = make_subplots(rows=n_samples, cols=len(outputs), figure=fig, subplot_titles=[' '] * n_samples * len(outputs))
+    up_back_list = get_count_up_back_list(len(req_centiles) - 1)
+    alphas = [(a / max(up_back_list)) * (1.0 - base_alpha) + base_alpha for a in up_back_list]
+    for i_sample in range(n_samples):
+        row = i_sample + 1
+        for i_out, o in enumerate(outputs):
+            target_extract = targets[i_out].data.loc[analysis_start_date: analysis_end_date]
+            cis, disps = get_negbinom_target_widths(target_extract, idata, model, base_params, o, req_centiles, prior_names)
+            col = i_out + 1
+            bottom_trace = go.Scatter(x=cis.index, y=cis.iloc[:, 0], line=dict(width=0.0), name='')
+            fig.add_traces(bottom_trace, rows=row, cols=col)
+            for i_cent, centile in enumerate(cis.columns[1:]):
+                colour = f'rgba({output_colours[o]}, {alphas[i_cent]})'
+                label = f'{round(cis.columns[i_cent] * 100)} to {round(centile * 100)} centile, {o}'
+                mid_trace = go.Scatter(x=cis.index, y=cis[centile], fill='tonexty', line=dict(width=0.0), fillcolor=colour, name=label)
+                fig.add_traces(mid_trace, rows=row, cols=col)
+            target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {o}', mode='markers', marker={'color': f'rgb({outputs[o]})', 'size': 4})
+            fig.add_trace(target_trace, row=row, col=col)
+            fig.layout.annotations[i_sample * len(outputs) + i_out].update(text=f'{o}, dispersion param: {round(float(disps.data), 1)}')
+
+    filename = 'dispersion_examples.jpg'
+    fig.write_image(SUPPLEMENT_PATH / filename)
+    tex_doc.include_figure(
+        'Examples of the effect of values of the negative binomial distribution dispersion parameter.', 
+        filename,
+        'Calibration',
+    )
+    if show_fig:
+        fig.show()
+        
