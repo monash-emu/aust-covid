@@ -376,21 +376,21 @@ def get_imm_stratification(
         'with a second parameter used to quantify the relative reduction in ' \
         'the rate of infection and reinfection for those in the stratum with ' \
         'reduced susceptibility. '
-    tex_doc.add_line(description, 'Stratification', subsection='Vaccination')
+    tex_doc.add_line(description, 'Stratification', subsection='Heterogeneous susceptibility')
 
-    imm_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
+    imm_strat = Stratification('immunity', ['imm', 'nonimm'], compartments)
     for infection_process in infection_processes:
         imm_strat.set_flow_adjustments(
             infection_process,
             {
-                'vacc': Multiply(1.0 - Parameter('imm_infect_protect')),
-                'unvacc': None,
+                'imm': Multiply(1.0 - Parameter('imm_infect_protect')),
+                'nonimm': None,
             },
         )
     imm_strat.set_population_split(
         {
-            'vacc': Parameter('imm_prop'),
-            'unvacc': 1.0 - Parameter('imm_prop'),
+            'imm': Parameter('imm_prop'),
+            'nonimm': 1.0 - Parameter('imm_prop'),
         }
     )
     return imm_strat
