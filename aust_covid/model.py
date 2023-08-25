@@ -77,8 +77,8 @@ def build_model(
 
     add_reinfection(aust_model, strain_strata, latent_compartments, tex_doc)
 
-    vacc_strat = get_vacc_stratification(compartments, infection_processes, tex_doc)
-    aust_model.stratify_with(vacc_strat)
+    imm_strat = get_imm_stratification(compartments, infection_processes, tex_doc)
+    aust_model.stratify_with(imm_strat)
 
     spatial_strat = get_spatial_stratification(datetime(2022, 3, 3), compartments, infection_processes, model_pops, aust_model, tex_doc)
     aust_model.stratify_with(spatial_strat)
@@ -362,7 +362,7 @@ def get_strain_stratification(
     return StrainStratification('strain', strain_strata, compartments_to_stratify)
 
 
-def get_vacc_stratification(
+def get_imm_stratification(
     compartments: list, 
     infection_processes: list,
     tex_doc: StandardTexDoc,
@@ -378,22 +378,22 @@ def get_vacc_stratification(
         'reduced susceptibility. '
     tex_doc.add_line(description, 'Stratification', subsection='Vaccination')
 
-    vacc_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
+    imm_strat = Stratification('vaccination', ['vacc', 'unvacc'], compartments)
     for infection_process in infection_processes:
-        vacc_strat.set_flow_adjustments(
+        imm_strat.set_flow_adjustments(
             infection_process,
             {
-                'vacc': Multiply(1.0 - Parameter('vacc_infect_protect')),
+                'vacc': Multiply(1.0 - Parameter('imm_infect_protect')),
                 'unvacc': None,
             },
         )
-    vacc_strat.set_population_split(
+    imm_strat.set_population_split(
         {
-            'vacc': Parameter('vacc_prop'),
-            'unvacc': 1.0 - Parameter('vacc_prop'),
+            'vacc': Parameter('imm_prop'),
+            'unvacc': 1.0 - Parameter('imm_prop'),
         }
     )
-    return vacc_strat
+    return imm_strat
 
 
 def seed_vocs(
