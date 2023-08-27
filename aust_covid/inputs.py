@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from copy import copy
 from datetime import datetime, timedelta
-from general_utils.tex_utils import StandardTexDoc
+from general_utils.tex import StandardTexDoc
 from plotly import graph_objects as go
 
 BASE_PATH = Path(__file__).parent.parent.resolve()

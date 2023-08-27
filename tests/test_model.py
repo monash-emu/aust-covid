@@ -3,7 +3,7 @@ from datetime import datetime
 from aust_covid import model
 import pandas as pd
 pd.options.plotting.backend = 'plotly'
-from general_utils.tex_utils import StandardTexDoc
+from general_utils.tex import StandardTexDoc
 from aust_covid.inputs import get_ifrs
 
 PROJECT_PATH = Path().resolve()
