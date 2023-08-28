@@ -30,6 +30,47 @@ def get_param_to_exp_plateau(
     return 0.0 - np.log(1.0 - output_request) / input_request
 
 
+def track_incidence(
+    model: CompartmentalModel,
+    tex_doc: StandardTexDoc,
+):
+    description = 'Age group and strain-specific and overall incidence of SARS-CoV-2 ' \
+        '(including episodes that are never detected) is first tracked. ' \
+        'This modelled incident infection quantity is not used explicitly in the calibration process, ' \
+        'but tracking this process is necessary for the calculation of several other  ' \
+        'model outputs, as described below. ' \
+        'The point at which new cases contribute to incidence is taken as ' \
+        'the time at which symptoms begin in those infected persons who develop symptoms. ' \
+        'To account for the observation that infectiousness is often present for ' \
+        'a short period of time prior to the onset of symptoms, ' \
+        'we estimate incidence from the transition from the first to second ' \
+        'chained sequential infectious compartment.\n'
+    tex_doc.add_line(description, 'Outputs', subsection='Notifications')
+
+    age_strata = model.stratifications['agegroup'].strata
+    strain_strata = model.stratifications['strain'].strata
+    for age in age_strata:
+        age_str = f'Xagegroup_{age}'
+        for strain in strain_strata:
+            strain_str = f'Xstrain_{strain}'
+            model.request_output_for_flow(
+                f'incidence{age_str}{strain_str}', 
+                'inf_transition_0', 
+                source_strata={'agegroup': age},
+                dest_strata={'strain': strain},
+                save_results=False,
+            )
+        model.request_function_output(
+            f'incidence{age_str}',
+            sum([DerivedOutput(f'incidence{age_str}Xstrain_{strain}') for strain in strain_strata]),
+            save_results=False,
+        )
+    model.request_function_output(
+        f'incidence',
+        sum([DerivedOutput(f'incidenceXagegroup_{age}') for age in age_strata]),
+    )
+
+
 def track_notifications(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
