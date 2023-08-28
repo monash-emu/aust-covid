@@ -146,7 +146,8 @@ def add_infection(
     origin = 'susceptible'
     destination = latent_compartments[0]
     description = f'The {process} process moves people from the {origin.replace("_", "")} ' \
-        f'compartment to the {destination.replace("_", "")} compartment, ' \
+        f'compartment to the {destination.replace("_", "")} compartment ' \
+        '(being the first latent compartment), ' \
         'under the frequency-dependent transmission assumption. '
     tex_doc.add_line(description, 'Model Structure')
 
@@ -163,13 +164,13 @@ def add_latent_transition(
     final_dest = infectious_compartments[0]
     n_latent_comps = len(latent_compartments)
     description = f'Following infection, infected persons enter a series of {n_latent_comps} latent compartments. ' \
-        'These are chained in series, with infected persons transitioning sequentially from ' \
+        'These are chained in sequence, with infected persons transitioning sequentially from ' \
         f'compartment 0 through to compartment {len(latent_compartments) - 1}. ' \
         'To achieve the same mean sojourn time in the composite latent stage, ' \
-        'the rate of transition between two consecutive latent compartments and out of the last latent compartment ' \
-        f'is multiplied by the number of serial compartments (i.e. {n_latent_comps}). ' \
+        'the rate of transition between successive latent compartments and out of the last latent compartment ' \
+        f'are multiplied by the number of serial compartments (i.e. {n_latent_comps}). ' \
         'As persons exit the final latent compartment, they enter the first infectious compartment. ' \
-        'An Erlang-distributed infectious and latent duration appears to reflect epidemiological evidence ' \
+        'An Erlang-distributed infectious and latent duration is consistent with epidemiological evidence ' \
         'and our intuition around this quantity. The serial interval \cite{anderheiden2022} and generation time \cite{ito2022} appear to ' \
         'well represented by a gamma distribution, with multiple past modelling studies choosing ' \
         'a shape parameter of four or five having been previously used to fit this distribution \cite{davies2020b,davies2020c}. '
@@ -191,10 +192,10 @@ def add_infectious_transition(
     parameter_name = 'infectious_period'
     final_dest = 'recovered'
     n_inf_comps = len(infectious_compartments)
-    description = f'As for the latent compartments, these are also chained in series, ' \
-        f'with a total of {n_inf_comps} linked together in sequence. ' \
+    description = f'As for the latent compartments, the infectious compartments are also chained in series, ' \
+        f'with a total of {n_inf_comps} also chained together in sequence. ' \
         'As for the latent compartments, ' \
-        f'the transition rates are again multiplied by {n_inf_comps}. ' \
+        f'each transition rate is multiplied by {n_inf_comps}. ' \
         'As persons exit the final infectious compartment, they enter the recovered compartment.\n'    
     tex_doc.add_line(description, 'Model Structure')
 
@@ -215,10 +216,10 @@ def add_waning(
     destination = 'waned'
     parameter_name = 'natural_immunity_period'
     description = 'A waned compartment is included in the model ' \
-        'to represent persons who no longer have immunity from past natural immunity. ' \
+        'to represent persons who no longer have natural immunity from past SARS-CoV-2 infection. ' \
         f'As these persons lose their infection-induced immunity, they transition from the ' \
-        f'{origin.replace("_", "")} compartment to the {destination.replace("_", "")} compartment at a rate equal to the reciprocal of the ' \
-        f'{parameter_name.replace("_", " ")}. '
+        f'{origin.replace("_", "")} compartment to the {destination.replace("_", "")} compartment '\
+        f'at a rate equal to the reciprocal of the {parameter_name.replace("_", " ")} parameter. '
     tex_doc.add_line(description, 'Model Structure')
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
@@ -240,7 +241,8 @@ def plot_mixing_matrices(
 
     matrix_fig.write_image(SUPPLEMENT_PATH / filename)
     tex_doc.include_figure(
-        f'Daily contact rates by age group (row), contact age group (column) and location (panel) for {filename.replace("_", " ").replace(".jpg", "")}. ', 
+        f'Daily contact rates by age group (row), contact age group (column) and location (panel) ' \
+        f'for {filename.replace("_", " ").replace(".jpg", "")}. ', 
         filename,
         'Mixing', 
     )
@@ -254,8 +256,9 @@ def adapt_gb_matrices_to_aust(
     tex_doc: StandardTexDoc,
     show_figs: bool=False,
 ) -> tuple:
-    description = 'Matrices were adjusted to account for the differences in the age distribution of the ' \
-        'Australian population distribution in 2022 compared to the population of Great Britain in 2000. ' \
+    description = 'Social contact matrices for Great Britain ' \
+        'were adjusted to account for the differences in the age distribution betweem the ' \
+        'Australian population distribution in 2022 and the population of Great Britain in 2000. ' \
         'The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices and the diagonal matrix ' \
         'containing the vector of the ratios between the proportion of the British and Australian populations ' \
         'within each age bracket as its diagonal elements. ' \
@@ -264,9 +267,10 @@ def adapt_gb_matrices_to_aust(
         'from the \href{https://ec.europa.eu/eurostat}{Eurostat database}. '
     tex_doc.add_line(description, 'Mixing')
 
-    # Australia
+    # Australia population
     aust_props_disp = copy(pop_data)
     aust_props_disp['age_group'] = [f'{age}-{age + 4}' for age in age_strata[:-1]] + ['75 and over']
+
     input_pop_fig = px.bar(
         aust_props_disp.melt(id_vars=['age_group']), 
         x='age_group', 
@@ -274,7 +278,6 @@ def adapt_gb_matrices_to_aust(
         color='variable', 
         labels={'value': 'population', 'age_group': ''},
     )
-
     input_pop_filename = 'input_population.jpg'
     input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
     tex_doc.include_figure(
@@ -283,11 +286,11 @@ def adapt_gb_matrices_to_aust(
         'Population',
     )
 
-    # UK
+    # UK population
     raw_uk_data = load_uk_pop_data()
+
     uk_pop_fig = px.bar(raw_uk_data)
     uk_pop_fig.update_layout(showlegend=False)
-
     uk_pop_filename = 'uk_population.jpg'
     uk_pop_fig.write_image(SUPPLEMENT_PATH / uk_pop_filename)
     tex_doc.include_figure(
@@ -296,7 +299,7 @@ def adapt_gb_matrices_to_aust(
         'Mixing', 
     )
 
-    # Make weighting calculations
+    # Weighting calculations
     aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
     uk_age_pops = raw_uk_data[:15]
     uk_age_pops['75 or over'] = raw_uk_data[15:].sum()
@@ -304,7 +307,7 @@ def adapt_gb_matrices_to_aust(
     uk_age_props = uk_age_pops / uk_age_pops.sum()
     aust_uk_ratios = aust_age_props / uk_age_props
 
-    # Check and adjust each location-specific matrix
+    # Adjust each location-specific matrix
     adjusted_matrices = {}
     for location in MATRIX_LOCATIONS:
         unadjusted_matrix = unadjusted_matrices[location]
@@ -313,7 +316,7 @@ def adapt_gb_matrices_to_aust(
         assert len(uk_age_props) == unadjusted_matrix.shape[0], 'Different number of UK age groups from mixing categories'
         adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
     
-    # Some final plotting
+    # Plot matrices
     raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, age_strata, 'raw_matrices.jpg', tex_doc)
     adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, age_strata, 'adjusted_matrices.jpg', tex_doc)
     if show_figs:
@@ -331,11 +334,11 @@ def get_age_stratification(
     matrix: np.array,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    description = 'We stratified all compartments of the base model ' \
-        'into sequential age brackets in five year ' \
-        f'bands from age {age_strata[0]} to {age_strata[0] + 4} through to age {age_strata[-2]} to {age_strata[-2] + 4} ' \
+    description = 'We stratified all compartments of the model described into sequential age brackets cmprising 5-year ' \
+        f'bands from age {age_strata[0]} to {age_strata[0] + 4} through to age {age_strata[-2]} to {age_strata[-2] + 4}, ' \
         f'with a final age band to represent those aged {age_strata[-1]} and above. ' \
-        'These age brackets were chosen to match those used by the POLYMOD survey \cite{mossong2008} and so fit with the mixing data available. ' \
+        'These age brackets were chosen to match those used by the POLYMOD survey \cite{mossong2008} ' \
+        'and so fit with the mixing data available. ' \
         'The population distribution by age group was informed by the data from the Australian ' \
         'Bureau of Statistics introduced previously. ' \
         'Ageing between sequential bands was not permitted given the time window of the simulation. '
@@ -353,10 +356,11 @@ def get_strain_stratification(
 ) -> tuple:
     strain_strings = [f'{strain.replace("ba", "BA.")}' for strain in strain_strata]
     compartments_to_stratify = [comp for comp in compartments if comp != 'susceptible']
-    description = f'We stratified the following compartments according to strain: {", ".join(compartments_to_stratify).replace("_", "")}, ' \
+    description = f'We stratified the following compartments according to strain: ' \
+        f'{", ".join(compartments_to_stratify).replace("_", "")}, ' \
         'replicating all of these compartments to represent the various major Omicron sub-variants relevant to the 2022 epidemic, ' \
         f'namely: {", ".join(strain_strings)}. ' \
-        f"This was implemented using summer's `{StrainStratification.__name__}' class. "
+        f"This was implemented using the summer library's `{StrainStratification.__name__}' class. "
     tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
 
     return StrainStratification('strain', strain_strata, compartments_to_stratify)
@@ -367,32 +371,27 @@ def get_imm_stratification(
     infection_processes: list,
     tex_doc: StandardTexDoc,
 ) -> Stratification:
-    description = 'All compartments and stratifications previously described were further ' \
+    description = 'All compartments and stratifications described were further ' \
         'stratified into two strata with differing levels of susceptibility to infection. ' \
-        'These are loosely intended to represent persons with and without protection ' \
-        'against infection attributable to vaccination. ' \
-        'A single parameter is used to represent the proportion of the population retaining ' \
-        'immunological protection against infection through vaccination, ' \
+        'One parameter was used to represent the proportion of the population with ' \
+        'immunological protection against infection, ' \
         'with a second parameter used to quantify the relative reduction in ' \
         'the rate of infection and reinfection for those in the stratum with ' \
-        'reduced susceptibility. '
+        'reduced susceptibility. ' \
+        'This stratification was implemented because some heterogeneity in susceptibility ' \
+        'may have been introduced through a proportion of the population having greater ' \
+        'protection through vaccination (e.g. because of recent receipt of a booster dose) ' \
+        'or other immunological heterogeneity in the population, ' \
+        'and because earlier iterations of the model suggested this helped to capture ' \
+        'sharpness of the peak of the initial BA.1 wave. '
     tex_doc.add_line(description, 'Stratification', subsection='Heterogeneous susceptibility')
 
     imm_strat = Stratification('immunity', ['imm', 'nonimm'], compartments)
     for infection_process in infection_processes:
-        imm_strat.set_flow_adjustments(
-            infection_process,
-            {
-                'imm': Multiply(1.0 - Parameter('imm_infect_protect')),
-                'nonimm': None,
-            },
-        )
-    imm_strat.set_population_split(
-        {
-            'imm': Parameter('imm_prop'),
-            'nonimm': 1.0 - Parameter('imm_prop'),
-        }
-    )
+        heterogeneity = {'imm': Multiply(1.0 - Parameter('imm_infect_protect')), 'nonimm': None}
+        imm_strat.set_flow_adjustments(infection_process, heterogeneity)
+    hetero_pop_split = {'imm': Parameter('imm_prop'), 'nonimm': 1.0 - Parameter('imm_prop')}
+    imm_strat.set_population_split(hetero_pop_split)
     return imm_strat
 
 
@@ -405,32 +404,19 @@ def seed_vocs(
     seed_comp = latent_compartments[0]
     seed_duration_str = 'seed_duration'
     seed_rate_str = 'seed_rate'
-    description = f'Each strain (including the starting {strains[0].replace("ba", "BA.")} strain) is seeded through ' \
-        'a step function that allows the introduction of a constant rate of new infectious ' \
+    description = f'Each strain (including the starting {strains[0].replace("ba", "BA.")} strain) was seeded through ' \
+        'a triangular step function that introduces new infectious ' \
         f'persons into the {seed_comp.replace("_", "")} compartment over a fixed seeding duration defined by a single ' \
         f'{seed_duration_str.replace("_", " ")} parameter. ' \
-        f'and at a rate defined by one {seed_rate_str.replace("_", " ")} parameter. ' \
+        f'and at a peak rate defined by one {seed_rate_str.replace("_", " ")} parameter. ' \
         'The time of first emergence of each strain into the system is defined by ' \
         'a separate emergence time parameter for each strain. '
     tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
 
     for strain in strains:
-        voc_seed_func = Function(
-            triangle_wave_func, 
-            [
-                Time,
-                Parameter(f'{strain}_seed_time'), 
-                Parameter(seed_duration_str), 
-                Parameter(seed_rate_str),
-            ]
-        )
-        model.add_importation_flow(
-            f'seed_{strain}',
-            voc_seed_func,
-            seed_comp,
-            dest_strata={'strain': strain},
-            split_imports=True,
-        )
+        seed_args = [Time, Parameter(f'{strain}_seed_time'), Parameter(seed_duration_str), Parameter(seed_rate_str)]
+        voc_seed_func = Function(triangle_wave_func, seed_args)
+        model.add_importation_flow(f'seed_{strain}', voc_seed_func, seed_comp, dest_strata={'strain': strain}, split_imports=True)
 
 
 def add_reinfection(
@@ -441,42 +427,38 @@ def add_reinfection(
 ) -> str:
     destination = latent_compartments[0]
     description = 'Reinfection is possible from both the recovered ' \
-        'and waned compartments, with these processes termed ' \
+        'and waned compartments, which we refer to as  ' \
         "`early' and `late' reinfection respectively. " \
         'In the case of early reinfection, this is only possible ' \
         'for persons who have recovered from an earlier circulating sub-variant. ' \
-        'That is, BA.2 early reinfection is possible for persons previously infected with ' \
-        'BA.1, while BA.5 reinfection is possible for persons previously infected with ' \
-        'BA.1 or BA.2. The degree of immune escape is determined by the infecting variant ' \
-        'and differs for BA.2 and BA.5. This implies that the rate of reinfection ' \
-        'is equal for BA.5 reinfecting those recovered from past BA.1 infection ' \
-        'as it is for those recovered from past BA.2 infection. ' \
+        'That is, early BA.2 reinfection is possible for persons previously infected with ' \
+        'BA.1, while early BA.5 reinfection is possible for persons previously infected with ' \
+        'BA.1 or BA.2. The parameter governing the degree of immune escape is determined ' \
+        'by the infecting variant and differs for BA.2 and BA.5. ' \
+        'Therefore, the rate of reinfection is equal for BA.5 reinfecting those recovered from past BA.1 infection ' \
+        'as for those recovered from past BA.2 infection. ' \
         'For late reinfection, all natural immunity is lost for persons in the waned compartment, ' \
         'such that the rate of reinfection for these persons is the same as the rate of infection ' \
         'for fully susceptible persons. ' \
-        'As for the first infection process, all reinfection processes transition individuals ' \
+        'As for the process of first infection, all reinfection processes transition individuals ' \
         'to the latent compartment corresponding to the infecting strain.\n'
     tex_doc.add_line(description, 'Reinfection')
 
     for dest_strain in strain_strata:
         for source_strain in strain_strata:
-            process = 'early_reinfection'
-            origin = 'recovered'
             escape = Parameter(f'{dest_strain}_escape') if int(dest_strain[-1]) > int(source_strain[-1]) else 0.0
             model.add_infection_frequency_flow(
-                process, 
+                'early_reinfection', 
                 Parameter('contact_rate') * escape,
-                origin, 
+                'recovered',
                 destination,
                 source_strata={'strain': source_strain},
                 dest_strata={'strain': dest_strain},
             )
-            process = 'late_reinfection'
-            origin = 'waned'
             model.add_infection_frequency_flow(
-                process, 
+                'late_reinfection', 
                 Parameter('contact_rate'),
-                origin, 
+                'waned', 
                 destination,
                 source_strata={'strain': source_strain},
                 dest_strata={'strain': dest_strain},
@@ -492,28 +474,24 @@ def get_spatial_stratification(
     tex_doc: StandardTexDoc,
 ) -> Stratification:
     strata = model_pops.columns
+    reopen_param_str = 'wa_reopen_period'
     description = 'All model compartments previously described are further ' \
         f"stratified into strata to represent Western Australia ({strata[0].upper()}) and `{strata[1]}' " \
         'to represent the remaining major jurisdictions of Australia. ' \
         f'Transmission in {strata[0].upper()} was initially set to zero, ' \
         f'and subsquently scaled up to being equal to that of the {strata[1]} ' \
-        f'jurisdictions of Australia over a period of time that is varied through the calibration process. '
+        f"jurisdictions of Australia over a period that governed by the `{reopen_param_str}' parameter. "
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)
     state_props = model_pops.sum() / model_pops.sum().sum()
     spatial_strat.set_population_split(state_props.to_dict())
-
     reopen_index = model.get_epoch().dti_to_index(reopen_date)
-    reopen_func = get_linear_interpolation_function(
-        [reopen_index, reopen_index + Parameter('wa_reopen_period')],
-        np.array([0.0, 1.0]),
-    )
-
+    reopen_times = [reopen_index, reopen_index + Parameter(reopen_param_str)]
+    reopen_func = get_linear_interpolation_function(reopen_times, np.array([0.0, 1.0]))
     infection_adj = {strata[0]: reopen_func, strata[1]: None}
     for infection_process in infection_processes:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
-
     return spatial_strat
 
 
@@ -525,7 +503,7 @@ def adjust_state_pops(
     strata = model_pops.columns
     description = 'Starting model populations were distributed by ' \
         f'age and spatial status ({strata[0].upper()}, {strata[1]}) ' \
-        'according to the age distribution in each simulated region. '
+        'according to the age distribution in each of the two simulated regions. '
     tex_doc.add_line(description, 'Stratification', 'Spatial')
 
     for state in model_pops.columns:
