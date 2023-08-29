@@ -106,7 +106,11 @@ def get_prior_dist_support(
     Returns:        
         The bounds to the prior's distribution joined together
     """
-    return ' to '.join([str(round_sigfig(i, 3)) for i in prior.bounds()])
+    if isinstance(prior, esp.BetaPrior):
+        bounds = [str(round_sigfig(i[0], 3)) for i in prior.bounds()]
+    else:
+        bounds = [str(round_sigfig(i, 3)) for i in prior.bounds()]
+    return ' to '.join(bounds)
 
 
 def plot_param_progression(
