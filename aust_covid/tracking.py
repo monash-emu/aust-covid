@@ -195,7 +195,6 @@ def track_adult_seroprev(
     model.request_output_for_compartments(f'adult_pop', compartments, strata=filter, save_results=False)
     model.request_output_for_compartments(f'adult_seropos', seropos_comps, strata=filter, save_results=False)
     model.request_function_output('adult_seropos_prop', DerivedOutput('adult_seropos') / DerivedOutput('adult_pop'))
-    model.request_function_output('adult_seropos_prop_copy', DerivedOutput('adult_seropos_prop') * 1.0)
 
 
 def track_strain_prop(
