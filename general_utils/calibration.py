@@ -81,7 +81,7 @@ def get_prior_dist_param_str(
     Note rounding to three decimal places.
     
     Args:
-        prior: The prior object
+        prior: The prior objectx
 
     Returns:
         The parameters to the prior's distribution joined together
@@ -172,6 +172,7 @@ def plot_param_posterior(
         figsize=(16, 21), 
         labeller=MapLabeller(var_name_map=display_names),
         var_names=request_vars,
+        grid=(3, 3),
     )
     fig = plot[0, 0].figure;
     
