@@ -88,8 +88,6 @@ def get_prior_dist_param_str(
     """
     if isinstance(prior, esp.GammaPrior):
         return f'shape: {round(prior.shape, 3)} scale: {round(prior.scale, 3)}'
-    elif isinstance(prior, esp.BetaPrior):
-        return ' '.join([f'{param}: {round(prior.distri_params[param][0], 3)}' for param in prior.distri_params])
     else:
         return ' '.join([f'{param}: {round(prior.distri_params[param], 3)}' for param in prior.distri_params])
 
@@ -106,11 +104,7 @@ def get_prior_dist_support(
     Returns:        
         The bounds to the prior's distribution joined together
     """
-    if isinstance(prior, esp.BetaPrior):
-        bounds = [str(round_sigfig(i[0], 3)) for i in prior.bounds()]
-    else:
-        bounds = [str(round_sigfig(i, 3)) for i in prior.bounds()]
-    return ' to '.join(bounds)
+    return ' to '.join([str(round_sigfig(i, 3)) for i in prior.bounds()])
 
 
 def plot_param_progression(
