@@ -148,45 +148,50 @@ def plot_param_progression(
         trace_fig.show()
 
 
-def plot_param_posterior(
-    idata: az.data.inference_data.InferenceData, 
-    display_names: dict, 
+def plot_posterior_comparison(
+    idata: az.InferenceData, 
+    priors: list, 
+    request_vars: list, 
+    display_names: dict,
+    dens_interval_req: float,
     tex_doc: StandardTexDoc,
-    show_fig: bool=False,
-    request_vars=None,
     name_ext: str='',
-) -> mpl.figure.Figure:
+    show_fig=False,
+):
     """
-    Plot posterior distribution of parameters.
+    Area plot posteriors against prior distributions.
 
     Args:
         idata: Formatted outputs from calibration
-        param_info: Collated information on the parameter values (excluding calibration/priors-related)
-        tex_doc: 
-            
-    Returns:
-        Formatted figure object created from arviz plotting command
+        priors: The prior objects
+        request_vars: The names of the priors to plot
+        display_names: Translation of names to names for display
     """
-    plot = az.plot_posterior(
-        idata,
-        figsize=(16, 21), 
-        labeller=MapLabeller(var_name_map=display_names),
-        var_names=request_vars,
-        grid=(3, 3),
-    )
-    fig = plot[0, 0].figure;
-    
-    filename = f'posteriors{name_ext}.jpg'
-    fig.savefig(SUPPLEMENT_PATH / filename)
+    comparison_plot = az.plot_density(
+        idata, 
+        var_names=request_vars, 
+        shade=0.5, 
+        labeller=MapLabeller(var_name_map=display_names), 
+        point_estimate=None,
+        hdi_prob=dens_interval_req,
+    );
+    req_priors = [p for p in priors if p.name in request_vars]
+    for i_ax, ax in enumerate(comparison_plot.ravel()[:len(request_vars)]):
+        ax_limits = ax.get_xlim()
+        x_vals = np.linspace(ax_limits[0], ax_limits[1], 100)
+        y_vals = req_priors[i_ax].pdf(x_vals)
+        ax.fill_between(x_vals, y_vals, color='k', alpha=0.2, linewidth=2)
+    comp_fig = comparison_plot[0, 0].figure;
+
+    filename = f'post_prior{name_ext}.jpg'
+    comp_fig.savefig(SUPPLEMENT_PATH / filename)
     tex_doc.include_figure(
-        'Parameter posteriors, chains combined.', 
+        'Comparison of posterior densities against prior distributions.', 
         filename,
-        'Calibration', 
+        'Calibration',
     )
-
     if show_fig:
-        fig.show()
-
+        comp_fig.show()
 
 def tabulate_priors(
     priors: list, 
