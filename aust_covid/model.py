@@ -261,10 +261,7 @@ def adapt_gb_matrices_to_aust(
         'Australian population distribution in 2022 and the population of Great Britain in 2000. ' \
         'The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices and the diagonal matrix ' \
         'containing the vector of the ratios between the proportion of the British and Australian populations ' \
-        'within each age bracket as its diagonal elements. ' \
-        'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
-        'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
-        'from the \href{https://ec.europa.eu/eurostat}{Eurostat database}. '
+        'within each age bracket as its diagonal elements. '
     tex_doc.add_line(description, 'Mixing')
 
     # Australia population
@@ -287,7 +284,7 @@ def adapt_gb_matrices_to_aust(
     )
 
     # UK population
-    raw_uk_data = load_uk_pop_data()
+    raw_uk_data = load_uk_pop_data(tex_doc)
 
     uk_pop_fig = px.bar(raw_uk_data)
     uk_pop_fig.update_layout(showlegend=False)

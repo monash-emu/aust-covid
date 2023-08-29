@@ -125,7 +125,9 @@ def load_pop_data(
     return model_pop_data
 
 
-def load_uk_pop_data() -> pd.Series:
+def load_uk_pop_data(
+    tex_doc: StandardTexDoc,
+) -> pd.Series:
     """
     Get the UK census data. Data are in raw form,
     except for renaming the sheet to omit a space (from "Sheet 1"),
@@ -134,6 +136,11 @@ def load_uk_pop_data() -> pd.Series:
     Returns:
         The population data
     """
+    description = 'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
+        'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
+        'from the \href{https://ec.europa.eu/eurostat}{Eurostat database}. '
+    tex_doc.add_line(description, 'Mixing')
+    
     sheet_name = "cens_01nscbirth__custom_6028079_page_spreadsheet.xlsx"
     data = pd.read_excel(
         DATA_PATH / sheet_name, 
