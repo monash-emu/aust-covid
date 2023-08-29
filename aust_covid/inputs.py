@@ -24,7 +24,7 @@ def load_calibration_targets(
         'The final calibration target for cases was constructed as the OWID data for 2021 ' \
         'concatenated with the Australian Government data for 2022. ' \
         f'These daily case data were then smoothed using a {window}-day moving average. '
-    tex_doc.add_line(description, 'Targets')
+    tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
     # National data
     national_data = pd.read_csv(DATA_PATH / 'Aus_covid_data.csv', index_col='date')
@@ -51,7 +51,7 @@ def load_who_data(
         '{Coronavirus (COVID-19) Dashboard} downloaded on 18\\textsuperscript{th} July 2023. ' \
         f'These daily deaths data were then smoothed using a {window}-day ' \
         'moving average. '
-    tex_doc.add_line(description, 'Targets')
+    tex_doc.add_line(description, 'Targets', subsection='Deaths')
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
     processed_data = raw_data[raw_data['Country'] == 'Australia']
