@@ -269,7 +269,7 @@ def plot_dispersion_examples(
                 label = f'{round(cis.columns[i_cent] * 100)} to {round(centile * 100)} centile, {o}'
                 mid_trace = go.Scatter(x=cis.index, y=cis[centile], fill='tonexty', line=dict(width=0.0), fillcolor=colour, name=label)
                 fig.add_traces(mid_trace, rows=row, cols=col)
-            target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {o}', mode='markers', marker={'color': f'rgb({outputs[o]})', 'size': 4})
+            target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {o}', mode='markers', marker={'color': f'rgb({output_colours[o]})', 'size': 4})
             fig.add_trace(target_trace, row=row, col=col)
             fig.layout.annotations[i_sample * len(outputs) + i_out].update(text=f'{o}, dispersion param: {round(float(disps.data), 1)}')
 
@@ -282,4 +282,3 @@ def plot_dispersion_examples(
     )
     if show_fig:
         fig.show()
-        

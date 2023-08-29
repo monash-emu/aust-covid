@@ -145,14 +145,15 @@ def track_deaths(
     moving_average_window: int,
 ) -> str:
     ba2_adj_name = 'ba2_rel_ifr'
+    ba2_adj_str = ba2_adj_name.replace('_', '\_')
     description = 'Calculation of the COVID-19-specific deaths follows an analogous ' \
         'approach to that described for notifications, ' \
         'except that there is no assumption of partial observation and ' \
         'age-specific infection fatality rates are used. ' \
         'For each age group, we first multiply the age-specific incidence ' \
-        'by the infection fatality rate for that group, . ' \
-        'and adjust this rate according to the relative infectiousness of the BA.2 ' \
-        f"subvariant in the case of this strain with the `{ba2_adj_name}' parameter. " \
+        'by the infection fatality rate for that group, ' \
+        'and then adjust this rate according to the relative infectiousness of the BA.2 ' \
+        f"subvariant in the case of this strain with the `{ba2_adj_str}' parameter. " \
         'Next, we convolve this rate with a gamma distribution ' \
         'to obtain the daily rate of deaths for each age group, and lastly sum over age groups. \n'
     tex_doc.add_line(description, 'Outputs', subsection='Deaths')

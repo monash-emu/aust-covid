@@ -480,7 +480,7 @@ def get_spatial_stratification(
         'to represent the remaining major jurisdictions of Australia. ' \
         f'Transmission in {strata[0].upper()} was initially set to zero, ' \
         f'and subsquently scaled up to being equal to that of the {strata[1]} ' \
-        f"jurisdictions of Australia over a period that governed by the `{reopen_param_str}' parameter. "
+        f"jurisdictions of Australia over a period that governed by the `{reopen_param_str.replace('_', ' ')}' parameter. "
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)

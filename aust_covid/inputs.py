@@ -104,10 +104,10 @@ def load_pop_data(
     tex_doc: StandardTexDoc,
 ) -> tuple:
     sheet_name = '31010do002_202206.xlsx'
+    sheet = sheet_name.replace('_', '\_')
     description = f'For estimates of the Australian population, the spreadsheet was downloaded ' \
         'from the Australian Bureau of Statistics website on 1\\textsuperscript{st} March 2023 \cite{abs2022} ' \
-        f'(sheet {sheet_name}).' \
-        "Minor jurisdictions other than Australia's eight major state and territories " \
+        f"(sheet {sheet}). Minor jurisdictions other than Australia's eight major state and territories " \
         '(i.e. Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory) are excluded from these data. ' \
         'These much smaller jurisdictions likely contribute little to overall COVID-19 epidemiology ' \
         'and are also unlikely to mix homogeneously with the larger states/territories. '
@@ -237,7 +237,7 @@ def get_ifrs(
     ) / 100.0
     odriscoll.index = odriscoll.index + 2.5
 
-    # Raw data from Erikstrup
+    # Erikstrup raw data
     erikstrup = pd.Series(
         {
             (17 + 36) / 2: 2.6,
