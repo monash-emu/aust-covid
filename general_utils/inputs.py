@@ -20,9 +20,10 @@ def load_param_info(
             descriptions: A brief reader-digestible name/description for the parameter
             units: The unit of measurement for the quantity (empty string if dimensionless)
             evidence: TeX-formatted full description of the evidence underpinning the choice of value
+            abbrevaitions: Short name for parameters, e.g. for some plots
             value: The values provided in the parameters argument
     """
-    data_cols = ['descriptions', 'units', 'evidence']
+    data_cols = ['descriptions', 'units', 'evidence', 'abbreviations']
     param_keys = parameters.keys()
     out_df = pd.DataFrame(index=param_keys, columns=data_cols)
     with open(data_path, 'r') as param_file:
