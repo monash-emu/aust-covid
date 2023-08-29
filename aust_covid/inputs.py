@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from copy import copy
 from datetime import datetime, timedelta
-from general_utils.tex_utils import StandardTexDoc
+from general_utils.tex import StandardTexDoc
 from plotly import graph_objects as go
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
@@ -16,18 +16,17 @@ def load_calibration_targets(
     window: int,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
         '\href{https://www.health.gov.au/health-alerts/covid-19/weekly-reporting}{The Department of Health} ' \
         'on the 2\\textsuperscript{nd} of May 2023. Data that extended back to 2021 were obtained from ' \
         '\href{https://github.com/owid/covid-19-data/tree/master/public/data#license}{Our World in Data (OWID)} on ' \
-        'the 16\\textsuperscript{th} of June 2023, downloaded from ' \
+        'the 16\\textsuperscript{th} of June 2023.' \
         'The final calibration target for cases was constructed as the OWID data for 2021 ' \
         'concatenated with the Australian Government data for 2022. ' \
         f'These daily case data were then smoothed using a {window}-day moving average. '
     tex_doc.add_line(description, 'Targets')
 
-    # Australian national data
+    # National data
     national_data = pd.read_csv(DATA_PATH / 'Aus_covid_data.csv', index_col='date')
     national_data.index = pd.to_datetime(national_data.index)
     national_data = national_data[national_data['region'] == 'AUS']
@@ -36,7 +35,7 @@ def load_calibration_targets(
     owid_data = pd.read_csv(DATA_PATH / 'aust_2021_surv_data.csv', index_col=0)['new_cases']
     owid_data.index = pd.to_datetime(owid_data.index)
 
-    # Join, truncate and smooth
+    # Join, truncate, smooth
     national_data_start = datetime(2022, 1, 1)
     interval = (start_request < owid_data.index) & (owid_data.index < national_data_start)
     composite_aust_data = pd.concat([owid_data[interval], national_data['cases']])
@@ -47,7 +46,6 @@ def load_who_data(
     window: int,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-
     description = 'The daily time series of deaths for Australia was obtained from the ' \
         "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
         '{Coronavirus (COVID-19) Dashboard} downloaded on 18\\textsuperscript{th} July 2023. ' \
@@ -70,7 +68,6 @@ def load_serosurvey_data(
     immunity_lag: float,
     tex_doc: StandardTexDoc,
 ) -> pd.Series:
-
     description = 'We obtained estimates of the seroprevalence of antibodies to ' \
         'nucleocapsid antigen from Australia blood donors from Kirby Institute serosurveillance reports. ' \
         'Data are available from \href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf}' \
@@ -89,13 +86,12 @@ def load_serosurvey_data(
         }
     )
     data.index = data.index - timedelta(days=immunity_lag)
-
     return data
 
 
 def load_raw_pop_data(
     sheet_name: str,
-):
+) -> pd.DataFrame:
     skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
     for group in range(16):
         skip_rows += list(range(228 + group * 6, 233 + group * 6))
@@ -108,9 +104,10 @@ def load_pop_data(
     tex_doc: StandardTexDoc,
 ) -> tuple:
     sheet_name = '31010do002_202206.xlsx'
+    sheet = sheet_name.replace('_', '\_')
     description = f'For estimates of the Australian population, the spreadsheet was downloaded ' \
-        'from the Australian Bureau of Statistics website on 01 March 2023.\cite{abs2022} ' \
-        "Minor jurisdictions other than Australia's eight major state and territories " \
+        'from the Australian Bureau of Statistics website on 1\\textsuperscript{st} March 2023 \cite{abs2022} ' \
+        f"(sheet {sheet}). Minor jurisdictions other than Australia's eight major state and territories " \
         '(i.e. Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory) are excluded from these data. ' \
         'These much smaller jurisdictions likely contribute little to overall COVID-19 epidemiology ' \
         'and are also unlikely to mix homogeneously with the larger states/territories. '
@@ -125,15 +122,14 @@ def load_pop_data(
     )
     model_pop_data = pd.concat([spatial_pops.loc[:'70-74'], pd.DataFrame([spatial_pops.loc['75-79':].sum()])])
     model_pop_data.index = age_strata
-
     return model_pop_data
 
 
 def load_uk_pop_data() -> pd.Series:
     """
     Get the UK census data. Data are in raw form,
-    except that renaming the sheet to omit a space (from "Sheet 1")
-    results in many fewer warnings.
+    except for renaming the sheet to omit a space (from "Sheet 1"),
+    to reduce the number of warnings.
 
     Returns:
         The population data
@@ -170,16 +166,21 @@ def load_household_impacts_data():
     return data
 
 
-def load_google_mob_year_df(year=int) -> pd.DataFrame:
-    mob_df = pd.read_csv(DATA_PATH / f"{year}_AU_Region_Mobility_Report.csv", index_col=8)
-    mob_df = mob_df[[isinstance(region, float) for region in mob_df["sub_region_1"]]]  # National data subregion is given as nan
-    mob_cols = [col for col in mob_df.columns if "percent_change_from_baseline" in col]
+def load_google_mob_year_df(
+    year=int,
+) -> pd.DataFrame:
+    mob_df = pd.read_csv(DATA_PATH / f'{year}_AU_Region_Mobility_Report.csv', index_col=8)
+    mob_df = mob_df[[isinstance(region, float) for region in mob_df['sub_region_1']]]  # National data subregion is given as nan
+    mob_cols = [col for col in mob_df.columns if 'percent_change_from_baseline' in col]
     mob_df = mob_df[mob_cols]
     mob_df.index = pd.to_datetime(mob_df.index)
     return mob_df
 
 
-def get_ifrs(tex_doc, show_figs=False):
+def get_ifrs(
+    tex_doc: StandardTexDoc,
+    show_figs=False,
+) -> dict:
     description = 'Age-specific infection fatality rates (IFRs) were estimated by various groups ' \
         "in unvaccinated populations, including O'Driscoll and colleagues who estimated " \
         'IFRs using data from 45 countries. These IFRs pertained to the risk of death given infection ' \
@@ -236,7 +237,7 @@ def get_ifrs(tex_doc, show_figs=False):
     ) / 100.0
     odriscoll.index = odriscoll.index + 2.5
 
-    # Raw data from Erikstrup
+    # Erikstrup raw data
     erikstrup = pd.Series(
         {
             (17 + 36) / 2: 2.6,
