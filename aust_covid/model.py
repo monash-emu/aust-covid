@@ -16,7 +16,7 @@ from summer2.parameters import Parameter, DerivedOutput, Function, Time
 from aust_covid.utils import triangle_wave_func
 from aust_covid.inputs import load_pop_data, load_uk_pop_data
 from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number
-from general_utils.tex import StandardTexDoc
+from emutools.tex import StandardTexDoc
 
 MATRIX_LOCATIONS = [
     'school', 
