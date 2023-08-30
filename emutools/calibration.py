@@ -10,7 +10,7 @@ from summer2 import CompartmentalModel
 from estival.model import BayesianCompartmentalModel
 import estival.priors as esp
 
-from general_utils.tex import StandardTexDoc
+from emutools.tex import StandardTexDoc
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'
@@ -154,9 +154,6 @@ def plot_posterior_comparison(
     request_vars: list, 
     display_names: dict,
     dens_interval_req: float,
-    tex_doc: StandardTexDoc,
-    name_ext: str='',
-    show_fig=False,
 ):
     """
     Area plot posteriors against prior distributions.
@@ -166,6 +163,7 @@ def plot_posterior_comparison(
         priors: The prior objects
         request_vars: The names of the priors to plot
         display_names: Translation of names to names for display
+        dens_interval_req: How much of the central density to plot
     """
     comparison_plot = az.plot_density(
         idata, 
@@ -181,15 +179,24 @@ def plot_posterior_comparison(
         x_vals = np.linspace(ax_limits[0], ax_limits[1], 100)
         y_vals = req_priors[i_ax].pdf(x_vals)
         ax.fill_between(x_vals, y_vals, color='k', alpha=0.2, linewidth=2)
-    comp_fig = comparison_plot[0, 0].figure;
+    return comparison_plot[0, 0].figure
 
+
+def view_posterior_comparison(
+    idata: az.InferenceData, 
+    priors: list, 
+    request_vars: list, 
+    display_names: dict,
+    dens_interval_req: float,
+    tex_doc: StandardTexDoc,
+    name_ext: str='',
+    show_fig=False,
+):
+    comp_fig = plot_posterior_comparison(idata, priors, request_vars, display_names, dens_interval_req)
     filename = f'post_prior{name_ext}.jpg'
     comp_fig.savefig(SUPPLEMENT_PATH / filename)
-    tex_doc.include_figure(
-        'Comparison of posterior densities against prior distributions.', 
-        filename,
-        'Calibration',
-    )
+    caption = 'Comparison of posterior densities against prior distributions.'
+    tex_doc.include_figure(caption, filename, 'Calibration')
     if show_fig:
         comp_fig.show()
 

@@ -11,8 +11,8 @@ from summer2 import CompartmentalModel
 
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
-from general_utils.tex import StandardTexDoc
-from general_utils.calibration import melt_spaghetti, get_negbinom_target_widths
+from emutools.tex import StandardTexDoc
+from emutools.calibration import melt_spaghetti, get_negbinom_target_widths
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'

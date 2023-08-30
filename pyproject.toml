@@ -14,7 +14,7 @@ description = "A set of calibration and probabilistic programming tools for use 
 authors = ["James Trauer <james.trauer@monash.edu>"]
 packages = [
     {include = "aust_covid"},
-    {include = "general_utils"}
+    {include = "emutools"}
 ]
 
 [tool.poetry.dependencies]

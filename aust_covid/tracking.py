@@ -10,7 +10,7 @@ from summer2.parameters import Parameter, DerivedOutput, Function
 
 from aust_covid.utils import convolve_probability, build_gamma_dens_interval_func
 from aust_covid.inputs import load_household_impacts_data
-from general_utils.tex import StandardTexDoc
+from emutools.tex import StandardTexDoc
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'
@@ -223,7 +223,8 @@ def track_reproduction_number(
     description = 'The time-varying effective reproduction number is calculated as ' \
         'the rate of all infections (including both first infection and reinfection) ' \
         'divided by the prevalence of infectious persons (i.e. in the infectious compartments) ' \
-        'multiplied by the duration of the infectious period.\n'
+        'multiplied by the duration of the infectious period. ' \
+        'This quantity was tracked for illustrative purposes, but did not contribute to calibration. \n'
     tex_doc.add_line(description, 'Outputs', subsection='Reproduction Number')
 
     model.request_output_for_compartments('n_infectious', infectious_compartments)

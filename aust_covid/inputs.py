@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from copy import copy
 from datetime import datetime, timedelta
-from general_utils.tex import StandardTexDoc
+from emutools.tex import StandardTexDoc
 from plotly import graph_objects as go
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
@@ -173,17 +173,6 @@ def load_household_impacts_data():
     return data
 
 
-def load_google_mob_year_df(
-    year=int,
-) -> pd.DataFrame:
-    mob_df = pd.read_csv(DATA_PATH / f'{year}_AU_Region_Mobility_Report.csv', index_col=8)
-    mob_df = mob_df[[isinstance(region, float) for region in mob_df['sub_region_1']]]  # National data subregion is given as nan
-    mob_cols = [col for col in mob_df.columns if 'percent_change_from_baseline' in col]
-    mob_df = mob_df[mob_cols]
-    mob_df.index = pd.to_datetime(mob_df.index)
-    return mob_df
-
-
 def get_ifrs(
     tex_doc: StandardTexDoc,
     show_figs=False,
@@ -301,3 +290,14 @@ def get_ifrs(
 
     model_breakpoint_values.index = model_breakpoint_values.index.map(lambda i: f'ifr_{int(i)}')
     return model_breakpoint_values.to_dict()
+
+
+def load_google_mob_year_df(
+    year=int,
+) -> pd.DataFrame:
+    mob_df = pd.read_csv(DATA_PATH / f'{year}_AU_Region_Mobility_Report.csv', index_col=8)
+    mob_df = mob_df[[isinstance(region, float) for region in mob_df['sub_region_1']]]  # National data subregion is given as nan
+    mob_cols = [col for col in mob_df.columns if 'percent_change_from_baseline' in col]
+    mob_df = mob_df[mob_cols]
+    mob_df.index = pd.to_datetime(mob_df.index)
+    return mob_df
