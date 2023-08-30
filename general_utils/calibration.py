@@ -193,6 +193,7 @@ def plot_posterior_comparison(
     if show_fig:
         comp_fig.show()
 
+
 def tabulate_priors(
     priors: list, 
     param_info: pd.DataFrame, 
