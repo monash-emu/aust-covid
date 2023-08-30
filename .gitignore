@@ -1,5 +1,5 @@
 supplement/*
-notebook/*
+notebooks/*
 outputs/
 *.pyc
 *ipynb_checkpoints*
