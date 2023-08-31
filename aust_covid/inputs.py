@@ -185,7 +185,14 @@ def get_ifrs(
         'and differences in severity for the variants we simulated. ' \
         'We therefore considered more recent studies, such as that of Erikstrup and colleagues to be better ' \
         'applicable to our local context, although also with limitations. ' \
-        '*** Insert brief description of Erikstrup study here. ***' \
+        'Danish investigators used the increase in anti-nucleocapsid IgG seroprevalence in blood donors ' \
+        'from January to April 2022 to estimate age-specific attack rates for the first Omicron wave in Denmark. ' \
+        '\cite{erikstrup2022} They then re-weighted these values to estimate the attack rate ' \
+        'for the general population aged 17-72. Linking this estimate to COVID-19 deaths ' \
+        'reported within 60 days of a positive PCR, they estimated the Omicron-specific IFR, ' \
+        'which was then re-weighted to exclude people with comorbidities. ' \
+        'Therefore, their final results used in our analysis represent an Omicron-specific IFR ' \
+        'for a healthy vaccinated population aged 17 to 72 years.' \
         "As expected, the estimates from Erikstrup are consideraly lower than those of O'Driscoll. " \
         'However, there are also several potential differences between the Danish epidemic and that of Australia, ' \
         'most notably that community transmission had been established from much earlier in the pandemic in ' \
