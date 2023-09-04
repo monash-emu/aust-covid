@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 pd.options.plotting.backend = 'plotly'
 from copy import copy
 
-from summer2.functions.time import get_linear_interpolation_function
+from summer2.functions.time import get_linear_interpolation_function as linear_interp
 from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply
 from summer2.parameters import Parameter, Function, Time
 
@@ -65,55 +65,20 @@ def build_model(
     add_waning(aust_model, tex_doc)
 
     # Age and heterogeneous mixing
-    raw_matrices = {i: pd.read_csv(DATA_PATH / f'{i}.csv', index_col=0).to_numpy() for i in MATRIX_LOCATIONS}
+    raw_matrices = {l: pd.read_csv(DATA_PATH / f'{l}.csv', index_col=0).to_numpy() for l in MATRIX_LOCATIONS}
     adjusted_matrices = adapt_gb_matrices_to_aust(age_strata, raw_matrices, model_pops, tex_doc)
-    mixing_matrix = sum(list(adjusted_matrices.values()))
+    static_matrix = sum(list(adjusted_matrices.values()))
 
-    state_data = get_raw_state_mobility()
-    jurisdictions, mob_locs = get_constants_from_mobility(state_data)
-    wa_data = state_data.loc[state_data['sub_region_1'] == 'Western Australia', mob_locs]
-    state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions)
-    non_wa_relmob = get_relative_mobility(state_averages)
-    wa_relmob = get_relative_mobility(wa_data)
-    mob_map = {
-        'other_locations': 
-            {
-                'retail_and_recreation': 0.34, 
-                'grocery_and_pharmacy': 0.33,
-                'parks': 0.0,
-                'transit_stations': 0.33,
-                'workplaces': 0.0,
-                'residential': 0.0,
-            },
-        'work':
-            {
-                'retail_and_recreation': 0.0, 
-                'grocery_and_pharmacy': 0.0,
-                'parks': 0.0,
-                'transit_stations': 0.0,
-                'workplaces': 1.0,
-                'residential': 0.0,
-            },  
-    }
-    model_mob = map_mobility_locations(wa_relmob, non_wa_relmob, mob_map)
-    smoothed_model_mob = model_mob.rolling(7).mean().dropna()
-
-    other_func = get_linear_interpolation_function(aust_model.get_epoch().dti_to_index(smoothed_model_mob.index), smoothed_model_mob['non_wa', 'other_locations'].to_numpy())
-    work_func = get_linear_interpolation_function(aust_model.get_epoch().dti_to_index(smoothed_model_mob.index), smoothed_model_mob['non_wa', 'work'].to_numpy())
-
-    def mobility_scaling(matrices, work_func, other_func):
-        return matrices['home'] + matrices['school'] + other_func * matrices['other_locations'] + work_func * matrices['work']
-
-    raw_matrices = {i: pd.read_csv(DATA_PATH / f'{i}.csv', index_col=0).to_numpy() for i in MATRIX_LOCATIONS}
-    adjusted_matrices = adapt_gb_matrices_to_aust(age_strata, raw_matrices, model_pops, tex_doc)
-    mixing_matrix = Function(
-        mobility_scaling, 
-        [
-            raw_matrices,
-            work_func,
-            other_func,
-        ]
-    )
+    # Mobility effects
+    mobility_sens = True
+    if mobility_sens:
+        model_mob = get_processed_mobility_data()
+        interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
+        def mobility_scaling(matrices, non_wa_work, non_wa_other):
+            return matrices['home'] + matrices['school'] + non_wa_other * matrices['other_locations'] + non_wa_work * matrices['work']
+        mixing_matrix = Function(mobility_scaling, [adjusted_matrices, interp_funcs['non_wa']['work'], interp_funcs['non_wa']['other_locations']])
+    else:
+        mixing_matrix = static_matrix
 
     age_strat = get_age_stratification(compartments, age_strata, mixing_matrix, tex_doc)
     aust_model.stratify_with(age_strat)
@@ -533,7 +498,7 @@ def get_spatial_stratification(
     spatial_strat.set_population_split(state_props.to_dict())
     reopen_index = model.get_epoch().dti_to_index(reopen_date)
     reopen_times = [reopen_index, reopen_index + Parameter(reopen_param_str)]
-    reopen_func = get_linear_interpolation_function(reopen_times, np.array([0.0, 1.0]))
+    reopen_func = linear_interp(reopen_times, np.array([0.0, 1.0]))
     infection_adj = {strata[0]: reopen_func, strata[1]: None}
     for infection_process in infection_processes:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
@@ -555,3 +520,42 @@ def adjust_state_pops(
         props = model_pops[state] / model_pops[state].sum()
         props.index = props.index.astype(str)
         model.adjust_population_split('agegroup', {'states': state}, props.to_dict())
+
+
+def get_processed_mobility_data():
+    state_data = get_raw_state_mobility()
+    jurisdictions, mob_locs = get_constants_from_mobility(state_data)
+    wa_data = state_data.loc[state_data['sub_region_1'] == 'Western Australia', mob_locs]
+    state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions)
+    non_wa_relmob = get_relative_mobility(state_averages)
+    wa_relmob = get_relative_mobility(wa_data)
+    mob_map = {
+        'other_locations': 
+            {
+                'retail_and_recreation': 0.34, 
+                'grocery_and_pharmacy': 0.33,
+                'parks': 0.0,
+                'transit_stations': 0.33,
+                'workplaces': 0.0,
+                'residential': 0.0,
+            },
+        'work':
+            {
+                'retail_and_recreation': 0.0, 
+                'grocery_and_pharmacy': 0.0,
+                'parks': 0.0,
+                'transit_stations': 0.0,
+                'workplaces': 1.0,
+                'residential': 0.0,
+            },  
+    }
+    model_locs_mob = map_mobility_locations(wa_relmob, non_wa_relmob, mob_map)
+    model_mob = model_locs_mob.rolling(7).mean().dropna()
+    return model_mob
+
+
+def get_interp_funcs_from_mobility(mob_values, epoch):
+    interp_funcs = {state: {} for state in mob_values.columns.get_level_values(0)}
+    for state, mob_loc in mob_values.columns:
+        interp_funcs[state][mob_loc] = linear_interp(epoch.dti_to_index(mob_values.index), mob_values[state, mob_loc].to_numpy())
+    return interp_funcs
