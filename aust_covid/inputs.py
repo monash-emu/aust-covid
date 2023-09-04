@@ -299,12 +299,18 @@ def get_ifrs(
     return model_breakpoint_values.to_dict()
 
 
-def load_google_mob_year_df(
-    year=int,
-) -> pd.DataFrame:
-    mob_df = pd.read_csv(DATA_PATH / f'{year}_AU_Region_Mobility_Report.csv', index_col=8)
-    mob_df = mob_df[[isinstance(region, float) for region in mob_df['sub_region_1']]]  # National data subregion is given as nan
-    mob_cols = [col for col in mob_df.columns if 'percent_change_from_baseline' in col]
-    mob_df = mob_df[mob_cols]
-    mob_df.index = pd.to_datetime(mob_df.index)
-    return mob_df
+def get_raw_state_mobility():
+    """
+    Get raw Google mobility data, concatenating 2021 and 2022 data,
+    retaining only state-level data and converting to date index.
+
+    Returns:
+        State-level Google mobility data
+    """
+    raw_data_2021 = pd.read_csv(DATA_PATH / '2021_AU_Region_Mobility_Report.csv', index_col=8)
+    raw_data_2022 = pd.read_csv(DATA_PATH / '2022_AU_Region_Mobility_Report.csv', index_col=8)
+    raw_data =  pd.concat([raw_data_2021, raw_data_2022])
+    
+    state_data = raw_data.loc[raw_data['sub_region_1'].notnull() & raw_data['sub_region_2'].isnull()]
+    state_data.index = pd.to_datetime(state_data.index)
+    return state_data
