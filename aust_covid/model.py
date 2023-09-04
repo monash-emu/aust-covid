@@ -1,6 +1,5 @@
 from pathlib import Path
 from datetime import datetime
-from jax import numpy as jnp
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -67,7 +66,6 @@ def build_model(
     # Age and heterogeneous mixing
     raw_matrices = {l: pd.read_csv(DATA_PATH / f'{l}.csv', index_col=0).to_numpy() for l in MATRIX_LOCATIONS}
     adjusted_matrices = adapt_gb_matrices_to_aust(age_strata, raw_matrices, model_pops, tex_doc)
-    static_matrix = sum(list(adjusted_matrices.values()))
 
     # Mobility effects
     mobility_sens = True
@@ -78,7 +76,7 @@ def build_model(
             return matrices['home'] + matrices['school'] + non_wa_other * matrices['other_locations'] + non_wa_work * matrices['work']
         mixing_matrix = Function(mobility_scaling, [adjusted_matrices, interp_funcs['non_wa']['work'], interp_funcs['non_wa']['other_locations']])
     else:
-        mixing_matrix = static_matrix
+        mixing_matrix = sum(list(adjusted_matrices.values()))
 
     age_strat = get_age_stratification(compartments, age_strata, mixing_matrix, tex_doc)
     aust_model.stratify_with(age_strat)
