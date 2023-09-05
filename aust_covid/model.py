@@ -73,7 +73,7 @@ def build_model(
 
     # Mobility effects
     if mobility_sens:
-        model_mob = get_processed_mobility_data()
+        model_mob = get_processed_mobility_data(tex_doc)
         interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
         wa_reopen_func = get_wa_infection_scaling(datetime(2022, 3, 3), aust_model)
         wa_prop_func = wa_reopen_func * state_props[0]
@@ -532,13 +532,20 @@ def adjust_state_pops(
         model.adjust_population_split('agegroup', {'states': state}, props.to_dict())
 
 
-def get_processed_mobility_data():
-    state_data = get_raw_state_mobility()
+def get_processed_mobility_data(
+    tex_doc: StandardTexDoc
+) -> pd.DataFrame:
+    state_data = get_raw_state_mobility(tex_doc)
     jurisdictions, mob_locs = get_constants_from_mobility(state_data)
     wa_data = state_data.loc[state_data['sub_region_1'] == 'Western Australia', mob_locs]
-    state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions)
+    state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions, tex_doc)
+
+    description = 'Values were then converted from the reported percentage ' \
+        'change from baseline to the proportional change relative to baseline. '
+    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
     non_wa_relmob = get_relative_mobility(state_averages)
     wa_relmob = get_relative_mobility(wa_data)
+
     mob_map = {
         'other_locations': 
             {
@@ -559,8 +566,12 @@ def get_processed_mobility_data():
                 'residential': 0.0,
             },  
     }
-    model_locs_mob = map_mobility_locations(wa_relmob, non_wa_relmob, mob_map)
-    model_mob = model_locs_mob.rolling(7).mean().dropna()
+    model_locs_mob = map_mobility_locations(wa_relmob, non_wa_relmob, mob_map, tex_doc)
+
+    average_window = 7
+    description = f'Last, we took the {average_window} moving average to smooth the ' \
+        'often abrupt shifts in mobility, including with weekend and public holidays. '
+    model_mob = model_locs_mob.rolling(average_window).mean().dropna()
     return model_mob
 
 

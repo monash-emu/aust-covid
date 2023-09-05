@@ -299,7 +299,9 @@ def get_ifrs(
     return model_breakpoint_values.to_dict()
 
 
-def get_raw_state_mobility():
+def get_raw_state_mobility(
+    tex_doc: StandardTexDoc
+) -> pd.DataFrame:
     """
     Get raw Google mobility data, concatenating 2021 and 2022 data,
     retaining only state-level data and converting to date index.
@@ -307,6 +309,12 @@ def get_raw_state_mobility():
     Returns:
         State-level Google mobility data
     """
+    description = 'We undertook an alternative analysis in which estimates of population mobility ' \
+        'were used to scale transmission rates. ' \
+        'Raw estimates of Australian population mobility were obtained from Google, ' \
+        'with 2021 and 2022 data concatenated together. '
+    tex_doc.add_line(description, section='Mobility', subsection='Data processing')   
+
     raw_data_2021 = pd.read_csv(DATA_PATH / '2021_AU_Region_Mobility_Report.csv', index_col=8)
     raw_data_2022 = pd.read_csv(DATA_PATH / '2022_AU_Region_Mobility_Report.csv', index_col=8)
     raw_data =  pd.concat([raw_data_2021, raw_data_2022])

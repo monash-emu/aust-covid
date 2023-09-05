@@ -5,6 +5,7 @@ from plotly.express.colors import colorbrewer
 from typing import Dict, Tuple
 
 from aust_covid.inputs import load_raw_pop_data
+from emutools.tex import StandardTexDoc
 PROJECT_PATH = Path().resolve().parent
 DATA_PATH = PROJECT_PATH / 'data'
 CHANGE_STR = '_percent_change_from_baseline'
@@ -15,6 +16,7 @@ def get_non_wa_mob_averages(
     state_data: pd.DataFrame, 
     mob_locs: set, 
     jurisdictions: set,
+    tex_doc: StandardTexDoc,
 ) -> pd.DataFrame:
     """
     Calculate the weighted averages for the mobility estimates in the 
@@ -28,6 +30,13 @@ def get_non_wa_mob_averages(
     Returns:
         Weighted averages for non-WA jurisdictions
     """
+    description = 'Values for Western Australia were extracted separately from the pooled data, ' \
+        'while the data for the remaining states were linked to the same population size ' \
+        'data as used to set the compartment sizes for the model. ' \
+        'These population values were then used as weights to calculate weighted national averages ' \
+        "for population mobility by each Google `location' " \
+        f'(being {" ".join([i for i in mob_locs])}). '
+    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
     non_wa_data = state_data.loc[state_data['sub_region_1'] != 'Western Australia']
 
     # Add state population totals to dataframe
@@ -83,6 +92,7 @@ def map_mobility_locations(
     wa_relmob: pd.DataFrame, 
     non_wa_relmob: pd.DataFrame, 
     mob_map: Dict[str, dict],
+    tex_doc: StandardTexDoc,
 ) -> pd.DataFrame:
     """
     Map mobility estimated values to model locations.
@@ -95,6 +105,10 @@ def map_mobility_locations(
     Returns:
         Mobility functions for use in the model
     """
+    description = 'Next, we used a mapping dictionary to map from the reported ' \
+        "`locations' to the contact locations of the model's mixing matrix. "
+    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
+
     patch_data = {
         'wa': wa_relmob,
         'non_wa': non_wa_relmob,
