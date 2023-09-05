@@ -566,6 +566,16 @@ def get_processed_mobility_data(
                 'residential': 0.0,
             },  
     }
+
+    for location in mob_map:
+        if sum(mob_map[location].values()) != 1.0:
+            raise ValueError(f'Mobility mapping does not sum to one for {location}')
+
+    mob_map_table = pd.DataFrame(mob_map)
+    mob_map_table.index = mob_map_table.index.str.replace('_', ' ')
+    mob_map_table.columns = mob_map_table.columns.str.replace('_', ' ')
+    tex_doc.include_table(mob_map_table, section='Mobility', subsection='Data processing')
+
     model_locs_mob = map_mobility_locations(wa_relmob, non_wa_relmob, mob_map, tex_doc)
 
     average_window = 7
