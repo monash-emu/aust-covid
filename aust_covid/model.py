@@ -64,6 +64,8 @@ def build_model(
     add_waning(aust_model, tex_doc)
 
     # Age and heterogeneous mixing
+    state_props = model_pops.sum() / model_pops.sum().sum()
+    wa_reopen_func = get_wa_infection_scaling(datetime(2022, 3, 3), aust_model)
     raw_matrices = {l: pd.read_csv(DATA_PATH / f'{l}.csv', index_col=0).to_numpy() for l in MATRIX_LOCATIONS}
     adjusted_matrices = adapt_gb_matrices_to_aust(age_strata, raw_matrices, model_pops, tex_doc)
 
@@ -91,7 +93,7 @@ def build_model(
     imm_strat = get_imm_stratification(compartments, infection_processes, tex_doc)
     aust_model.stratify_with(imm_strat)
 
-    spatial_strat = get_spatial_stratification(datetime(2022, 3, 3), compartments, infection_processes, model_pops, aust_model, tex_doc)
+    spatial_strat = get_spatial_stratification(compartments, infection_processes, model_pops, tex_doc, wa_reopen_func, state_props)
     aust_model.stratify_with(spatial_strat)
     adjust_state_pops(model_pops, aust_model, tex_doc)
 
@@ -473,13 +475,23 @@ def add_reinfection(
             )
 
 
-def get_spatial_stratification(
+def get_wa_infection_scaling(
     reopen_date: datetime, 
+    model: CompartmentalModel,
+) -> Function:
+    reopen_param_str = 'wa_reopen_period'
+    reopen_index = model.get_epoch().dti_to_index(reopen_date)
+    reopen_times = [reopen_index, reopen_index + Parameter(reopen_param_str)]
+    return linear_interp(reopen_times, np.array([0.0, 1.0]))
+
+
+def get_spatial_stratification(
     compartments: list, 
     infection_processes: list, 
     model_pops: pd.DataFrame, 
-    model: CompartmentalModel,
     tex_doc: StandardTexDoc,
+    reopen_func,
+    state_props,
 ) -> Stratification:
     strata = model_pops.columns
     reopen_param_str = 'wa_reopen_period'
@@ -492,11 +504,7 @@ def get_spatial_stratification(
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)
-    state_props = model_pops.sum() / model_pops.sum().sum()
     spatial_strat.set_population_split(state_props.to_dict())
-    reopen_index = model.get_epoch().dti_to_index(reopen_date)
-    reopen_times = [reopen_index, reopen_index + Parameter(reopen_param_str)]
-    reopen_func = linear_interp(reopen_times, np.array([0.0, 1.0]))
     infection_adj = {strata[0]: reopen_func, strata[1]: None}
     for infection_process in infection_processes:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
