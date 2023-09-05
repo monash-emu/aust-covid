@@ -44,6 +44,7 @@ def build_model(
     end_date: datetime, 
     tex_doc: StandardTexDoc,
     moving_average_window: int,
+    mobility_sens: bool=False,
 ):
     
     # Model construction
@@ -71,7 +72,6 @@ def build_model(
     adjusted_matrices = adapt_gb_matrices_to_aust(age_strata, raw_matrices, model_pops, tex_doc)
 
     # Mobility effects
-    mobility_sens = True
     if mobility_sens:
         model_mob = get_processed_mobility_data()
         interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
