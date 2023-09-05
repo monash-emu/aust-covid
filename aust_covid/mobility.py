@@ -35,7 +35,7 @@ def get_non_wa_mob_averages(
         'data as used to set the compartment sizes for the model. ' \
         'These population values were then used as weights to calculate weighted national averages ' \
         "for population mobility by each Google `location' " \
-        f'(being {" ".join([i for i in mob_locs])}). '
+        f'(being {" ".join([i.replace("_", " ") for i in mob_locs])}). '
     tex_doc.add_line(description, section='Mobility', subsection='Data processing')
     non_wa_data = state_data.loc[state_data['sub_region_1'] != 'Western Australia']
 
