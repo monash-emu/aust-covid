@@ -16,6 +16,7 @@ from aust_covid.utils import triangle_wave_func
 from aust_covid.inputs import load_pop_data, load_uk_pop_data, get_raw_state_mobility
 from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number
 from emutools.tex import StandardTexDoc
+from emutools.parameters import capture_kwargs
 from aust_covid.mobility import get_non_wa_mob_averages, get_constants_from_mobility, get_relative_mobility, map_mobility_locations
 
 MATRIX_LOCATIONS = [
@@ -74,9 +75,12 @@ def build_model(
     if mobility_sens:
         model_mob = get_processed_mobility_data()
         interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
-        def mobility_scaling(matrices, non_wa_work, non_wa_other):
-            return matrices['home'] + matrices['school'] + non_wa_other * matrices['other_locations'] + non_wa_work * matrices['work']
-        mixing_matrix = Function(mobility_scaling, [adjusted_matrices, interp_funcs['non_wa']['work'], interp_funcs['non_wa']['other_locations']])
+        wa_reopen_func = get_wa_infection_scaling(datetime(2022, 3, 3), aust_model)
+        wa_prop_func = wa_reopen_func * state_props[0]
+        wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['wa'])
+        non_wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['non_wa'])
+        mob_funcs = Function(capture_kwargs, kwargs={'wa': wa_funcs, 'non_wa': non_wa_funcs})
+        mixing_matrix = Function(get_dynamic_matrix, [adjusted_matrices, mob_funcs, wa_prop_func])
     else:
         mixing_matrix = sum(list(adjusted_matrices.values()))
 
@@ -565,3 +569,12 @@ def get_interp_funcs_from_mobility(mob_values, epoch):
     for state, mob_loc in mob_values.columns:
         interp_funcs[state][mob_loc] = linear_interp(epoch.dti_to_index(mob_values.index), mob_values[state, mob_loc].to_numpy())
     return interp_funcs
+
+
+def get_dynamic_matrix(matrices, mob_funcs, wa_prop_func):
+    working_matrix = matrices['home'] + matrices['school']
+    for location in ['other_locations', 'work']:
+        for patch in ['wa', 'non_wa']:
+            prop = wa_prop_func if patch == 'wa' else 1.0 - wa_prop_func
+            working_matrix += matrices[location] * mob_funcs[patch][location] * prop
+    return working_matrix
