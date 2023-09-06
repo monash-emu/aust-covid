@@ -13,11 +13,11 @@ from summer2 import CompartmentalModel, Stratification, StrainStratification, Mu
 from summer2.parameters import Parameter, Function, Time
 
 from aust_covid.utils import triangle_wave_func
-from aust_covid.inputs import load_pop_data, load_uk_pop_data, get_raw_state_mobility
+from aust_covid.inputs import load_pop_data, load_uk_pop_data
 from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number
+from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
 from emutools.tex import StandardTexDoc
 from emutools.parameters import capture_kwargs
-from aust_covid.mobility import get_non_wa_mob_averages, get_constants_from_mobility, get_relative_mobility, map_mobility_locations
 
 MATRIX_LOCATIONS = [
     'school', 
@@ -530,72 +530,3 @@ def adjust_state_pops(
         props = model_pops[state] / model_pops[state].sum()
         props.index = props.index.astype(str)
         model.adjust_population_split('agegroup', {'states': state}, props.to_dict())
-
-
-def get_processed_mobility_data(
-    tex_doc: StandardTexDoc
-) -> pd.DataFrame:
-    state_data = get_raw_state_mobility(tex_doc)
-    jurisdictions, mob_locs = get_constants_from_mobility(state_data)
-    wa_data = state_data.loc[state_data['sub_region_1'] == 'Western Australia', mob_locs]
-    state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions, tex_doc)
-
-    description = 'Values were then converted from the reported percentage ' \
-        'change from baseline to the proportional change relative to baseline. '
-    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
-    non_wa_relmob = get_relative_mobility(state_averages)
-    wa_relmob = get_relative_mobility(wa_data)
-
-    mob_map = {
-        'other_locations': 
-            {
-                'retail_and_recreation': 0.34, 
-                'grocery_and_pharmacy': 0.33,
-                'parks': 0.0,
-                'transit_stations': 0.33,
-                'workplaces': 0.0,
-                'residential': 0.0,
-            },
-        'work':
-            {
-                'retail_and_recreation': 0.0, 
-                'grocery_and_pharmacy': 0.0,
-                'parks': 0.0,
-                'transit_stations': 0.0,
-                'workplaces': 1.0,
-                'residential': 0.0,
-            },  
-    }
-
-    for location in mob_map:
-        if sum(mob_map[location].values()) != 1.0:
-            raise ValueError(f'Mobility mapping does not sum to one for {location}')
-
-    mob_map_table = pd.DataFrame(mob_map)
-    mob_map_table.index = mob_map_table.index.str.replace('_', ' ')
-    mob_map_table.columns = mob_map_table.columns.str.replace('_', ' ')
-    tex_doc.include_table(mob_map_table, section='Mobility', subsection='Data processing')
-
-    model_locs_mob = map_mobility_locations(wa_relmob, non_wa_relmob, mob_map, tex_doc)
-
-    average_window = 7
-    description = f'Last, we took the {average_window} moving average to smooth the ' \
-        'often abrupt shifts in mobility, including with weekend and public holidays. '
-    model_mob = model_locs_mob.rolling(average_window).mean().dropna()
-    return model_mob
-
-
-def get_interp_funcs_from_mobility(mob_values, epoch):
-    interp_funcs = {state: {} for state in mob_values.columns.get_level_values(0)}
-    for state, mob_loc in mob_values.columns:
-        interp_funcs[state][mob_loc] = linear_interp(epoch.dti_to_index(mob_values.index), mob_values[state, mob_loc].to_numpy())
-    return interp_funcs
-
-
-def get_dynamic_matrix(matrices, mob_funcs, wa_prop_func):
-    working_matrix = matrices['home'] + matrices['school']
-    for location in ['other_locations', 'work']:
-        for patch in ['wa', 'non_wa']:
-            prop = wa_prop_func if patch == 'wa' else 1.0 - wa_prop_func
-            working_matrix += matrices[location] * mob_funcs[patch][location] * prop
-    return working_matrix

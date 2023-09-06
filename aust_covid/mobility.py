@@ -4,7 +4,11 @@ import numpy as np
 from plotly.express.colors import colorbrewer
 from typing import Dict, Tuple
 
-from aust_covid.inputs import load_raw_pop_data
+from summer2.parameters import Function
+from summer2.utils import Epoch
+from summer2.functions.time import get_linear_interpolation_function as linear_interp
+
+from aust_covid.inputs import load_raw_pop_data, get_raw_state_mobility
 from emutools.tex import StandardTexDoc
 PROJECT_PATH = Path().resolve().parent
 DATA_PATH = PROJECT_PATH / 'data'
@@ -119,3 +123,100 @@ def map_mobility_locations(
             data = patch_data[patch].assign(**mob_map[mob_loc]).mul(patch_data[patch]).sum(1)
             model_mob.loc[:, (patch, mob_loc)] = data
     return model_mob
+
+
+def get_processed_mobility_data(
+    tex_doc: StandardTexDoc
+) -> pd.DataFrame:
+    state_data = get_raw_state_mobility(tex_doc)
+    jurisdictions, mob_locs = get_constants_from_mobility(state_data)
+    wa_data = state_data.loc[state_data['sub_region_1'] == 'Western Australia', mob_locs]
+    state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions, tex_doc)
+
+    description = 'Values were then converted from the reported percentage ' \
+        'change from baseline to the proportional change relative to baseline. '
+    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
+    non_wa_relmob = get_relative_mobility(state_averages)
+    wa_relmob = get_relative_mobility(wa_data)
+
+    mob_map = {
+        'other_locations': 
+            {
+                'retail_and_recreation': 0.34, 
+                'grocery_and_pharmacy': 0.33,
+                'parks': 0.0,
+                'transit_stations': 0.33,
+                'workplaces': 0.0,
+                'residential': 0.0,
+            },
+        'work':
+            {
+                'retail_and_recreation': 0.0, 
+                'grocery_and_pharmacy': 0.0,
+                'parks': 0.0,
+                'transit_stations': 0.0,
+                'workplaces': 1.0,
+                'residential': 0.0,
+            },  
+    }
+
+    for location in mob_map:
+        if sum(mob_map[location].values()) != 1.0:
+            raise ValueError(f'Mobility mapping does not sum to one for {location}')
+
+    mob_map_table = pd.DataFrame(mob_map)
+    mob_map_table.index = mob_map_table.index.str.replace('_', ' ')
+    mob_map_table.columns = mob_map_table.columns.str.replace('_', ' ')
+    tex_doc.include_table(mob_map_table, section='Mobility', subsection='Data processing')
+
+    model_locs_mob = map_mobility_locations(wa_relmob, non_wa_relmob, mob_map, tex_doc)
+
+    average_window = 7
+    description = f'Last, we took the {average_window} moving average to smooth the ' \
+        'often abrupt shifts in mobility, including with weekend and public holidays. '
+    model_mob = model_locs_mob.rolling(average_window).mean().dropna()
+    return model_mob
+
+
+def get_interp_funcs_from_mobility(
+    mob_values: pd.DataFrame, 
+    epoch: Epoch,
+) -> Dict[str, Dict[str, Function]]:
+    """
+    Get summer-ready interpolated functions from mobility data.
+
+    Args:
+        mob_values: Mobility values by patch and contact location
+        epoch: Model's epoch
+
+    Returns:
+        Nested dictionary of the interpolated functions
+    """
+    interp_funcs = {state: {} for state in mob_values.columns.get_level_values(0)}
+    for state, mob_loc in mob_values.columns:
+        interp_funcs[state][mob_loc] = linear_interp(epoch.dti_to_index(mob_values.index), mob_values[state, mob_loc].to_numpy())
+    return interp_funcs
+
+
+def get_dynamic_matrix(
+    matrices: Dict[str, np.array], 
+    mob_funcs: Function, 
+    wa_prop_func: Function,
+) -> np.array:
+    """
+    Construct dynamic matrix from scaling values by patch.
+
+    Args:
+        matrices: Unadjusted mixing matrices
+        mob_funcs: Scaling functions by patch and contact location
+        wa_prop_func: Scaling function for re-opening of WA
+
+    Returns:
+        Function to represent the scaling of the matrices with time-varying mobility
+    """
+    working_matrix = matrices['home'] + matrices['school']
+    for location in ['other_locations', 'work']:
+        for patch in ['wa', 'non_wa']:
+            prop = wa_prop_func if patch == 'wa' else 1.0 - wa_prop_func
+            working_matrix += matrices[location] * mob_funcs[patch][location] * prop
+    return working_matrix
