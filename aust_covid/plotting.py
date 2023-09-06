@@ -12,13 +12,13 @@ from summer2 import CompartmentalModel
 
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
-from aust_covid.mobility import CHANGE_STR
 from emutools.tex import StandardTexDoc
 from emutools.calibration import melt_spaghetti, get_negbinom_target_widths
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'
 COLOURS = colorbrewer.Accent
+CHANGE_STR = '_percent_change_from_baseline'
 
 
 def plot_key_outputs(
@@ -287,7 +287,7 @@ def plot_dispersion_examples(
         fig.show()
 
 
-def plot_state_mobility(state_data, jurisdictions, mob_locs):
+def plot_state_mobility(state_data, jurisdictions, mob_locs, tex_doc):
     fig = make_subplots(rows=4, cols=2, subplot_titles=list(jurisdictions))
     fig.update_layout(height=1500)
     for j, juris in enumerate(jurisdictions):
@@ -301,7 +301,7 @@ def plot_state_mobility(state_data, jurisdictions, mob_locs):
     return fig
 
 
-def plot_processed_mobility(model_mob, smoothed_model_mob):
+def plot_processed_mobility(model_mob, smoothed_model_mob, tex_doc):
     fig = make_subplots(rows=1, cols=2, subplot_titles=['Western Australia', 'weighted average for rest of Australia'])
     fig.update_layout(height=500)
     for p, patch in enumerate(set(model_mob.columns.get_level_values(0))):
@@ -319,7 +319,7 @@ def plot_processed_mobility(model_mob, smoothed_model_mob):
     return fig
 
 
-def plot_example_model_matrices(model, parameters):
+def plot_example_model_matrices(model, parameters, tex_doc, show_fig=False):
     epoch = model.get_epoch()
     matrix_func = model.graph.filter('mixing_matrix').get_callable()
     dates = [datetime(2022, month, 1) for month in range(1, 13)]
@@ -334,4 +334,13 @@ def plot_example_model_matrices(model, parameters):
             row=int(np.floor(i_date /4) + 1), 
             col=i_date % 4 + 1,
         )
-    return fig
+    
+    filename = 'example_matrices.jpg'
+    fig.write_image(SUPPLEMENT_PATH / filename)
+    tex_doc.include_figure(
+        'Snapshots of modelled dynamic matrices.', 
+        filename,
+        'Mobility',
+    )
+    if show_fig:
+        fig.show()

@@ -9,8 +9,11 @@ from summer2.utils import Epoch
 from summer2.functions.time import get_linear_interpolation_function as linear_interp
 
 from aust_covid.inputs import load_raw_pop_data, get_raw_state_mobility
+from aust_covid.plotting import plot_state_mobility, plot_processed_mobility
 from emutools.tex import StandardTexDoc
 PROJECT_PATH = Path().resolve().parent
+BASE_PATH = Path(__file__).parent.parent.resolve()
+SUPPLEMENT_PATH = BASE_PATH / 'supplement'
 DATA_PATH = PROJECT_PATH / 'data'
 CHANGE_STR = '_percent_change_from_baseline'
 COLOURS = colorbrewer.Accent
@@ -130,6 +133,16 @@ def get_processed_mobility_data(
 ) -> pd.DataFrame:
     state_data = get_raw_state_mobility(tex_doc)
     jurisdictions, mob_locs = get_constants_from_mobility(state_data)
+    
+    fig = plot_state_mobility(state_data, jurisdictions, mob_locs, tex_doc)
+    filename = 'state_mobility.jpg'
+    fig.write_image(SUPPLEMENT_PATH / filename)
+    tex_doc.include_figure(
+        'Raw state mobility.', 
+        filename,
+        'Mobility',
+    )
+
     wa_data = state_data.loc[state_data['sub_region_1'] == 'Western Australia', mob_locs]
     state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions, tex_doc)
 
@@ -172,10 +185,26 @@ def get_processed_mobility_data(
     model_locs_mob = map_mobility_locations(wa_relmob, non_wa_relmob, mob_map, tex_doc)
 
     average_window = 7
-    description = f'Last, we took the {average_window} moving average to smooth the ' \
+    description = f'Next, we took the {average_window} moving average to smooth the ' \
         'often abrupt shifts in mobility, including with weekend and public holidays. '
+    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
     smoothed_mob = model_locs_mob.rolling(average_window).mean().dropna()
+
+    description = 'Last, we squared the relative variations in mobility to account for ' \
+        'the effect of reductions in visits to specific locations for both the infector ' \
+        'and the infectee of the modelled social contacts. '
+    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
     model_mob = smoothed_mob ** 2.0
+
+    fig = plot_processed_mobility(model_mob, smoothed_mob, tex_doc)
+    filename = 'processed_mobility.jpg'
+    fig.write_image(SUPPLEMENT_PATH / filename)
+    tex_doc.include_figure(
+        'Processed model mobility functions.', 
+        filename,
+        'Mobility',
+    )
+
     return model_mob
 
 
