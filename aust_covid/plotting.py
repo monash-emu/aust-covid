@@ -317,3 +317,21 @@ def plot_processed_mobility(model_mob, smoothed_model_mob):
                 row=1, col=p + 1,
             )
     return fig
+
+
+def plot_example_model_matrices(model, parameters):
+    epoch = model.get_epoch()
+    matrix_func = model.graph.filter('mixing_matrix').get_callable()
+    dates = [datetime(2022, month, 1) for month in range(1, 13)]
+    agegroups = model.stratifications['agegroup'].strata
+    fig = make_subplots(cols=4, rows=3, subplot_titles=[i.strftime('%B') for i in dates])
+    fig.update_layout(height=700, width=800)
+    for i_date, date in enumerate(dates):
+        index = epoch.datetime_to_number(date)
+        matrix = matrix_func(model_variables={'time': index}, parameters=parameters)['mixing_matrix']    
+        fig.add_trace(
+            go.Heatmap(x=agegroups, y=agegroups, z=matrix, zmin=0.0, zmax=6.4), 
+            row=int(np.floor(i_date /4) + 1), 
+            col=i_date % 4 + 1,
+        )
+    return fig
