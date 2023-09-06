@@ -1,6 +1,5 @@
 from pathlib import Path
 from datetime import datetime
-from jax import numpy as jnp
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -9,14 +8,16 @@ import plotly.graph_objects as go
 pd.options.plotting.backend = 'plotly'
 from copy import copy
 
-from summer2.functions.time import get_linear_interpolation_function
+from summer2.functions.time import get_linear_interpolation_function as linear_interp
 from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply
-from summer2.parameters import Parameter, DerivedOutput, Function, Time
+from summer2.parameters import Parameter, Function, Time
 
 from aust_covid.utils import triangle_wave_func
 from aust_covid.inputs import load_pop_data, load_uk_pop_data
 from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number
+from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
 from emutools.tex import StandardTexDoc
+from emutools.parameters import capture_kwargs
 
 MATRIX_LOCATIONS = [
     'school', 
@@ -43,6 +44,7 @@ def build_model(
     end_date: datetime, 
     tex_doc: StandardTexDoc,
     moving_average_window: int,
+    mobility_sens: bool=False,
 ):
     
     # Model construction
@@ -64,9 +66,24 @@ def build_model(
     add_waning(aust_model, tex_doc)
 
     # Age and heterogeneous mixing
-    raw_matrices = {i: pd.read_csv(DATA_PATH / f'{i}.csv', index_col=0).to_numpy() for i in MATRIX_LOCATIONS}
+    state_props = model_pops.sum() / model_pops.sum().sum()
+    wa_reopen_func = get_wa_infection_scaling(datetime(2022, 3, 3), aust_model)
+    raw_matrices = {l: pd.read_csv(DATA_PATH / f'{l}.csv', index_col=0).to_numpy() for l in MATRIX_LOCATIONS}
     adjusted_matrices = adapt_gb_matrices_to_aust(age_strata, raw_matrices, model_pops, tex_doc)
-    mixing_matrix = sum(list(adjusted_matrices.values()))
+
+    # Mobility effects
+    if mobility_sens:
+        model_mob = get_processed_mobility_data(tex_doc)
+        interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
+        wa_reopen_func = get_wa_infection_scaling(datetime(2022, 3, 3), aust_model)
+        wa_prop_func = wa_reopen_func * state_props[0]
+        wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['wa'])
+        non_wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['non_wa'])
+        mob_funcs = Function(capture_kwargs, kwargs={'wa': wa_funcs, 'non_wa': non_wa_funcs})
+        mixing_matrix = Function(get_dynamic_matrix, [adjusted_matrices, mob_funcs, wa_prop_func])
+    else:
+        mixing_matrix = sum(list(adjusted_matrices.values()))
+
     age_strat = get_age_stratification(compartments, age_strata, mixing_matrix, tex_doc)
     aust_model.stratify_with(age_strat)
 
@@ -80,7 +97,7 @@ def build_model(
     imm_strat = get_imm_stratification(compartments, infection_processes, tex_doc)
     aust_model.stratify_with(imm_strat)
 
-    spatial_strat = get_spatial_stratification(datetime(2022, 3, 3), compartments, infection_processes, model_pops, aust_model, tex_doc)
+    spatial_strat = get_spatial_stratification(compartments, infection_processes, model_pops, tex_doc, wa_reopen_func, state_props)
     aust_model.stratify_with(spatial_strat)
     adjust_state_pops(model_pops, aust_model, tex_doc)
 
@@ -462,13 +479,23 @@ def add_reinfection(
             )
 
 
-def get_spatial_stratification(
+def get_wa_infection_scaling(
     reopen_date: datetime, 
+    model: CompartmentalModel,
+) -> Function:
+    reopen_param_str = 'wa_reopen_period'
+    reopen_index = model.get_epoch().dti_to_index(reopen_date)
+    reopen_times = [reopen_index, reopen_index + Parameter(reopen_param_str)]
+    return linear_interp(reopen_times, np.array([0.0, 1.0]))
+
+
+def get_spatial_stratification(
     compartments: list, 
     infection_processes: list, 
     model_pops: pd.DataFrame, 
-    model: CompartmentalModel,
     tex_doc: StandardTexDoc,
+    reopen_func,
+    state_props,
 ) -> Stratification:
     strata = model_pops.columns
     reopen_param_str = 'wa_reopen_period'
@@ -481,11 +508,7 @@ def get_spatial_stratification(
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)
-    state_props = model_pops.sum() / model_pops.sum().sum()
     spatial_strat.set_population_split(state_props.to_dict())
-    reopen_index = model.get_epoch().dti_to_index(reopen_date)
-    reopen_times = [reopen_index, reopen_index + Parameter(reopen_param_str)]
-    reopen_func = get_linear_interpolation_function(reopen_times, np.array([0.0, 1.0]))
     infection_adj = {strata[0]: reopen_func, strata[1]: None}
     for infection_process in infection_processes:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)

@@ -185,7 +185,14 @@ def get_ifrs(
         'and differences in severity for the variants we simulated. ' \
         'We therefore considered more recent studies, such as that of Erikstrup and colleagues to be better ' \
         'applicable to our local context, although also with limitations. ' \
-        '*** Insert brief description of Erikstrup study here. ***' \
+        'Danish investigators used the increase in anti-nucleocapsid IgG seroprevalence in blood donors ' \
+        'from January to April 2022 to estimate age-specific attack rates for the first Omicron wave in Denmark. ' \
+        '\cite{erikstrup2022} They then re-weighted these values to estimate the attack rate ' \
+        'for the general population aged 17-72. Linking this estimate to COVID-19 deaths ' \
+        'reported within 60 days of a positive PCR, they estimated the Omicron-specific IFR, ' \
+        'which was then re-weighted to exclude people with comorbidities. ' \
+        'Therefore, their final results used in our analysis represent an Omicron-specific IFR ' \
+        'for a healthy vaccinated population aged 17 to 72 years.' \
         "As expected, the estimates from Erikstrup are consideraly lower than those of O'Driscoll. " \
         'However, there are also several potential differences between the Danish epidemic and that of Australia, ' \
         'most notably that community transmission had been established from much earlier in the pandemic in ' \
@@ -292,12 +299,26 @@ def get_ifrs(
     return model_breakpoint_values.to_dict()
 
 
-def load_google_mob_year_df(
-    year=int,
+def get_raw_state_mobility(
+    tex_doc: StandardTexDoc
 ) -> pd.DataFrame:
-    mob_df = pd.read_csv(DATA_PATH / f'{year}_AU_Region_Mobility_Report.csv', index_col=8)
-    mob_df = mob_df[[isinstance(region, float) for region in mob_df['sub_region_1']]]  # National data subregion is given as nan
-    mob_cols = [col for col in mob_df.columns if 'percent_change_from_baseline' in col]
-    mob_df = mob_df[mob_cols]
-    mob_df.index = pd.to_datetime(mob_df.index)
-    return mob_df
+    """
+    Get raw Google mobility data, concatenating 2021 and 2022 data,
+    retaining only state-level data and converting to date index.
+
+    Returns:
+        State-level Google mobility data
+    """
+    description = 'We undertook an alternative analysis in which estimates of population mobility ' \
+        'were used to scale transmission rates. ' \
+        'Raw estimates of Australian population mobility were obtained from Google, ' \
+        'with 2021 and 2022 data concatenated together. '
+    tex_doc.add_line(description, section='Mobility', subsection='Data processing')   
+
+    raw_data_2021 = pd.read_csv(DATA_PATH / '2021_AU_Region_Mobility_Report.csv', index_col=8)
+    raw_data_2022 = pd.read_csv(DATA_PATH / '2022_AU_Region_Mobility_Report.csv', index_col=8)
+    raw_data =  pd.concat([raw_data_2021, raw_data_2022])
+    
+    state_data = raw_data.loc[raw_data['sub_region_1'].notnull() & raw_data['sub_region_2'].isnull()]
+    state_data.index = pd.to_datetime(state_data.index)
+    return state_data

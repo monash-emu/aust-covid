@@ -5,6 +5,7 @@ import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import plotly.express as px
+from plotly.express.colors import colorbrewer
 import arviz as az
 
 from summer2 import CompartmentalModel
@@ -16,6 +17,8 @@ from emutools.calibration import melt_spaghetti, get_negbinom_target_widths
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'
+COLOURS = colorbrewer.Accent
+CHANGE_STR = '_percent_change_from_baseline'
 
 
 def plot_key_outputs(
@@ -279,6 +282,65 @@ def plot_dispersion_examples(
         'Examples of the effect of values of the negative binomial distribution dispersion parameter.', 
         filename,
         'Calibration',
+    )
+    if show_fig:
+        fig.show()
+
+
+def plot_state_mobility(state_data, jurisdictions, mob_locs, tex_doc):
+    fig = make_subplots(rows=4, cols=2, subplot_titles=list(jurisdictions))
+    fig.update_layout(height=1500)
+    for j, juris in enumerate(jurisdictions):
+        for l, mob_loc in enumerate(mob_locs):
+            estimates = state_data[state_data['sub_region_1'] == juris][mob_loc]
+            legend_str = mob_loc.replace(CHANGE_STR, "").replace("_", " ")
+            fig.add_trace(
+                go.Scatter(x=estimates.index, y=estimates, name=legend_str, line=dict(color=COLOURS[l]), showlegend=j==0),
+                row=j % 4 + 1, col=round(j / 7) + 1,
+            )
+    return fig
+
+
+def plot_processed_mobility(model_mob, smoothed_model_mob, tex_doc):
+    fig = make_subplots(rows=1, cols=2, subplot_titles=['Western Australia', 'weighted average for rest of Australia'])
+    fig.update_layout(height=500)
+    for p, patch in enumerate(set(model_mob.columns.get_level_values(0))):
+        for l, mob_loc in enumerate(set(model_mob.columns.get_level_values(1))):
+            values = model_mob.loc[:, (patch, mob_loc)]
+            fig.add_trace(
+                go.Scatter(x=values.index, y=values, name=mob_loc.replace('_', ' '), line=dict(color=COLOURS[l]), showlegend=p==0),
+                row=1, col=p + 1,
+            )
+            values = smoothed_model_mob.loc[:, (patch, mob_loc)]
+            fig.add_trace(
+                go.Scatter(x=values.index, y=values, name=f'smoothed_{mob_loc}'.replace('_', ' '), line=dict(color=COLOURS[l + 2]), showlegend=p==0),
+                row=1, col=p + 1,
+            )
+    return fig
+
+
+def plot_example_model_matrices(model, parameters, tex_doc, show_fig=False):
+    epoch = model.get_epoch()
+    matrix_func = model.graph.filter('mixing_matrix').get_callable()
+    dates = [datetime(2022, month, 1) for month in range(1, 13)]
+    agegroups = model.stratifications['agegroup'].strata
+    fig = make_subplots(cols=4, rows=3, subplot_titles=[i.strftime('%B') for i in dates])
+    fig.update_layout(height=700, width=800)
+    for i_date, date in enumerate(dates):
+        index = epoch.datetime_to_number(date)
+        matrix = matrix_func(model_variables={'time': index}, parameters=parameters)['mixing_matrix']    
+        fig.add_trace(
+            go.Heatmap(x=agegroups, y=agegroups, z=matrix, zmin=0.0, zmax=6.4), 
+            row=int(np.floor(i_date /4) + 1), 
+            col=i_date % 4 + 1,
+        )
+    
+    filename = 'example_matrices.jpg'
+    fig.write_image(SUPPLEMENT_PATH / filename)
+    tex_doc.include_figure(
+        'Snapshots of modelled dynamic matrices.', 
+        filename,
+        'Mobility',
     )
     if show_fig:
         fig.show()
