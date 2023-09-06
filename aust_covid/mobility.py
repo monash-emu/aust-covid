@@ -174,7 +174,8 @@ def get_processed_mobility_data(
     average_window = 7
     description = f'Last, we took the {average_window} moving average to smooth the ' \
         'often abrupt shifts in mobility, including with weekend and public holidays. '
-    model_mob = model_locs_mob.rolling(average_window).mean().dropna()
+    smoothed_mob = model_locs_mob.rolling(average_window).mean().dropna()
+    model_mob = smoothed_mob ** 2.0
     return model_mob
 
 
