@@ -8,6 +8,7 @@ from summer2.functions.time import get_linear_interpolation_function
 from summer2.functions.derived import get_rolling_reduction
 from summer2.parameters import Parameter, DerivedOutput, Function
 
+from inputs.constants import TARGETS_AVERAGE_WINDOW
 from aust_covid.utils import convolve_probability, build_gamma_dens_interval_func
 from aust_covid.inputs import load_household_impacts_data
 from emutools.tex import StandardTexDoc
@@ -74,7 +75,6 @@ def track_incidence(
 def track_notifications(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
-    moving_average_window: int,
     show_figs: bool=False,
 ) -> tuple:
     description = 'The extent of community testing following symptomatic infection is likely to have declined ' \
@@ -111,7 +111,7 @@ def track_notifications(
     
     delay = build_gamma_dens_interval_func(Parameter('notifs_shape'), Parameter('notifs_mean'), model.times)
     model.request_function_output('notifications', Function(convolve_probability, [DerivedOutput('incidence'), delay]) * tracked_ratio_interp)
-    model.request_function_output('notifications_ma', Function(get_rolling_reduction(jnp.mean, moving_average_window), [DerivedOutput('notifications')]))
+    model.request_function_output('notifications_ma', Function(get_rolling_reduction(jnp.mean, TARGETS_AVERAGE_WINDOW), [DerivedOutput('notifications')]))
 
     survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
     survey_fig_name = 'survey.jpg'
@@ -142,7 +142,6 @@ def track_notifications(
 def track_deaths(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
-    moving_average_window: int,
 ) -> str:
     ba2_adj_name = 'ba2_rel_ifr'
     ba2_adj_str = ba2_adj_name.replace('_', '\_')
@@ -173,7 +172,7 @@ def track_deaths(
         model.request_function_output(f'deaths{age_str}', age_total)
     deaths_total = sum([DerivedOutput(f'deathsXagegroup_{age}') for age in agegroups])
     model.request_function_output('deaths', deaths_total)
-    deaths_ma = Function(get_rolling_reduction(jnp.mean, moving_average_window), [DerivedOutput('deaths')])
+    deaths_ma = Function(get_rolling_reduction(jnp.mean, TARGETS_AVERAGE_WINDOW), [DerivedOutput('deaths')])
     model.request_function_output('deaths_ma', deaths_ma)
 
 

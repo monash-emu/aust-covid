@@ -18,7 +18,7 @@ from aust_covid.tracking import track_incidence, track_notifications, track_deat
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
 from emutools.tex import StandardTexDoc
 from emutools.parameters import capture_kwargs
-from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE
+from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE
 
 MATRIX_LOCATIONS = [
     'school', 
@@ -41,7 +41,6 @@ in the documentation is best description of the code's function.
 
 def build_model(
     tex_doc: StandardTexDoc,
-    moving_average_window: int,
     mobility_sens: bool=False,
 ):
     
@@ -65,7 +64,7 @@ def build_model(
 
     # Age and heterogeneous mixing
     state_props = model_pops.sum() / model_pops.sum().sum()
-    wa_reopen_func = get_wa_infection_scaling(datetime(2022, 3, 3), aust_model)
+    wa_reopen_func = get_wa_infection_scaling(aust_model)
     raw_matrices = {l: pd.read_csv(DATA_PATH / f'{l}.csv', index_col=0).to_numpy() for l in MATRIX_LOCATIONS}
     adjusted_matrices = adapt_gb_matrices_to_aust(age_strata, raw_matrices, model_pops, tex_doc)
 
@@ -73,7 +72,7 @@ def build_model(
     if mobility_sens:
         model_mob = get_processed_mobility_data(tex_doc)
         interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
-        wa_reopen_func = get_wa_infection_scaling(datetime(2022, 3, 3), aust_model)
+        wa_reopen_func = get_wa_infection_scaling(aust_model)
         wa_prop_func = wa_reopen_func * state_props[0]
         wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['wa'])
         non_wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['non_wa'])
@@ -101,8 +100,8 @@ def build_model(
 
     # Outputs
     track_incidence(aust_model, tex_doc)
-    track_notifications(aust_model, tex_doc, moving_average_window)
-    track_deaths(aust_model, tex_doc, moving_average_window)
+    track_notifications(aust_model, tex_doc)
+    track_deaths(aust_model, tex_doc)
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
     track_strain_prop(aust_model, infectious_compartments, tex_doc)
     track_reproduction_number(aust_model, infection_processes, infectious_compartments, tex_doc)
@@ -475,11 +474,10 @@ def add_reinfection(
 
 
 def get_wa_infection_scaling(
-    reopen_date: datetime, 
     model: CompartmentalModel,
 ) -> Function:
     reopen_param_str = 'wa_reopen_period'
-    reopen_index = model.get_epoch().dti_to_index(reopen_date)
+    reopen_index = model.get_epoch().dti_to_index(WA_REOPEN_DATE)
     reopen_times = [reopen_index, reopen_index + Parameter(reopen_param_str)]
     return linear_interp(reopen_times, np.array([0.0, 1.0]))
 

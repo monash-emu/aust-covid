@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from emutools.tex import StandardTexDoc
 from plotly import graph_objects as go
 
-from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
+from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE
 
 BASE_PATH = Path(__file__).parent.parent.resolve()
 DATA_PATH = BASE_PATH / 'data'
@@ -43,29 +43,26 @@ def load_calibration_targets(
 
 
 def load_who_data(
-    window: int,
     tex_doc: StandardTexDoc,
 ) -> tuple:
     description = 'The daily time series of deaths for Australia was obtained from the ' \
         "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
         '{Coronavirus (COVID-19) Dashboard} downloaded on 18\\textsuperscript{th} July 2023. ' \
-        f'These daily deaths data were then smoothed using a {window}-day ' \
+        f'These daily deaths data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day ' \
         'moving average. '
     tex_doc.add_line(description, 'Targets', subsection='Deaths')
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
     processed_data = raw_data[raw_data['Country'] == 'Australia']
     processed_data.index = pd.to_datetime(processed_data.index)
-    change_to_weekly_report_date = datetime(2022, 9, 16)
-    processed_data = processed_data.loc[:change_to_weekly_report_date, :]
+    processed_data = processed_data.loc[:WHO_CHANGE_WEEKLY_REPORT_DATE, :]
     death_data = processed_data['New_deaths']
-    death_data = death_data.rolling(window=window).mean().dropna()
+    death_data = death_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
 
     return death_data
 
 
 def load_serosurvey_data(
-    immunity_lag: float,
     tex_doc: StandardTexDoc,
 ) -> pd.Series:
     description = 'We obtained estimates of the seroprevalence of antibodies to ' \
@@ -74,7 +71,7 @@ def load_serosurvey_data(
         '{the round 4 serosurvey}, with ' \
         '\href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf}' \
         '{information on assay sensitivity also available}.' \
-        f'We lagged these empiric estimates by {immunity_lag} days to account for the delay between infection and seroconversion. '
+        f'We lagged these empiric estimates by {IMMUNITY_LAG} days to account for the delay between infection and seroconversion. '
     tex_doc.add_line(description, 'Targets', subsection='Seroprevalence')
 
     data = pd.Series(
@@ -85,7 +82,7 @@ def load_serosurvey_data(
             datetime(2022, 12, 5): 0.850,
         }
     )
-    data.index = data.index - timedelta(days=immunity_lag)
+    data.index = data.index - timedelta(days=IMMUNITY_LAG)
     return data
 
 
