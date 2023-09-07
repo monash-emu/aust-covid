@@ -14,10 +14,33 @@ from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
 from emutools.tex import StandardTexDoc
 from emutools.calibration import melt_spaghetti, get_negbinom_target_widths
-from inputs.constants import SUPPLEMENT_PATH
+from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, SUPPLEMENT_PATH
 
 COLOURS = colorbrewer.Accent
 CHANGE_STR = '_percent_change_from_baseline'
+
+def plot_single_run_outputs(model, targets):
+    case_targets = next((t.data for t in targets if t.name == 'notifications_ma'))
+    death_targets = next((t.data for t in targets if t.name == 'deaths_ma'))
+    serosurvey_targets = next((t.data for t in targets if t.name == 'adult_seropos_prop'))
+
+    fig = make_subplots(rows=3, cols=2)
+    derived_outputs = model.get_derived_outputs_df()
+    x_vals = derived_outputs.index
+    fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['notifications_ma'], name='modelled cases'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=case_targets.index, y=case_targets, name='reported cases'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['deaths_ma'], name='deaths_ma'), row=1, col=2)
+    fig.add_trace(go.Scatter(x=death_targets.index, y=death_targets, name='reported deaths ma'), row=1, col=2)
+    fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['adult_seropos_prop'], name='adult seropos'), row=2, col=1)
+    fig.add_trace(go.Scatter(x=serosurvey_targets.index, y=serosurvey_targets, name='seropos estimates'), row=2, col=1)
+    fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['reproduction_number'], name='reproduction number'), row=2, col=2)
+    for agegroup in model.stratifications['agegroup'].strata:
+        fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[f'deathsXagegroup_{agegroup}'], name=f'{agegroup} deaths'), row=3, col=1)
+        fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[f'deathsXagegroup_{agegroup}'], name=f'{agegroup} deaths'), row=3, col=2)
+    fig['layout']['yaxis6'].update(type='log', range=[-2.0, 2.0])
+    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
+    fig.update_layout(height=600, width=1200)
+    fig.show()
 
 
 def plot_key_outputs(
@@ -324,7 +347,7 @@ def plot_example_model_matrices(model, parameters, tex_doc, show_fig=False):
     dates = [datetime(2022, month, 1) for month in range(1, 13)]
     agegroups = model.stratifications['agegroup'].strata
     fig = make_subplots(cols=4, rows=3, subplot_titles=[i.strftime('%B') for i in dates])
-    fig.update_layout(height=700, width=800)
+    fig.update_layout(height=750, width=800)
     for i_date, date in enumerate(dates):
         index = epoch.datetime_to_number(date)
         matrix = matrix_func(model_variables={'time': index}, parameters=parameters)['mixing_matrix']    
