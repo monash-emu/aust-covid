@@ -1,5 +1,6 @@
 from pathlib import Path
 import pandas as pd
+import yaml as yml
 
 
 class TexDoc:
@@ -22,7 +23,7 @@ class TexDoc:
         """
         self.content = {}
         self.path = path
-        self.doc_name = f'{doc_name}.tex'
+        self.doc_name = doc_name
         self.bib_filename = bib_filename
         self.title = title
         self.prepared = False
@@ -64,7 +65,7 @@ class TexDoc:
         """
         Write the compiled document string to disc.
         """
-        with open(self.path / self.doc_name, 'w') as doc_file:
+        with open(self.path / f'{self.doc_name}.tex', 'w') as doc_file:
             doc_file.write(self.emit_doc(section_order=order))
     
     def emit_doc(
@@ -163,6 +164,13 @@ class TexDoc:
         self.add_line(table_text, section, subsection=subsection)
         self.add_line('\end{center}', section, subsection=subsection)
 
+    def save_content(self):
+        with open(self.path / f'{self.doc_name}.yml', 'w') as file:
+            yml.dump(self.content, file)
+
+    def load_content(self):
+        with open(self.path / f'{self.doc_name}.yml', 'r') as file:
+            self.content = yml.load(file, Loader=yml.FullLoader)
 
 class StandardTexDoc(TexDoc):
     def prepare_doc(self):
