@@ -16,7 +16,7 @@ def load_param_info(
 
     Returns:
         The parameters info DataFrame contains the following fields:
-            default_values: Enough parameter values to ensure model runs, may be over-written in calibration
+            value: Enough parameter values to ensure model runs, may be over-written in calibration
             descriptions: A brief reader-digestible name/description for the parameter
             units: The unit of measurement for the quantity (empty string if dimensionless)
             evidence: TeX-formatted full description of the evidence underpinning the choice of value

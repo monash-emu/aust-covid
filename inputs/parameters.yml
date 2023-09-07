@@ -1,4 +1,4 @@
-default_values:
+value:
   contact_rate: 0.076
   latent_period: 1.8
   infectious_period: 2.5
