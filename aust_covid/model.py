@@ -18,6 +18,7 @@ from aust_covid.tracking import track_incidence, track_notifications, track_deat
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
 from emutools.tex import StandardTexDoc
 from emutools.parameters import capture_kwargs
+from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE
 
 MATRIX_LOCATIONS = [
     'school', 
@@ -39,9 +40,6 @@ in the documentation is best description of the code's function.
 
 
 def build_model(
-    ref_date: datetime, 
-    start_date: datetime, 
-    end_date: datetime, 
     tex_doc: StandardTexDoc,
     moving_average_window: int,
     mobility_sens: bool=False,
@@ -57,7 +55,7 @@ def build_model(
     strain_strata = ['ba1', 'ba2', 'ba5']
     infection_processes = ['infection', 'early_reinfection', 'late_reinfection']
 
-    aust_model = build_base_model(ref_date, compartments, infectious_compartments, start_date, end_date, tex_doc)
+    aust_model = build_base_model(compartments, infectious_compartments, tex_doc)
     model_pops = load_pop_data(age_strata, tex_doc)
     set_starting_conditions(aust_model, model_pops, tex_doc)
     add_infection(aust_model, latent_compartments, tex_doc)
@@ -116,28 +114,25 @@ def build_model(
 
 
 def build_base_model(
-    ref_date: datetime,
     compartments: list,
     infectious_compartments: list,
-    start_date: datetime,
-    end_date: datetime,
     tex_doc: StandardTexDoc,
 ) -> tuple:
     description = f'The base model consists of {len(compartments)} states, ' \
         f'representing the following states: {", ".join(compartments).replace("_", "")}. ' \
         f"Each of the infectious compartments contribute equally to the force of infection. \n"
-    time_desc =  f'A simulation is run from {start_date.strftime("%d %B %Y")} to {end_date.strftime("%d %B %Y")}. '
+    time_desc =  f'A simulation is run from {ANALYSIS_START_DATE.strftime("%d %B %Y")} to {ANALYSIS_END_DATE.strftime("%d %B %Y")}. '
     tex_doc.add_line(description, 'Model Structure')
     tex_doc.add_line(time_desc, 'Population')
 
     return CompartmentalModel(
         times=(
-            (start_date - ref_date).days, 
-            (end_date - ref_date).days,
+            (ANALYSIS_START_DATE - REFERENCE_DATE).days, 
+            (ANALYSIS_END_DATE - REFERENCE_DATE).days,
         ),
         compartments=compartments,
         infectious_compartments=infectious_compartments,
-        ref_date=ref_date,
+        ref_date=REFERENCE_DATE,
     )
 
 

@@ -6,14 +6,14 @@ from datetime import datetime, timedelta
 from emutools.tex import StandardTexDoc
 from plotly import graph_objects as go
 
+from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
+
 BASE_PATH = Path(__file__).parent.parent.resolve()
 DATA_PATH = BASE_PATH / 'data'
 SUPPLEMENT_PATH = BASE_PATH / 'supplement'
 
 
 def load_calibration_targets(
-    start_request: datetime, 
-    window: int,
     tex_doc: StandardTexDoc,
 ) -> tuple:
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
@@ -23,7 +23,7 @@ def load_calibration_targets(
         'the 16\\textsuperscript{th} of June 2023.' \
         'The final calibration target for cases was constructed as the OWID data for 2021 ' \
         'concatenated with the Australian Government data for 2022. ' \
-        f'These daily case data were then smoothed using a {window}-day moving average. '
+        f'These daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
     # National data
@@ -37,9 +37,9 @@ def load_calibration_targets(
 
     # Join, truncate, smooth
     national_data_start = datetime(2022, 1, 1)
-    interval = (start_request < owid_data.index) & (owid_data.index < national_data_start)
+    interval = (TARGETS_START_DATE < owid_data.index) & (owid_data.index < national_data_start)
     composite_aust_data = pd.concat([owid_data[interval], national_data['cases']])
-    return composite_aust_data.rolling(window=window).mean().dropna()
+    return composite_aust_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
 
 
 def load_who_data(
