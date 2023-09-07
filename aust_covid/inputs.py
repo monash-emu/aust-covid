@@ -6,11 +6,8 @@ from datetime import datetime, timedelta
 from emutools.tex import StandardTexDoc
 from plotly import graph_objects as go
 
-from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE
-
-BASE_PATH = Path(__file__).parent.parent.resolve()
-DATA_PATH = BASE_PATH / 'data'
-SUPPLEMENT_PATH = BASE_PATH / 'supplement'
+from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
+from inputs.constants import DATA_PATH, SUPPLEMENT_PATH
 
 
 def load_calibration_targets(
@@ -97,7 +94,6 @@ def load_raw_pop_data(
 
 
 def load_pop_data(
-    age_strata: list,
     tex_doc: StandardTexDoc,
 ) -> tuple:
     sheet_name = '31010do002_202206.xlsx'
@@ -118,7 +114,7 @@ def load_pop_data(
         }
     )
     model_pop_data = pd.concat([spatial_pops.loc[:'70-74'], pd.DataFrame([spatial_pops.loc['75-79':].sum()])])
-    model_pop_data.index = age_strata
+    model_pop_data.index = AGE_STRATA
     return model_pop_data
 
 

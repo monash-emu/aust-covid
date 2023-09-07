@@ -5,14 +5,10 @@ import pandas as pd
 pd.options.plotting.backend = 'plotly'
 from emutools.tex import StandardTexDoc
 from aust_covid.inputs import get_ifrs
-
-PROJECT_PATH = Path().resolve()
+from inputs.constants import SUPPLEMENT_PATH, REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE
 
 
 def test_smoke_model():
-    ref_date = datetime(2019, 12, 31)
-    start_date = datetime(2021, 9, 1)
-    end_date = datetime(2022, 10, 1)
     parameters = {
         'contact_rate': 0.065,
         'latent_period': 1.8,
@@ -36,8 +32,8 @@ def test_smoke_model():
         'deaths_mean': 20.0,
         'deaths_shape': 2.0,
     }
-    app_doc = StandardTexDoc(PROJECT_PATH / 'supplement', 'supplement', "Australia's 2023 Omicron Waves Supplement", 'austcovid')
+    app_doc = StandardTexDoc(SUPPLEMENT_PATH / 'supplement', 'supplement', "Australia's 2023 Omicron Waves Supplement", 'austcovid')
     ifrs = get_ifrs(app_doc)
     parameters.update(ifrs) 
-    aust_model = model.build_model(ref_date, start_date, end_date, app_doc, 7)
+    aust_model = model.build_model(REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, app_doc, 7)
     aust_model.run(parameters=parameters)

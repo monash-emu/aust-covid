@@ -11,10 +11,8 @@ from summer2.functions.time import get_linear_interpolation_function as linear_i
 from aust_covid.inputs import load_raw_pop_data, get_raw_state_mobility
 from aust_covid.plotting import plot_state_mobility, plot_processed_mobility
 from emutools.tex import StandardTexDoc
-PROJECT_PATH = Path().resolve().parent
-BASE_PATH = Path(__file__).parent.parent.resolve()
-SUPPLEMENT_PATH = BASE_PATH / 'supplement'
-DATA_PATH = PROJECT_PATH / 'data'
+from inputs.constants import SUPPLEMENT_PATH
+
 CHANGE_STR = '_percent_change_from_baseline'
 COLOURS = colorbrewer.Accent
 

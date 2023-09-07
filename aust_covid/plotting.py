@@ -14,9 +14,8 @@ from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
 from emutools.tex import StandardTexDoc
 from emutools.calibration import melt_spaghetti, get_negbinom_target_widths
+from inputs.constants import SUPPLEMENT_PATH
 
-BASE_PATH = Path(__file__).parent.parent.resolve()
-SUPPLEMENT_PATH = BASE_PATH / 'supplement'
 COLOURS = colorbrewer.Accent
 CHANGE_STR = '_percent_change_from_baseline'
 

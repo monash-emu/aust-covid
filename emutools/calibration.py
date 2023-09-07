@@ -11,9 +11,7 @@ from estival.model import BayesianCompartmentalModel
 import estival.priors as esp
 
 from emutools.tex import StandardTexDoc
-
-BASE_PATH = Path(__file__).parent.parent.resolve()
-SUPPLEMENT_PATH = BASE_PATH / 'supplement'
+from inputs.constants import SUPPLEMENT_PATH
 
 
 def round_sigfig(

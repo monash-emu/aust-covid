@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import yaml as yml
+from inputs.constants import INPUTS_PATH
 
 
 def load_param_info(
@@ -23,6 +24,6 @@ def load_param_info(
             abbrevaitions: Short name for parameters, e.g. for some plots
             value: The values provided in the parameters argument
     """
-    with open(data_path, 'r') as param_file:
+    with open(INPUTS_PATH / data_path, 'r') as param_file:
         all_data = yml.safe_load(param_file)
     return pd.DataFrame(all_data)

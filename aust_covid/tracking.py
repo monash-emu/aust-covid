@@ -8,13 +8,11 @@ from summer2.functions.time import get_linear_interpolation_function
 from summer2.functions.derived import get_rolling_reduction
 from summer2.parameters import Parameter, DerivedOutput, Function
 
-from inputs.constants import TARGETS_AVERAGE_WINDOW
+from inputs.constants import TARGETS_AVERAGE_WINDOW, SUPPLEMENT_PATH
 from aust_covid.utils import convolve_probability, build_gamma_dens_interval_func
 from aust_covid.inputs import load_household_impacts_data
 from emutools.tex import StandardTexDoc
-
-BASE_PATH = Path(__file__).parent.parent.resolve()
-SUPPLEMENT_PATH = BASE_PATH / 'supplement'
+from inputs.constants import INFECTION_PROCESSES
 
 
 def get_cdr_values(
@@ -215,7 +213,6 @@ def track_strain_prop(
 
 def track_reproduction_number(
     model: CompartmentalModel,
-    infection_processes: list,
     infectious_compartments: list,
     tex_doc: StandardTexDoc,
 ):
@@ -227,7 +224,7 @@ def track_reproduction_number(
     tex_doc.add_line(description, 'Outputs', subsection='Reproduction Number')
 
     model.request_output_for_compartments('n_infectious', infectious_compartments)
-    for process in infection_processes:
+    for process in INFECTION_PROCESSES:
         model.request_output_for_flow(process, process, save_results=False)
-    model.request_function_output('all_infection', sum([DerivedOutput(process) for process in infection_processes]), save_results=False)
+    model.request_function_output('all_infection', sum([DerivedOutput(process) for process in INFECTION_PROCESSES]), save_results=False)
     model.request_function_output('reproduction_number', DerivedOutput('all_infection') / DerivedOutput('n_infectious') * Parameter('infectious_period'))
