@@ -20,22 +20,22 @@ default_values:
   notifs_shape: 2.0
   deaths_mean: 15.93
   deaths_shape: 5.0
-  ifr_0: 0.0
-  ifr_5: 0.0
-  ifr_10: 0.0
-  ifr_15: 0.0
-  ifr_20: 0.0
-  ifr_25: 0.0
-  ifr_30: 0.0
-  ifr_35: 0.0
-  ifr_40: 0.0
-  ifr_45: 0.0
-  ifr_50: 0.0
-  ifr_55: 0.0
-  ifr_60: 0.0
-  ifr_65: 0.0
-  ifr_70: 0.0
-  ifr_75: 0.0
+  ifr_0: .NAN
+  ifr_5: .NAN
+  ifr_10: .NAN
+  ifr_15: .NAN
+  ifr_20: .NAN
+  ifr_25: .NAN
+  ifr_30: .NAN
+  ifr_35: .NAN
+  ifr_40: .NAN
+  ifr_45: .NAN
+  ifr_50: .NAN
+  ifr_55: .NAN
+  ifr_60: .NAN
+  ifr_65: .NAN
+  ifr_70: .NAN
+  ifr_75: .NAN
 descriptions:
   contact_rate: 'Effective contact rate'
   latent_period: 'Latent period'
