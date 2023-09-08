@@ -6,7 +6,7 @@ from jax import numpy as jnp
 import estival.priors as esp
 import estival.targets as est
 
-from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data, get_ifrs, load_raw_pop_data, get_raw_state_mobility
+from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data
 
 
 def get_priors():

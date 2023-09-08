@@ -8,6 +8,7 @@ from plotly import graph_objects as go
 
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
 from inputs.constants import DATA_PATH, SUPPLEMENT_PATH
+CHANGE_STR = '_percent_change_from_baseline'
 
 
 def load_calibration_targets(
@@ -300,13 +301,15 @@ def get_raw_state_mobility(
     retaining only state-level data and converting to date index.
 
     Returns:
-        State-level Google mobility data
+    
+    Returns:
+        State-level mobility data, names of jurisdictions and locations
     """
     description = 'We undertook an alternative analysis in which estimates of population mobility ' \
         'were used to scale transmission rates. ' \
         'Raw estimates of Australian population mobility were obtained from Google, ' \
         'with 2021 and 2022 data concatenated together. '
-    tex_doc.add_line(description, section='Mobility', subsection='Data processing')   
+    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
 
     raw_data_2021 = pd.read_csv(DATA_PATH / '2021_AU_Region_Mobility_Report.csv', index_col=8)
     raw_data_2022 = pd.read_csv(DATA_PATH / '2022_AU_Region_Mobility_Report.csv', index_col=8)
@@ -314,4 +317,7 @@ def get_raw_state_mobility(
     
     state_data = raw_data.loc[raw_data['sub_region_1'].notnull() & raw_data['sub_region_2'].isnull()]
     state_data.index = pd.to_datetime(state_data.index)
-    return state_data
+
+    jurisdictions = set([j for j in state_data['sub_region_1'] if j != 'Australia'])
+    mob_locs = [c for c in state_data.columns if CHANGE_STR in c]
+    return state_data, jurisdictions, mob_locs

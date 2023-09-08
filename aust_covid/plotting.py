@@ -1,11 +1,9 @@
-from pathlib import Path
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import plotly.express as px
-from plotly.express.colors import colorbrewer
 import arviz as az
 
 from summer2 import CompartmentalModel
@@ -14,10 +12,8 @@ from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
 from emutools.tex import StandardTexDoc
 from emutools.calibration import melt_spaghetti, get_negbinom_target_widths
-from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, SUPPLEMENT_PATH
+from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, SUPPLEMENT_PATH, CHANGE_STR, COLOURS
 
-COLOURS = colorbrewer.Accent
-CHANGE_STR = '_percent_change_from_baseline'
 
 def plot_single_run_outputs(model, targets):
     case_targets = next((t.data for t in targets if t.name == 'notifications_ma'))
@@ -309,7 +305,7 @@ def plot_dispersion_examples(
         fig.show()
 
 
-def plot_state_mobility(state_data, jurisdictions, mob_locs, tex_doc):
+def plot_state_mobility(state_data, jurisdictions, mob_locs):
     fig = make_subplots(rows=4, cols=2, subplot_titles=list(jurisdictions))
     fig.update_layout(height=1500)
     for j, juris in enumerate(jurisdictions):
@@ -323,21 +319,20 @@ def plot_state_mobility(state_data, jurisdictions, mob_locs, tex_doc):
     return fig
 
 
-def plot_processed_mobility(model_mob, smoothed_model_mob, tex_doc):
+def plot_processed_mobility(mob_types):
     fig = make_subplots(rows=1, cols=2, subplot_titles=['Western Australia', 'weighted average for rest of Australia'])
     fig.update_layout(height=500)
-    for p, patch in enumerate(set(model_mob.columns.get_level_values(0))):
-        for l, mob_loc in enumerate(set(model_mob.columns.get_level_values(1))):
-            values = model_mob.loc[:, (patch, mob_loc)]
-            fig.add_trace(
-                go.Scatter(x=values.index, y=values, name=mob_loc.replace('_', ' '), line=dict(color=COLOURS[l]), showlegend=p==0),
-                row=1, col=p + 1,
-            )
-            values = smoothed_model_mob.loc[:, (patch, mob_loc)]
-            fig.add_trace(
-                go.Scatter(x=values.index, y=values, name=f'smoothed_{mob_loc}'.replace('_', ' '), line=dict(color=COLOURS[l + 2]), showlegend=p==0),
-                row=1, col=p + 1,
-            )
+    levels = mob_types['original'].columns
+    for p, patch in enumerate(set(levels.get_level_values(0))):
+        colour = 0
+        for mob_loc in set(levels.get_level_values(1)):
+            for m, mob_type in mob_types.items():
+                colour += 1
+                values = mob_type.loc[:, (patch, mob_loc)]
+                fig.add_trace(
+                    go.Scatter(x=values.index, y=values, name=f'{m}, {mob_loc}'.replace('_', ' '), showlegend=p==0, line=dict(color=COLOURS[colour])),
+                    row=1, col=p + 1,
+                )
     return fig
 
 
