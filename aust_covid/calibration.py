@@ -7,6 +7,7 @@ import estival.priors as esp
 import estival.targets as est
 
 from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data
+from inputs.constants import TARGETS_START_DATE
 
 
 def get_priors():
@@ -37,7 +38,7 @@ def truncation_ceiling(modelled, obs, parameters, time_weights):
 
 def get_targets(app_doc):
     case_targets = load_calibration_targets(app_doc)
-    death_targets = load_who_data(app_doc)
+    death_targets = load_who_data(app_doc)[TARGETS_START_DATE:]
     serosurvey_targets = load_serosurvey_data(app_doc)
     targets = [
         est.NegativeBinomialTarget('notifications_ma', case_targets, dispersion_param=esp.UniformPrior('notifications_ma_dispersion', (10.0, 140.0))),
