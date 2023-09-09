@@ -6,11 +6,18 @@ from jax import numpy as jnp
 import estival.priors as esp
 import estival.targets as est
 
+from emutools.tex import StandardTexDoc
 from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data
 from inputs.constants import TARGETS_START_DATE
 
 
-def get_priors():
+def get_priors() -> list:
+    """
+    Get the standard priors used for the analysis.
+
+    Returns:
+        Final priors
+    """
     return [
         esp.UniformPrior('contact_rate', (0.02, 0.15)),
         esp.GammaPrior.from_mode('latent_period', 2.5, 5.0),
@@ -33,13 +40,28 @@ def get_priors():
 
 
 def truncation_ceiling(modelled, obs, parameters, time_weights):
+    """
+    Very large negative number to add to likelihood if modelled values 
+    above a threshold considered implausible.
+    """
     return jnp.where(modelled > obs, -1e11, 0.0)
 
 
-def get_targets(app_doc):
-    case_targets = load_calibration_targets(app_doc)
-    death_targets = load_who_data(app_doc)[TARGETS_START_DATE:]
-    serosurvey_targets = load_serosurvey_data(app_doc)
+def get_targets(
+    tex_doc: StandardTexDoc,
+) -> list:
+    """
+    Get the standard targets used for the analysis.
+
+    Args:
+        tex_doc: Supplement documentation object
+
+    Returns:
+        Final targets
+    """
+    case_targets = load_calibration_targets(tex_doc)
+    death_targets = load_who_data(tex_doc)[TARGETS_START_DATE:]
+    serosurvey_targets = load_serosurvey_data(tex_doc)
     targets = [
         est.NegativeBinomialTarget('notifications_ma', case_targets, dispersion_param=esp.UniformPrior('notifications_ma_dispersion', (10.0, 140.0))),
         est.NegativeBinomialTarget('deaths_ma', death_targets, dispersion_param=esp.UniformPrior('deaths_ma_dispersion', (60.0, 200.0))),
