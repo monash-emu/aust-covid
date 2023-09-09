@@ -1,6 +1,8 @@
+from typing import List
 import arviz as az
 from arviz.labels import MapLabeller
-from pathlib import Path
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
 import matplotlib as mpl
@@ -356,3 +358,42 @@ def get_negbinom_target_widths(
         p = mu / (mu + dispersion)
         cis.loc[time, :] = stats.nbinom.ppf(centiles, dispersion, 1.0 - p)
     return cis, dispersion
+
+
+def plot_priors(
+    priors: list, 
+    titles: dict, 
+    n_cols: int, 
+    n_points: int, 
+    rel_overhang: float, 
+    prior_cover: float,
+) -> go.Figure:
+    """
+    Plot the PDF of each of a set of priors.
+
+    Args:
+        priors: The list of estival prior objects
+        titles: Names for the subplots
+        n_cols: User request for number of columns
+        n_points: Number of points to evaluate the prior at
+        rel_overhang: How far out to go past the edge of requested bounds
+            (to ensure priors that are discontinuous at their edges go down to zero at the sides)
+        prior_cover: How much of the posterior density to cover (before overhanging)
+
+    Returns:
+        Multi-panel figure with one panel per prior
+    """
+    n_cols = 5
+    n_rows = int(np.ceil(len(priors) / n_cols))
+    titles = [titles[p.name] for p in priors]
+    fig = make_subplots(rows=n_rows, cols=n_cols, subplot_titles=titles)
+    for p, prior in enumerate(priors):
+        extremes = prior.ppf(1.0 - prior_cover), prior.ppf(prior_cover)
+        overhang = (extremes[1] - extremes[0]) * rel_overhang
+        x_values = np.linspace(extremes[0] - overhang, extremes[1] + overhang, n_points)
+        y_values = [prior.pdf(x) for x in x_values]
+        row = int(np.floor(p / n_cols)) + 1
+        col = p % n_cols + 1
+        fig.add_trace(go.Scatter(x=x_values, y=y_values, fill='tozeroy'), row=row, col=col)
+    fig.update_layout(height=1000, showlegend=False)
+    return fig
