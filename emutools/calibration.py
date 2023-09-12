@@ -400,14 +400,30 @@ def plot_priors(
     return fig
 
 
-def plot_spaghetti(spaghetti, indicators, cols, targets):
-    cols = 2
-    rows = int(np.ceil(len(indicators) / cols))
+def plot_spaghetti(
+    spaghetti: pd.DataFrame, 
+    indicators: List[str], 
+    n_cols: int, 
+    targets: list,
+) -> go.Figure:
+    """
+    Generate a spaghetti plot to compare any number of requested outputs to targets.
 
-    fig = make_subplots(rows=rows, cols=cols, subplot_titles=indicators)
+    Args:
+        spaghetti: The values from the sampled runs
+        indicators: The names of the indicators to look at
+        n_cols: Number of columns for the figure
+        targets: The calibration targets
+
+    Returns:
+        The spaghetti plot figure object
+    """
+    rows = int(np.ceil(len(indicators) / n_cols))
+
+    fig = make_subplots(rows=rows, cols=n_cols, subplot_titles=indicators)
     for i, ind in enumerate(indicators):
-        row = int(np.floor(i / cols)) + 1
-        col = i % cols + 1
+        row = int(np.floor(i / n_cols)) + 1
+        col = i % n_cols + 1
 
         # Model outputs
         ind_spagh = spaghetti[ind]
@@ -425,4 +441,32 @@ def plot_spaghetti(spaghetti, indicators, cols, targets):
                 col=col,
             )
     fig.update_layout(showlegend=False, height=400 * rows)
+    return fig
+
+
+def plot_param_hover_spaghetti(
+    indicator_spaghetti: pd.DataFrame, 
+    idata: az.InferenceData,
+) -> go.Figure:
+    """
+    Generate a spaghetti plot with all parameters displayed on hover.
+
+    Args:
+        indicator_spaghetti: The values from the sampled runs for one indicator only
+        idata: The corresponding inference data
+
+    Returns:
+        The spaghetti plot figure object
+    """
+    fig = go.Figure()
+    working_data = pd.DataFrame()
+    for col in indicator_spaghetti.columns:
+        chain, draw = col
+        working_data['values'] = indicator_spaghetti[col]
+        info = {i: float(j) for i, j in dict(idata.posterior.sel(chain=int(chain), draw=int(draw)).variables).items()}
+        for param in info:
+            working_data[param] = int(info[param]) if param in ['chain', 'draw'] else round_sigfig(info[param], 3)
+        lines = px.line(working_data, y='values', hover_data=working_data.columns)
+        fig.add_traces(lines.data)
+    fig.update_layout(showlegend=False, height=600)
     return fig
