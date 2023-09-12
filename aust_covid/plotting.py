@@ -14,6 +14,8 @@ from emutools.tex import StandardTexDoc
 from emutools.calibration import melt_spaghetti, get_negbinom_target_widths
 from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, SUPPLEMENT_PATH, CHANGE_STR, COLOURS
 
+pd.options.plotting.backend = 'plotly'
+
 
 def plot_single_run_outputs(model, targets):
     case_targets = next((t.data for t in targets if t.name == 'notifications_ma'))
@@ -37,91 +39,6 @@ def plot_single_run_outputs(model, targets):
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     fig.update_layout(height=600, width=1200)
     fig.show()
-
-
-def plot_key_outputs(
-    sampled_idata: pd.DataFrame, 
-    output_results: pd.DataFrame, 
-    start_date: datetime, 
-    end_date: datetime,
-    tex_doc: StandardTexDoc, 
-    outputs: list,
-    case_targets: pd.Series,
-    serosurvey_targets: pd.Series,
-    death_targets: pd.Series,
-    show_fig: bool=False,
-):
-    """
-    Create spaghetti plot of key outputs over sequential model runs.
-
-    Args:
-        sampled_idata: Sample from the inference data
-        output_results: Outputs that have been run through the model
-        start_date: Start date for plot
-        end_date: End date for plot
-        tex_doc: TeX documentation object
-        outputs: Names of outputs to plot
-        case_targets: Notification series for comparison
-        serosurvey_targets: Serosurvey values for comparison
-        death_targets: Death series for comparison
-        show_fig: Whether to display the figure now
-    """
-    title_dict = {
-        'notifications_ma': 'cases (moving average)',
-        'adult_seropos_prop': 'adult seropositive proportion',
-        'deaths_ma': 'deaths (moving average)',    
-    }
-    fig = make_subplots(rows=3, cols=1, subplot_titles=[title_dict[o] for o in outputs])
-    for i_out, out in enumerate(outputs):
-        spaghetti = melt_spaghetti(output_results, out, sampled_idata)
-        lines = px.line(spaghetti, y='value', color='chain', line_group='draw', hover_data=spaghetti.columns)
-        fig.add_traces(lines.data, rows=i_out + 1, cols=1)
-    fig.add_trace(
-        go.Scatter(
-            x=case_targets.index, 
-            y=case_targets, 
-            name='reported cases',
-            mode='markers',
-            marker={'color': 'LightBlue', 'size': 4, 'line': {'color': 'black', 'width': 1}},
-        ), 
-        row=1, 
-        col=1,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=serosurvey_targets.index, 
-            y=serosurvey_targets, 
-            name='serosurveys',
-            mode='markers',
-            marker={'color': 'white', 'size': 20, 'line': {'color': 'black', 'width': 1}},
-        ), 
-        row=2, 
-        col=1,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=death_targets.index, 
-            y=death_targets, 
-            name='reported deaths ma', 
-            mode='markers',
-            marker={'color': 'Red', 'size': 4, 'line': {'color': 'black', 'width': 1}},
-        ),
-        row=3, 
-        col=1,
-    )
-    fig.update_xaxes(range=(start_date, end_date))
-    fig.update_layout(height=1000, width=1000)
-
-    filename = 'key_outputs.jpg'
-    fig.write_image(SUPPLEMENT_PATH / filename)
-    caption = 'Key results for randomly sampled runs from calibration algorithm.'
-    tex_doc.include_figure(
-        caption, 
-        filename,
-        'Results',
-    )
-    if show_fig:
-        fig.show()
 
 
 def plot_subvariant_props(
@@ -182,38 +99,23 @@ def plot_subvariant_props(
         fig.show()
 
 
-def plot_cdr_examples(
-    samples: pd.Series, 
-    tex_doc: StandardTexDoc, 
-    show_fig: bool=False,
-):
+def plot_cdr_examples(samples):
     """
     Plot examples of the variation in the case detection rate over time,
     display and include in documentation.
 
     Args:
         samples: Case detection values
-        tex_doc: TeX documentation object
-        show_fig: Whether to display the figure now
     """
     hh_impact = load_household_impacts_data()
     hh_test_ratio = hh_impact['Proportion testing'] / hh_impact['Proportion symptomatic']
     cdr_values = pd.DataFrame()
     for start_cdr in samples:
+        start_cdr = float(start_cdr)
         exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
         cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
     fig = cdr_values.plot(markers=True, labels={'value': 'case detection ratio', 'index': ''})
-
-    filename = 'cdr_samples.jpg'
-    fig.write_image(SUPPLEMENT_PATH / filename)
-    tex_doc.include_figure(
-        'Examples of simulated case detection rates over modelled time.', 
-        filename,
-        'Outputs',
-        subsection='Notifications', 
-    )
-    if show_fig:
-        fig.show()
+    return fig
 
 
 def get_count_up_back_list(
