@@ -2,6 +2,7 @@ from typing import List
 import arviz as az
 from arviz.labels import MapLabeller
 import plotly.graph_objects as go
+import plotly.express as px
 from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
@@ -13,7 +14,7 @@ from estival.model import BayesianCompartmentalModel
 import estival.priors as esp
 
 from emutools.tex import StandardTexDoc
-from inputs.constants import SUPPLEMENT_PATH
+from inputs.constants import SUPPLEMENT_PATH, PLOT_START_DATE, ANALYSIS_END_DATE
 
 
 def round_sigfig(
@@ -396,4 +397,32 @@ def plot_priors(
         col = p % n_cols + 1
         fig.add_trace(go.Scatter(x=x_values, y=y_values, fill='tozeroy'), row=row, col=col)
     fig.update_layout(height=1000, showlegend=False)
+    return fig
+
+
+def plot_spaghetti(spaghetti, indicators, cols, targets):
+    cols = 2
+    rows = int(np.ceil(len(indicators) / cols))
+
+    fig = make_subplots(rows=rows, cols=cols, subplot_titles=indicators)
+    for i, ind in enumerate(indicators):
+        row = int(np.floor(i / cols)) + 1
+        col = i % cols + 1
+
+        # Model outputs
+        ind_spagh = spaghetti[ind]
+        ind_spagh.columns = [f'chain:{col[0]}, draw:{col[1]}' for col in ind_spagh.columns]
+        ind_spagh = ind_spagh[(PLOT_START_DATE < ind_spagh.index) & (ind_spagh.index < ANALYSIS_END_DATE)]
+        fig.add_traces(px.line(ind_spagh).data, rows=row, cols=col)
+
+        # Targets
+        target = next((t.data for t in targets if t.name == ind), None)
+        if target is not None:
+            target = target[(PLOT_START_DATE < target.index) & (target.index < ANALYSIS_END_DATE)]
+            fig.add_trace(
+                go.Scatter(x=target.index, y=target, marker=dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey')), name='targets', mode='markers'), 
+                row=row, 
+                col=col,
+            )
+    fig.update_layout(showlegend=False, height=400 * rows)
     return fig
