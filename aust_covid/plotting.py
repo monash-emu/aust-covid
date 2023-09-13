@@ -127,17 +127,11 @@ def plot_dispersion_examples(
     model: CompartmentalModel,
     base_params: list,
     prior_names: list,
-    targets: list,
-    analysis_start_date: datetime,
-    analysis_end_date: datetime,
+    all_targets: list,
     output_colours: dict, 
-    tex_doc: StandardTexDoc,
     req_centiles: np.ndarray, 
     n_samples: int=4, 
     base_alpha: float=0.2, 
-    width: int=1000, 
-    height: int=1200,
-    show_fig: bool=False,
 ) -> go.Figure:
     """
     Illustrate the range of the density of the negative
@@ -149,17 +143,14 @@ def plot_dispersion_examples(
         model: The epidemiological model
         base_params: Default parameter values
         prior_names: The priors used in the calibration algorithm
-        targets: The selected targets to consider
-        analysis_start_date: Analysis starting time
-        analysis_end_date: Analysis end time
+        all_targets: The selected targets to consider
         output_colours: Colours for plotting the outputs
         req_centiles: Centiles to plot
         n_samples: Number of samples (rows of panels)
         base_alpha: Minimum alpha/transparency for area plots
-        width: Plot width
-        height: Plot height
     """
-    fig = go.Figure(layout=go.Layout(width=width, height=height))
+    fig = go.Figure(layout=go.Layout(width=1000, height=1200))
+    targets = [t for t in all_targets if hasattr(t, 'dispersion_param')]
     outputs = [t.name for t in targets]
     fig = make_subplots(rows=n_samples, cols=len(outputs), figure=fig, subplot_titles=[' '] * n_samples * len(outputs))
     up_back_list = get_count_up_back_list(len(req_centiles) - 1)
@@ -167,7 +158,7 @@ def plot_dispersion_examples(
     for i_sample in range(n_samples):
         row = i_sample + 1
         for i_out, o in enumerate(outputs):
-            target_extract = targets[i_out].data.loc[analysis_start_date: analysis_end_date]
+            target_extract = targets[i_out].data.loc[PLOT_START_DATE: ANALYSIS_END_DATE]
             cis, disps = get_negbinom_target_widths(target_extract, idata, model, base_params, o, req_centiles, prior_names)
             col = i_out + 1
             bottom_trace = go.Scatter(x=cis.index, y=cis.iloc[:, 0], line=dict(width=0.0), name='')
@@ -180,16 +171,7 @@ def plot_dispersion_examples(
             target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {o}', mode='markers', marker={'color': f'rgb({output_colours[o]})', 'size': 4})
             fig.add_trace(target_trace, row=row, col=col)
             fig.layout.annotations[i_sample * len(outputs) + i_out].update(text=f'{o}, dispersion param: {round(float(disps.data), 1)}')
-
-    filename = 'dispersion_examples.jpg'
-    fig.write_image(SUPPLEMENT_PATH / filename)
-    tex_doc.include_figure(
-        'Examples of the effect of values of the negative binomial distribution dispersion parameter.', 
-        filename,
-        'Calibration',
-    )
-    if show_fig:
-        fig.show()
+    return fig
 
 
 def plot_state_mobility(state_data, jurisdictions, mob_locs):
