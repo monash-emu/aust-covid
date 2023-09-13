@@ -18,17 +18,9 @@ from aust_covid.tracking import track_incidence, track_notifications, track_deat
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
 from emutools.tex import StandardTexDoc
 from emutools.parameters import capture_kwargs
-
-MATRIX_LOCATIONS = [
-    'school', 
-    'home', 
-    'work', 
-    'other_locations',
-]
-
-BASE_PATH = Path(__file__).parent.parent.resolve()
-SUPPLEMENT_PATH = BASE_PATH / 'supplement'
-DATA_PATH = BASE_PATH / 'data'
+from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
+from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES
+from inputs.constants import SUPPLEMENT_PATH, DATA_PATH
 
 
 """
@@ -39,26 +31,18 @@ in the documentation is best description of the code's function.
 
 
 def build_model(
-    ref_date: datetime, 
-    start_date: datetime, 
-    end_date: datetime, 
     tex_doc: StandardTexDoc,
-    moving_average_window: int,
     mobility_sens: bool=False,
 ):
     
     # Model construction
-    n_latent_comps = 4
-    n_infectious_comps = n_latent_comps
-    latent_compartments = [f'latent_{i}' for i in range(n_latent_comps)]
+    n_infectious_comps = N_LATENT_COMPARTMENTS
+    latent_compartments = [f'latent_{i}' for i in range(N_LATENT_COMPARTMENTS)]
     infectious_compartments = [f'infectious_{i}' for i in range(n_infectious_comps)]
     compartments = ['susceptible', 'recovered', 'waned'] + infectious_compartments + latent_compartments
-    age_strata = list(range(0, 80, 5))
-    strain_strata = ['ba1', 'ba2', 'ba5']
-    infection_processes = ['infection', 'early_reinfection', 'late_reinfection']
 
-    aust_model = build_base_model(ref_date, compartments, infectious_compartments, start_date, end_date, tex_doc)
-    model_pops = load_pop_data(age_strata, tex_doc)
+    aust_model = build_base_model(compartments, infectious_compartments, tex_doc)
+    model_pops = load_pop_data(tex_doc)
     set_starting_conditions(aust_model, model_pops, tex_doc)
     add_infection(aust_model, latent_compartments, tex_doc)
     add_latent_transition(aust_model, latent_compartments, infectious_compartments, tex_doc)
@@ -67,15 +51,15 @@ def build_model(
 
     # Age and heterogeneous mixing
     state_props = model_pops.sum() / model_pops.sum().sum()
-    wa_reopen_func = get_wa_infection_scaling(datetime(2022, 3, 3), aust_model)
+    wa_reopen_func = get_wa_infection_scaling(aust_model)
     raw_matrices = {l: pd.read_csv(DATA_PATH / f'{l}.csv', index_col=0).to_numpy() for l in MATRIX_LOCATIONS}
-    adjusted_matrices = adapt_gb_matrices_to_aust(age_strata, raw_matrices, model_pops, tex_doc)
+    adjusted_matrices = adapt_gb_matrices_to_aust(raw_matrices, model_pops, tex_doc)
 
     # Mobility effects
     if mobility_sens:
         model_mob = get_processed_mobility_data(tex_doc)
         interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
-        wa_reopen_func = get_wa_infection_scaling(datetime(2022, 3, 3), aust_model)
+        wa_reopen_func = get_wa_infection_scaling(aust_model)
         wa_prop_func = wa_reopen_func * state_props[0]
         wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['wa'])
         non_wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['non_wa'])
@@ -84,30 +68,30 @@ def build_model(
     else:
         mixing_matrix = sum(list(adjusted_matrices.values()))
 
-    age_strat = get_age_stratification(compartments, age_strata, mixing_matrix, tex_doc)
+    age_strat = get_age_stratification(compartments, mixing_matrix, tex_doc)
     aust_model.stratify_with(age_strat)
 
     # Other stratifications and reinfection
-    strain_strat = get_strain_stratification(compartments, strain_strata, tex_doc)
+    strain_strat = get_strain_stratification(compartments, tex_doc)
     aust_model.stratify_with(strain_strat)
     seed_vocs(aust_model, latent_compartments, tex_doc)
 
-    add_reinfection(aust_model, strain_strata, latent_compartments, tex_doc)
+    add_reinfection(aust_model, latent_compartments, tex_doc)
 
-    imm_strat = get_imm_stratification(compartments, infection_processes, tex_doc)
+    imm_strat = get_imm_stratification(compartments, tex_doc)
     aust_model.stratify_with(imm_strat)
 
-    spatial_strat = get_spatial_stratification(compartments, infection_processes, model_pops, tex_doc, wa_reopen_func, state_props)
+    spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func, state_props)
     aust_model.stratify_with(spatial_strat)
     adjust_state_pops(model_pops, aust_model, tex_doc)
 
     # Outputs
     track_incidence(aust_model, tex_doc)
-    track_notifications(aust_model, tex_doc, moving_average_window)
-    track_deaths(aust_model, tex_doc, moving_average_window)
+    track_notifications(aust_model, tex_doc)
+    track_deaths(aust_model, tex_doc)
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
     track_strain_prop(aust_model, infectious_compartments, tex_doc)
-    track_reproduction_number(aust_model, infection_processes, infectious_compartments, tex_doc)
+    track_reproduction_number(aust_model, infectious_compartments, tex_doc)
 
     for comp in compartments:
         aust_model.request_output_for_compartments(comp, [comp])
@@ -116,28 +100,25 @@ def build_model(
 
 
 def build_base_model(
-    ref_date: datetime,
     compartments: list,
     infectious_compartments: list,
-    start_date: datetime,
-    end_date: datetime,
     tex_doc: StandardTexDoc,
 ) -> tuple:
     description = f'The base model consists of {len(compartments)} states, ' \
         f'representing the following states: {", ".join(compartments).replace("_", "")}. ' \
         f"Each of the infectious compartments contribute equally to the force of infection. \n"
-    time_desc =  f'A simulation is run from {start_date.strftime("%d %B %Y")} to {end_date.strftime("%d %B %Y")}. '
+    time_desc =  f'A simulation is run from {ANALYSIS_START_DATE.strftime("%d %B %Y")} to {ANALYSIS_END_DATE.strftime("%d %B %Y")}. '
     tex_doc.add_line(description, 'Model Structure')
     tex_doc.add_line(time_desc, 'Population')
 
     return CompartmentalModel(
         times=(
-            (start_date - ref_date).days, 
-            (end_date - ref_date).days,
+            (ANALYSIS_START_DATE - REFERENCE_DATE).days, 
+            (ANALYSIS_END_DATE - REFERENCE_DATE).days,
         ),
         compartments=compartments,
         infectious_compartments=infectious_compartments,
-        ref_date=ref_date,
+        ref_date=REFERENCE_DATE,
     )
 
 
@@ -179,13 +160,12 @@ def add_latent_transition(
 ):
     parameter_name = 'latent_period'
     final_dest = infectious_compartments[0]
-    n_latent_comps = len(latent_compartments)
-    description = f'Following infection, infected persons enter a series of {n_latent_comps} latent compartments. ' \
+    description = f'Following infection, infected persons enter a series of {N_LATENT_COMPARTMENTS} latent compartments. ' \
         'These are chained in sequence, with infected persons transitioning sequentially from ' \
         f'compartment 0 through to compartment {len(latent_compartments) - 1}. ' \
         'To achieve the same mean sojourn time in the composite latent stage, ' \
         'the rate of transition between successive latent compartments and out of the last latent compartment ' \
-        f'are multiplied by the number of serial compartments (i.e. {n_latent_comps}). ' \
+        f'are multiplied by the number of serial compartments (i.e. {N_LATENT_COMPARTMENTS}). ' \
         'As persons exit the final latent compartment, they enter the first infectious compartment. ' \
         'An Erlang-distributed infectious and latent duration is consistent with epidemiological evidence ' \
         'and our intuition around this quantity. The serial interval \cite{anderheiden2022} and generation time \cite{ito2022} appear to ' \
@@ -193,8 +173,8 @@ def add_latent_transition(
         'a shape parameter of four or five having been previously used to fit this distribution \cite{davies2020b,davies2020c}. '
     tex_doc.add_line(description, 'Model Structure')
 
-    rate = 1.0 / Parameter(parameter_name) * n_latent_comps
-    for i_comp in range(n_latent_comps - 1):
+    rate = 1.0 / Parameter(parameter_name) * N_LATENT_COMPARTMENTS
+    for i_comp in range(N_LATENT_COMPARTMENTS - 1):
         origin = latent_compartments[i_comp]
         destination = latent_compartments[i_comp + 1]
         model.add_transition_flow(f'latent_transition_{str(i_comp)}', rate, origin, destination)
@@ -267,7 +247,6 @@ def plot_mixing_matrices(
 
 
 def adapt_gb_matrices_to_aust(
-    age_strata: list,
     unadjusted_matrices: dict, 
     pop_data: pd.DataFrame,
     tex_doc: StandardTexDoc,
@@ -283,7 +262,7 @@ def adapt_gb_matrices_to_aust(
 
     # Australia population
     aust_props_disp = copy(pop_data)
-    aust_props_disp['age_group'] = [f'{age}-{age + 4}' for age in age_strata[:-1]] + ['75 and over']
+    aust_props_disp['age_group'] = [f'{age}-{age + 4}' for age in AGE_STRATA[:-1]] + ['75 and over']
 
     input_pop_fig = px.bar(
         aust_props_disp.melt(id_vars=['age_group']), 
@@ -317,7 +296,7 @@ def adapt_gb_matrices_to_aust(
     aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
     uk_age_pops = raw_uk_data[:15]
     uk_age_pops['75 or over'] = raw_uk_data[15:].sum()
-    uk_age_pops.index = age_strata
+    uk_age_pops.index = AGE_STRATA
     uk_age_props = uk_age_pops / uk_age_pops.sum()
     aust_uk_ratios = aust_age_props / uk_age_props
 
@@ -331,8 +310,8 @@ def adapt_gb_matrices_to_aust(
         adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
     
     # Plot matrices
-    raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, age_strata, 'raw_matrices.jpg', tex_doc)
-    adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, age_strata, 'adjusted_matrices.jpg', tex_doc)
+    raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA, 'raw_matrices.jpg', tex_doc)
+    adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA, 'adjusted_matrices.jpg', tex_doc)
     if show_figs:
         input_pop_fig.show()
         uk_pop_fig.show()
@@ -344,13 +323,12 @@ def adapt_gb_matrices_to_aust(
 
 def get_age_stratification(
     compartments: list,
-    age_strata: list,
     matrix: np.array,
     tex_doc: StandardTexDoc,
 ) -> tuple:
     description = 'We stratified all compartments of the model described into sequential age brackets cmprising 5-year ' \
-        f'bands from age {age_strata[0]} to {age_strata[0] + 4} through to age {age_strata[-2]} to {age_strata[-2] + 4}, ' \
-        f'with a final age band to represent those aged {age_strata[-1]} and above. ' \
+        f'bands from age {AGE_STRATA[0]} to {AGE_STRATA[0] + 4} through to age {AGE_STRATA[-2]} to {AGE_STRATA[-2] + 4}, ' \
+        f'with a final age band to represent those aged {AGE_STRATA[-1]} and above. ' \
         'These age brackets were chosen to match those used by the POLYMOD survey \cite{mossong2008} ' \
         'and so fit with the mixing data available. ' \
         'The population distribution by age group was informed by the data from the Australian ' \
@@ -358,17 +336,16 @@ def get_age_stratification(
         'Ageing between sequential bands was not permitted given the time window of the simulation. '
     tex_doc.add_line(description, 'Stratification', subsection='Age')
 
-    age_strat = Stratification('agegroup', age_strata, compartments)
+    age_strat = Stratification('agegroup', AGE_STRATA, compartments)
     age_strat.set_mixing_matrix(matrix)
     return age_strat
 
 
 def get_strain_stratification(
     compartments: list,
-    strain_strata,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    strain_strings = [f'{strain.replace("ba", "BA.")}' for strain in strain_strata]
+    strain_strings = [f'{strain.replace("ba", "BA.")}' for strain in STRAIN_STRATA]
     compartments_to_stratify = [comp for comp in compartments if comp != 'susceptible']
     description = f'We stratified the following compartments according to strain: ' \
         f'{", ".join(compartments_to_stratify).replace("_", "")}, ' \
@@ -377,12 +354,11 @@ def get_strain_stratification(
         f"This was implemented using the summer library's `{StrainStratification.__name__}' class. "
     tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
 
-    return StrainStratification('strain', strain_strata, compartments_to_stratify)
+    return StrainStratification('strain', STRAIN_STRATA, compartments_to_stratify)
 
 
 def get_imm_stratification(
     compartments: list, 
-    infection_processes: list,
     tex_doc: StandardTexDoc,
 ) -> Stratification:
     description = 'All compartments and stratifications described were further ' \
@@ -401,7 +377,7 @@ def get_imm_stratification(
     tex_doc.add_line(description, 'Stratification', subsection='Heterogeneous susceptibility')
 
     imm_strat = Stratification('immunity', ['imm', 'nonimm'], compartments)
-    for infection_process in infection_processes:
+    for infection_process in INFECTION_PROCESSES:
         heterogeneity = {'imm': Multiply(1.0 - Parameter('imm_infect_protect')), 'nonimm': None}
         imm_strat.set_flow_adjustments(infection_process, heterogeneity)
     hetero_pop_split = {'imm': Parameter('imm_prop'), 'nonimm': 1.0 - Parameter('imm_prop')}
@@ -435,7 +411,6 @@ def seed_vocs(
 
 def add_reinfection(
     model: CompartmentalModel,
-    strain_strata: list,
     latent_compartments: list,
     tex_doc: StandardTexDoc,
 ) -> str:
@@ -458,8 +433,8 @@ def add_reinfection(
         'to the latent compartment corresponding to the infecting strain.\n'
     tex_doc.add_line(description, 'Reinfection')
 
-    for dest_strain in strain_strata:
-        for source_strain in strain_strata:
+    for dest_strain in STRAIN_STRATA:
+        for source_strain in STRAIN_STRATA:
             escape = Parameter(f'{dest_strain}_escape') if int(dest_strain[-1]) > int(source_strain[-1]) else 0.0
             model.add_infection_frequency_flow(
                 'early_reinfection', 
@@ -480,18 +455,16 @@ def add_reinfection(
 
 
 def get_wa_infection_scaling(
-    reopen_date: datetime, 
     model: CompartmentalModel,
 ) -> Function:
     reopen_param_str = 'wa_reopen_period'
-    reopen_index = model.get_epoch().dti_to_index(reopen_date)
+    reopen_index = model.get_epoch().dti_to_index(WA_REOPEN_DATE)
     reopen_times = [reopen_index, reopen_index + Parameter(reopen_param_str)]
     return linear_interp(reopen_times, np.array([0.0, 1.0]))
 
 
 def get_spatial_stratification(
     compartments: list, 
-    infection_processes: list, 
     model_pops: pd.DataFrame, 
     tex_doc: StandardTexDoc,
     reopen_func,
@@ -510,7 +483,7 @@ def get_spatial_stratification(
     spatial_strat = Stratification('states', model_pops.columns, compartments)
     spatial_strat.set_population_split(state_props.to_dict())
     infection_adj = {strata[0]: reopen_func, strata[1]: None}
-    for infection_process in infection_processes:
+    for infection_process in INFECTION_PROCESSES:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
     return spatial_strat
 

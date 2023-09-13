@@ -6,14 +6,12 @@ from datetime import datetime, timedelta
 from emutools.tex import StandardTexDoc
 from plotly import graph_objects as go
 
-BASE_PATH = Path(__file__).parent.parent.resolve()
-DATA_PATH = BASE_PATH / 'data'
-SUPPLEMENT_PATH = BASE_PATH / 'supplement'
+from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
+from inputs.constants import DATA_PATH, SUPPLEMENT_PATH
+CHANGE_STR = '_percent_change_from_baseline'
 
 
 def load_calibration_targets(
-    start_request: datetime, 
-    window: int,
     tex_doc: StandardTexDoc,
 ) -> tuple:
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
@@ -23,7 +21,7 @@ def load_calibration_targets(
         'the 16\\textsuperscript{th} of June 2023.' \
         'The final calibration target for cases was constructed as the OWID data for 2021 ' \
         'concatenated with the Australian Government data for 2022. ' \
-        f'These daily case data were then smoothed using a {window}-day moving average. '
+        f'These daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
     # National data
@@ -37,35 +35,32 @@ def load_calibration_targets(
 
     # Join, truncate, smooth
     national_data_start = datetime(2022, 1, 1)
-    interval = (start_request < owid_data.index) & (owid_data.index < national_data_start)
+    interval = (TARGETS_START_DATE < owid_data.index) & (owid_data.index < national_data_start)
     composite_aust_data = pd.concat([owid_data[interval], national_data['cases']])
-    return composite_aust_data.rolling(window=window).mean().dropna()
+    return composite_aust_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
 
 
 def load_who_data(
-    window: int,
     tex_doc: StandardTexDoc,
 ) -> tuple:
     description = 'The daily time series of deaths for Australia was obtained from the ' \
         "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
         '{Coronavirus (COVID-19) Dashboard} downloaded on 18\\textsuperscript{th} July 2023. ' \
-        f'These daily deaths data were then smoothed using a {window}-day ' \
+        f'These daily deaths data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day ' \
         'moving average. '
     tex_doc.add_line(description, 'Targets', subsection='Deaths')
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
     processed_data = raw_data[raw_data['Country'] == 'Australia']
     processed_data.index = pd.to_datetime(processed_data.index)
-    change_to_weekly_report_date = datetime(2022, 9, 16)
-    processed_data = processed_data.loc[:change_to_weekly_report_date, :]
+    processed_data = processed_data.loc[:WHO_CHANGE_WEEKLY_REPORT_DATE, :]
     death_data = processed_data['New_deaths']
-    death_data = death_data.rolling(window=window).mean().dropna()
+    death_data = death_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
 
     return death_data
 
 
 def load_serosurvey_data(
-    immunity_lag: float,
     tex_doc: StandardTexDoc,
 ) -> pd.Series:
     description = 'We obtained estimates of the seroprevalence of antibodies to ' \
@@ -74,7 +69,7 @@ def load_serosurvey_data(
         '{the round 4 serosurvey}, with ' \
         '\href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf}' \
         '{information on assay sensitivity also available}.' \
-        f'We lagged these empiric estimates by {immunity_lag} days to account for the delay between infection and seroconversion. '
+        f'We lagged these empiric estimates by {IMMUNITY_LAG} days to account for the delay between infection and seroconversion. '
     tex_doc.add_line(description, 'Targets', subsection='Seroprevalence')
 
     data = pd.Series(
@@ -85,7 +80,7 @@ def load_serosurvey_data(
             datetime(2022, 12, 5): 0.850,
         }
     )
-    data.index = data.index - timedelta(days=immunity_lag)
+    data.index = data.index - timedelta(days=IMMUNITY_LAG)
     return data
 
 
@@ -100,7 +95,6 @@ def load_raw_pop_data(
 
 
 def load_pop_data(
-    age_strata: list,
     tex_doc: StandardTexDoc,
 ) -> tuple:
     sheet_name = '31010do002_202206.xlsx'
@@ -121,7 +115,7 @@ def load_pop_data(
         }
     )
     model_pop_data = pd.concat([spatial_pops.loc[:'70-74'], pd.DataFrame([spatial_pops.loc['75-79':].sum()])])
-    model_pop_data.index = age_strata
+    model_pop_data.index = AGE_STRATA
     return model_pop_data
 
 
@@ -307,13 +301,15 @@ def get_raw_state_mobility(
     retaining only state-level data and converting to date index.
 
     Returns:
-        State-level Google mobility data
+    
+    Returns:
+        State-level mobility data, names of jurisdictions and locations
     """
     description = 'We undertook an alternative analysis in which estimates of population mobility ' \
         'were used to scale transmission rates. ' \
         'Raw estimates of Australian population mobility were obtained from Google, ' \
         'with 2021 and 2022 data concatenated together. '
-    tex_doc.add_line(description, section='Mobility', subsection='Data processing')   
+    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
 
     raw_data_2021 = pd.read_csv(DATA_PATH / '2021_AU_Region_Mobility_Report.csv', index_col=8)
     raw_data_2022 = pd.read_csv(DATA_PATH / '2022_AU_Region_Mobility_Report.csv', index_col=8)
@@ -321,4 +317,7 @@ def get_raw_state_mobility(
     
     state_data = raw_data.loc[raw_data['sub_region_1'].notnull() & raw_data['sub_region_2'].isnull()]
     state_data.index = pd.to_datetime(state_data.index)
-    return state_data
+
+    jurisdictions = set([j for j in state_data['sub_region_1'] if j != 'Australia'])
+    mob_locs = [c for c in state_data.columns if CHANGE_STR in c]
+    return state_data, jurisdictions, mob_locs

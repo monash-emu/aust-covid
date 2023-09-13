@@ -1,20 +1,17 @@
-from pathlib import Path
 import pandas as pd
 import numpy as np
 from plotly.express.colors import colorbrewer
-from typing import Dict, Tuple
+from typing import Dict
 
 from summer2.parameters import Function
 from summer2.utils import Epoch
 from summer2.functions.time import get_linear_interpolation_function as linear_interp
 
 from aust_covid.inputs import load_raw_pop_data, get_raw_state_mobility
-from aust_covid.plotting import plot_state_mobility, plot_processed_mobility
+from aust_covid.plotting import plot_processed_mobility
 from emutools.tex import StandardTexDoc
-PROJECT_PATH = Path().resolve().parent
-BASE_PATH = Path(__file__).parent.parent.resolve()
-SUPPLEMENT_PATH = BASE_PATH / 'supplement'
-DATA_PATH = PROJECT_PATH / 'data'
+from inputs.constants import SUPPLEMENT_PATH, MOBILITY_MAP, MOBILITY_AVERAGE_WINDOW
+
 CHANGE_STR = '_percent_change_from_baseline'
 COLOURS = colorbrewer.Accent
 
@@ -60,24 +57,6 @@ def get_non_wa_mob_averages(
     return state_averages
 
 
-def get_constants_from_mobility(
-    state_data: pd.DataFrame,
-) -> Tuple[set, set]:
-    """
-    Get the names of the jurisdictions (states and territories),
-    and the Google mobility locations.
-
-    Args:
-        Google mobility data
-
-    Returns:
-        Names of jurisdictions and locations
-    """
-    jurisdictions = set([j for j in state_data['sub_region_1'] if j != 'Australia'])
-    mob_locs = [c for c in state_data.columns if CHANGE_STR in c]
-    return jurisdictions, mob_locs
-
-
 def get_relative_mobility(
     mobility_df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -98,7 +77,6 @@ def get_relative_mobility(
 def map_mobility_locations(
     wa_relmob: pd.DataFrame, 
     non_wa_relmob: pd.DataFrame, 
-    mob_map: Dict[str, dict],
     tex_doc: StandardTexDoc,
 ) -> pd.DataFrame:
     """
@@ -107,7 +85,6 @@ def map_mobility_locations(
     Args:
         wa_relmob: Western Australia relative mobility
         non_wa_relmob: Rest of Australia relative mobility
-        mob_map: User instructions for mapping
 
     Returns:
         Mobility functions for use in the model
@@ -120,10 +97,10 @@ def map_mobility_locations(
         'wa': wa_relmob,
         'non_wa': non_wa_relmob,
     }
-    model_mob = pd.DataFrame(columns=pd.MultiIndex.from_product([patch_data.keys(), mob_map.keys()]))
+    model_mob = pd.DataFrame(columns=pd.MultiIndex.from_product([patch_data.keys(), MOBILITY_MAP.keys()]))
     for patch in patch_data.keys():
-        for mob_loc in mob_map.keys():
-            data = patch_data[patch].assign(**mob_map[mob_loc]).mul(patch_data[patch]).sum(1)
+        for mob_loc in MOBILITY_MAP.keys():
+            data = patch_data[patch].assign(**MOBILITY_MAP[mob_loc]).mul(patch_data[patch]).sum(1)
             model_mob.loc[:, (patch, mob_loc)] = data
     return model_mob
 
@@ -131,18 +108,12 @@ def map_mobility_locations(
 def get_processed_mobility_data(
     tex_doc: StandardTexDoc
 ) -> pd.DataFrame:
-    state_data = get_raw_state_mobility(tex_doc)
-    jurisdictions, mob_locs = get_constants_from_mobility(state_data)
-    
-    fig = plot_state_mobility(state_data, jurisdictions, mob_locs, tex_doc)
-    filename = 'state_mobility.jpg'
-    fig.write_image(SUPPLEMENT_PATH / filename)
-    tex_doc.include_figure(
-        'Raw state mobility.', 
-        filename,
-        'Mobility',
-    )
-
+    """
+    Get the state-level Google mobility estimates.
+    Also return the names of the jurisdictions (states and territories),
+    and the Google mobility locations.
+    """
+    state_data, jurisdictions, mob_locs = get_raw_state_mobility(tex_doc)
     wa_data = state_data.loc[state_data['sub_region_1'] == 'Western Australia', mob_locs]
     state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions, tex_doc)
 
@@ -152,60 +123,29 @@ def get_processed_mobility_data(
     non_wa_relmob = get_relative_mobility(state_averages)
     wa_relmob = get_relative_mobility(wa_data)
 
-    mob_map = {
-        'other_locations': 
-            {
-                'retail_and_recreation': 0.34, 
-                'grocery_and_pharmacy': 0.33,
-                'parks': 0.0,
-                'transit_stations': 0.33,
-                'workplaces': 0.0,
-                'residential': 0.0,
-            },
-        'work':
-            {
-                'retail_and_recreation': 0.0, 
-                'grocery_and_pharmacy': 0.0,
-                'parks': 0.0,
-                'transit_stations': 0.0,
-                'workplaces': 1.0,
-                'residential': 0.0,
-            },  
-    }
-
-    for location in mob_map:
-        if sum(mob_map[location].values()) != 1.0:
+    for location in MOBILITY_MAP:
+        if sum(MOBILITY_MAP[location].values()) != 1.0:
             raise ValueError(f'Mobility mapping does not sum to one for {location}')
 
-    mob_map_table = pd.DataFrame(mob_map)
+    mob_map_table = pd.DataFrame(MOBILITY_MAP)
     mob_map_table.index = mob_map_table.index.str.replace('_', ' ')
     mob_map_table.columns = mob_map_table.columns.str.replace('_', ' ')
     tex_doc.include_table(mob_map_table, section='Mobility', subsection='Data processing')
 
-    model_locs_mob = map_mobility_locations(wa_relmob, non_wa_relmob, mob_map, tex_doc)
+    processed_mob = map_mobility_locations(wa_relmob, non_wa_relmob, tex_doc)
 
-    average_window = 7
-    description = f'Next, we took the {average_window} moving average to smooth the ' \
+    description = f'Next, we took the {MOBILITY_AVERAGE_WINDOW} moving average to smooth the ' \
         'often abrupt shifts in mobility, including with weekend and public holidays. '
     tex_doc.add_line(description, section='Mobility', subsection='Data processing')
-    smoothed_mob = model_locs_mob.rolling(average_window).mean().dropna()
+    smoothed_mob = processed_mob.rolling(MOBILITY_AVERAGE_WINDOW).mean().dropna()
 
     description = 'Last, we squared the relative variations in mobility to account for ' \
         'the effect of reductions in visits to specific locations for both the infector ' \
         'and the infectee of the modelled social contacts. '
     tex_doc.add_line(description, section='Mobility', subsection='Data processing')
-    model_mob = smoothed_mob ** 2.0
+    squared_mob = smoothed_mob ** 2.0
 
-    fig = plot_processed_mobility(model_mob, smoothed_mob, tex_doc)
-    filename = 'processed_mobility.jpg'
-    fig.write_image(SUPPLEMENT_PATH / filename)
-    tex_doc.include_figure(
-        'Processed model mobility functions.', 
-        filename,
-        'Mobility',
-    )
-
-    return model_mob
+    return squared_mob
 
 
 def get_interp_funcs_from_mobility(

@@ -1,6 +1,9 @@
+from typing import List
 import arviz as az
 from arviz.labels import MapLabeller
-from pathlib import Path
+import plotly.graph_objects as go
+import plotly.express as px
+from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
 import matplotlib as mpl
@@ -11,9 +14,7 @@ from estival.model import BayesianCompartmentalModel
 import estival.priors as esp
 
 from emutools.tex import StandardTexDoc
-
-BASE_PATH = Path(__file__).parent.parent.resolve()
-SUPPLEMENT_PATH = BASE_PATH / 'supplement'
+from inputs.constants import SUPPLEMENT_PATH, PLOT_START_DATE, ANALYSIS_END_DATE
 
 
 def round_sigfig(
@@ -47,9 +48,9 @@ def param_table_to_tex(
     Returns:
         table: Ready to write version of the table
     """
-    table = param_info.iloc[:, 1:]  # Drop description for now
+    table = param_info[[c for c in param_info.columns if c != 'description']]
     table['value'] = table['value'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))  # Round value
-    table.loc[[i for i in table.index if i in prior_names], 'value'] = 'Calibrated'  # Suppress value if calibrated
+    table.loc[[i for i in table.index if i in prior_names], 'values'] = 'Calibrated'  # Suppress value if calibrated
     table.index = param_info['descriptions']  # Use readable description for row names
     table.columns = table.columns.str.replace('_', ' ').str.capitalize()
     table.index.name = None
@@ -358,3 +359,114 @@ def get_negbinom_target_widths(
         p = mu / (mu + dispersion)
         cis.loc[time, :] = stats.nbinom.ppf(centiles, dispersion, 1.0 - p)
     return cis, dispersion
+
+
+def plot_priors(
+    priors: list, 
+    titles: dict, 
+    n_cols: int, 
+    n_points: int, 
+    rel_overhang: float, 
+    prior_cover: float,
+) -> go.Figure:
+    """
+    Plot the PDF of each of a set of priors.
+
+    Args:
+        priors: The list of estival prior objects
+        titles: Names for the subplots
+        n_cols: User request for number of columns
+        n_points: Number of points to evaluate the prior at
+        rel_overhang: How far out to go past the edge of requested bounds
+            (to ensure priors that are discontinuous at their edges go down to zero at the sides)
+        prior_cover: How much of the posterior density to cover (before overhanging)
+
+    Returns:
+        Multi-panel figure with one panel per prior
+    """
+    n_cols = 5
+    n_rows = int(np.ceil(len(priors) / n_cols))
+    titles = [titles[p.name] for p in priors]
+    fig = make_subplots(rows=n_rows, cols=n_cols, subplot_titles=titles)
+    for p, prior in enumerate(priors):
+        extremes = prior.ppf(1.0 - prior_cover), prior.ppf(prior_cover)
+        overhang = (extremes[1] - extremes[0]) * rel_overhang
+        x_values = np.linspace(extremes[0] - overhang, extremes[1] + overhang, n_points)
+        y_values = [prior.pdf(x) for x in x_values]
+        row = int(np.floor(p / n_cols)) + 1
+        col = p % n_cols + 1
+        fig.add_trace(go.Scatter(x=x_values, y=y_values, fill='tozeroy'), row=row, col=col)
+    fig.update_layout(height=1000, showlegend=False)
+    return fig
+
+
+def plot_spaghetti(
+    spaghetti: pd.DataFrame, 
+    indicators: List[str], 
+    n_cols: int, 
+    targets: list,
+) -> go.Figure:
+    """
+    Generate a spaghetti plot to compare any number of requested outputs to targets.
+
+    Args:
+        spaghetti: The values from the sampled runs
+        indicators: The names of the indicators to look at
+        n_cols: Number of columns for the figure
+        targets: The calibration targets
+
+    Returns:
+        The spaghetti plot figure object
+    """
+    rows = int(np.ceil(len(indicators) / n_cols))
+
+    fig = make_subplots(rows=rows, cols=n_cols, subplot_titles=indicators)
+    for i, ind in enumerate(indicators):
+        row = int(np.floor(i / n_cols)) + 1
+        col = i % n_cols + 1
+
+        # Model outputs
+        ind_spagh = spaghetti[ind]
+        ind_spagh.columns = [f'chain:{col[0]}, draw:{col[1]}' for col in ind_spagh.columns]
+        ind_spagh = ind_spagh[(PLOT_START_DATE < ind_spagh.index) & (ind_spagh.index < ANALYSIS_END_DATE)]
+        fig.add_traces(px.line(ind_spagh).data, rows=row, cols=col)
+
+        # Targets
+        target = next((t.data for t in targets if t.name == ind), None)
+        if target is not None:
+            target = target[(PLOT_START_DATE < target.index) & (target.index < ANALYSIS_END_DATE)]
+            fig.add_trace(
+                go.Scatter(x=target.index, y=target, marker=dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey')), name='targets', mode='markers'), 
+                row=row, 
+                col=col,
+            )
+    fig.update_layout(showlegend=False, height=400 * rows)
+    return fig
+
+
+def plot_param_hover_spaghetti(
+    indicator_spaghetti: pd.DataFrame, 
+    idata: az.InferenceData,
+) -> go.Figure:
+    """
+    Generate a spaghetti plot with all parameters displayed on hover.
+
+    Args:
+        indicator_spaghetti: The values from the sampled runs for one indicator only
+        idata: The corresponding inference data
+
+    Returns:
+        The spaghetti plot figure object
+    """
+    fig = go.Figure()
+    working_data = pd.DataFrame()
+    for col in indicator_spaghetti.columns:
+        chain, draw = col
+        working_data['values'] = indicator_spaghetti[col]
+        info = {i: float(j) for i, j in dict(idata.posterior.sel(chain=int(chain), draw=int(draw)).variables).items()}
+        for param in info:
+            working_data[param] = int(info[param]) if param in ['chain', 'draw'] else round_sigfig(info[param], 3)
+        lines = px.line(working_data, y='values', hover_data=working_data.columns)
+        fig.add_traces(lines.data)
+    fig.update_layout(showlegend=False, height=600)
+    return fig

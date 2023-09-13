@@ -1,3 +1,41 @@
+value:
+  contact_rate: 0.076
+  latent_period: 1.8
+  infectious_period: 2.5
+  natural_immunity_period: 60.0
+  start_cdr: 0.3
+  imm_prop: 0.4
+  imm_infect_protect: 0.4
+  ifr_adjuster: 3.0
+  ba1_seed_time: 619.0
+  ba2_seed_time: 659.0
+  ba5_seed_time: 715.0
+  ba2_escape: 0.4
+  ba5_escape: 0.54
+  ba2_rel_ifr: 0.5
+  wa_reopen_period: 50.0
+  seed_duration: 10.0
+  seed_rate: 1.0
+  notifs_mean: 4.0
+  notifs_shape: 2.0
+  deaths_mean: 15.93
+  deaths_shape: 5.0
+  ifr_0: .NAN
+  ifr_5: .NAN
+  ifr_10: .NAN
+  ifr_15: .NAN
+  ifr_20: .NAN
+  ifr_25: .NAN
+  ifr_30: .NAN
+  ifr_35: .NAN
+  ifr_40: .NAN
+  ifr_45: .NAN
+  ifr_50: .NAN
+  ifr_55: .NAN
+  ifr_60: .NAN
+  ifr_65: .NAN
+  ifr_70: .NAN
+  ifr_75: .NAN
 descriptions:
   contact_rate: 'Effective contact rate'
   latent_period: 'Latent period'
