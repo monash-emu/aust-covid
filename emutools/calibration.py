@@ -251,77 +251,6 @@ def tabulate_param_results(
     return table
 
 
-def sample_idata(
-    idata: az.InferenceData, 
-    n_samples: int, 
-    model: BayesianCompartmentalModel,
-) -> pd.DataFrame:
-    """
-    Sample from inference data, retain only data pertaining to the parameters,
-    and sort by draw and chain.
-
-    Args:
-        idata: The inference data
-        n_samples: Number of samples to select
-        model: The Bayesian calibration object, only used for getting parameter names
-
-    Returns:
-        Sampled data converted to dataframe with columns for parameters and multi-index for chain and draw
-    """
-    prior_names = [k for k in model.priors.keys() if 'dispersion' not in k]
-    return az.extract(idata, num_samples=n_samples).to_dataframe()[prior_names].sort_index(level='draw').sort_index(level='chain')
-
-
-def get_sampled_outputs(
-    model: BayesianCompartmentalModel, 
-    sampled_idata: pd.DataFrame, 
-    outputs: list, 
-    parameters: dict,
-) -> pd.DataFrame:
-    """
-    Take output of sample_idata and run through model to get results of multiple runs of model.
-
-    Args:
-        model: The Bayesian calibration object, needed to run the parameters through to get results again
-        sampled_idata: Output of sampled_idata
-        outputs: The names of the derived outputs we want to examine
-        parameters: The base parameter names to be updated by the samples
-
-    Returns:
-        Sampled runs with multi-index for columns output, chain and draw, and index being independent variable of model (i.e. time)
-    """
-    spaghetti_df = pd.concat([pd.DataFrame(columns=sampled_idata.index)] * len(outputs), keys=outputs, axis=1)
-    for (chain, draw), params in sampled_idata.iterrows():
-        run_results = model.run(parameters | params.to_dict()).derived_outputs
-        for output in outputs:
-            spaghetti_df[(output, chain, draw)] = run_results[output]
-    return spaghetti_df
-
-
-def melt_spaghetti(
-    spaghetti_df: pd.DataFrame, 
-    output: str, 
-    sampled_idata: az.InferenceData,
-) -> pd.DataFrame:
-    """
-    Take output of get_sampled_outputs, 'melt'/convert to long format and add columns for parameter values.
-    This is done in preparation for producing a 'spaghetti plot' of sequential model runs.
-
-    Args:
-        spaghetti_df: Output of get_sampled_outputs
-        output: The name of the derived output of interest
-        idata: The output of sample_idata
-
-    Returns:
-        The melted sequential runs spaghetti
-    """
-    melted_df = spaghetti_df[output].melt(ignore_index=False)
-    for (chain, draw), params in sampled_idata.iterrows():
-        for param, value in params.iteritems():
-            melted_df.loc[(melted_df['chain']==chain) & (melted_df['draw'] == draw), param] = round_sigfig(value, 3)
-    return melted_df
-
-
 def get_negbinom_target_widths(
     targets: pd.Series, 
     idata: az.InferenceData,
@@ -435,11 +364,9 @@ def plot_spaghetti(
         target = next((t.data for t in targets if t.name == ind), None)
         if target is not None:
             target = target[(PLOT_START_DATE < target.index) & (target.index < ANALYSIS_END_DATE)]
-            fig.add_trace(
-                go.Scatter(x=target.index, y=target, marker=dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey')), name='targets', mode='markers'), 
-                row=row, 
-                col=col,
-            )
+            target_marker_config = dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey'))
+            lines = go.Scatter(x=target.index, y=target, marker=target_marker_config, name='targets', mode='markers')
+            fig.add_trace(lines, row=row, col=col)
     fig.update_layout(showlegend=False, height=400 * rows)
     return fig
 
