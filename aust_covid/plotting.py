@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import plotly.express as px
 import arviz as az
 
 from summer2 import CompartmentalModel
