@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 import arviz as az
 from arviz.labels import MapLabeller
 import plotly.graph_objects as go
@@ -111,10 +111,7 @@ def get_prior_dist_support(
 def plot_param_progression(
     idata: az.InferenceData, 
     param_info: pd.DataFrame, 
-    tex_doc: StandardTexDoc,
-    show_fig: bool=False,
-    request_vars=None,
-    name_ext: str='',
+    request_vars: Union[None, List[str]]=None,
 ) -> mpl.figure.Figure:
     """
     Plot progression of parameters over model iterations with posterior density plots.
@@ -122,31 +119,17 @@ def plot_param_progression(
     Args:
         idata: Formatted outputs from calibration
         param_info: Collated information on the parameter values (excluding calibration/priors-related)
+        request_vars: The parameter names to plot
     
     Returns:
         Formatted figure object created from arviz plotting command
     """
     mpl.rcParams['axes.titlesize'] = 25
-    trace_plot = az.plot_trace(
-        idata, 
-        figsize=(16, 21), 
-        compact=False, 
-        legend=False,
-        labeller=MapLabeller(var_name_map=param_info['descriptions']),
-        var_names=request_vars,
-    )
+    labeller = MapLabeller(var_name_map=param_info['descriptions'])
+    trace_plot = az.plot_trace(idata, figsize=(16, 21), compact=False, legend=False, labeller=labeller, var_names=request_vars)
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
-
-    filename = f'traces{name_ext}.jpg'
-    trace_fig.savefig(SUPPLEMENT_PATH / filename)
-    tex_doc.include_figure(
-        'Parameter posteriors and traces by chain.', 
-        filename,
-        'Calibration', 
-    )
-    if show_fig:
-        trace_fig.show()
+    return trace_fig
 
 
 def plot_posterior_comparison(
@@ -181,25 +164,6 @@ def plot_posterior_comparison(
         y_vals = req_priors[i_ax].pdf(x_vals)
         ax.fill_between(x_vals, y_vals, color='k', alpha=0.2, linewidth=2)
     return comparison_plot[0, 0].figure
-
-
-def view_posterior_comparison(
-    idata: az.InferenceData, 
-    priors: list, 
-    request_vars: list, 
-    display_names: dict,
-    dens_interval_req: float,
-    tex_doc: StandardTexDoc,
-    name_ext: str='',
-    show_fig=False,
-):
-    comp_fig = plot_posterior_comparison(idata, priors, request_vars, display_names, dens_interval_req)
-    filename = f'post_prior{name_ext}.jpg'
-    comp_fig.savefig(SUPPLEMENT_PATH / filename)
-    caption = 'Comparison of posterior densities against prior distributions.'
-    tex_doc.include_figure(caption, filename, 'Calibration')
-    if show_fig:
-        comp_fig.show()
 
 
 def tabulate_priors(
