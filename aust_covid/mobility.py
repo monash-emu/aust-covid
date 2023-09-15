@@ -8,7 +8,6 @@ from summer2.utils import Epoch
 from summer2.functions.time import get_linear_interpolation_function as linear_interp
 
 from aust_covid.inputs import load_raw_pop_data, get_raw_state_mobility
-from aust_covid.plotting import plot_processed_mobility
 from emutools.tex import StandardTexDoc
 from inputs.constants import SUPPLEMENT_PATH, MOBILITY_MAP, MOBILITY_AVERAGE_WINDOW
 
@@ -41,7 +40,7 @@ def get_non_wa_mob_averages(
         "for population mobility by each Google `location' " \
         f'(being {", ".join([i.replace("_percent_change_from_baseline", "").replace("_", " ") for i in mob_locs])}). '
     tex_doc.add_line(description, section='Mobility', subsection='Data processing')
-    non_wa_data = state_data.loc[state_data['sub_region_1'] != 'Western Australia']
+    non_wa_data = state_data.copy().loc[state_data['sub_region_1'] != 'Western Australia']
 
     # Add state population totals to dataframe
     state_pop_totals = load_raw_pop_data('31010do002_202206.xlsx').sum()
