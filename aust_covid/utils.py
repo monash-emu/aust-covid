@@ -1,9 +1,11 @@
+from typing import Union
 from jax import numpy as jnp
 from jax import scipy as jsp
 import numpy as np
 from matplotlib.figure import Figure as MplFig
 from plotly.graph_objects import Figure as PlotlyFig
 
+from emutools.tex import StandardTexDoc
 from summer2.parameters import Function, Data, DerivedOutput
 
 from inputs.constants import SUPPLEMENT_PATH
@@ -91,7 +93,26 @@ def build_gamma_dens_interval_func(
     return Function(jnp.gradient, [cdf_values])
 
 
-def add_image_to_doc(fig, filename, caption, tex_doc, section):
+def add_image_to_doc(
+    fig: Union[MplFig, PlotlyFig], 
+    filename: str, 
+    caption: str, 
+    tex_doc: StandardTexDoc, 
+    section: str,
+):
+    """
+    Save an figure image to a local directory and include in TeX doc.
+
+    Args:
+        fig: The figure object
+        filename: A string for the filenam to save the figure as
+        caption: Figure caption for the document
+        tex_doc: The working document
+        section: Section of the document to include the figure in
+
+    Raises:
+        TypeError: If the figure is not one of the two supported formats
+    """
     full_filename = f'{filename}.jpg'
     if isinstance(fig, MplFig):
         fig.savefig(SUPPLEMENT_PATH / full_filename)
