@@ -42,6 +42,10 @@ class TexDoc:
         pass
 
 
+class DummyTexDoc(TexDoc):
+    pass
+
+
 class ConcreteTexDoc:
     def __init__(
         self, 
