@@ -1,9 +1,12 @@
 from jax import numpy as jnp
 from jax import scipy as jsp
 import numpy as np
+from matplotlib.figure import Figure as MplFig
+from plotly.graph_objects import Figure as PlotlyFig
 
 from summer2.parameters import Function, Data, DerivedOutput
 
+from inputs.constants import SUPPLEMENT_PATH
 
 def triangle_wave_func(
     time: float, 
@@ -86,3 +89,14 @@ def build_gamma_dens_interval_func(
     lags = Data(model_times - model_times[0])
     cdf_values = Function(gamma_cdf, [shape, mean, lags])
     return Function(jnp.gradient, [cdf_values])
+
+
+def add_image_to_doc(fig, filename, caption, tex_doc, section):
+    full_filename = f'{filename}.jpg'
+    if isinstance(fig, MplFig):
+        fig.savefig(SUPPLEMENT_PATH / full_filename)
+    elif isinstance(fig, PlotlyFig):
+        fig.write_image(SUPPLEMENT_PATH / full_filename)
+    else:
+        raise TypeError('Figure type not supported')
+    tex_doc.include_figure(caption, full_filename, section)
