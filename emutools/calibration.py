@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 import arviz as az
 from arviz.labels import MapLabeller
 import plotly.graph_objects as go
@@ -111,10 +111,7 @@ def get_prior_dist_support(
 def plot_param_progression(
     idata: az.InferenceData, 
     param_info: pd.DataFrame, 
-    tex_doc: StandardTexDoc,
-    show_fig: bool=False,
-    request_vars=None,
-    name_ext: str='',
+    request_vars: Union[None, List[str]]=None,
 ) -> mpl.figure.Figure:
     """
     Plot progression of parameters over model iterations with posterior density plots.
@@ -122,31 +119,17 @@ def plot_param_progression(
     Args:
         idata: Formatted outputs from calibration
         param_info: Collated information on the parameter values (excluding calibration/priors-related)
+        request_vars: The parameter names to plot
     
     Returns:
         Formatted figure object created from arviz plotting command
     """
     mpl.rcParams['axes.titlesize'] = 25
-    trace_plot = az.plot_trace(
-        idata, 
-        figsize=(16, 21), 
-        compact=False, 
-        legend=False,
-        labeller=MapLabeller(var_name_map=param_info['descriptions']),
-        var_names=request_vars,
-    )
+    labeller = MapLabeller(var_name_map=param_info['descriptions'])
+    trace_plot = az.plot_trace(idata, figsize=(16, 21), compact=False, legend=False, labeller=labeller, var_names=request_vars)
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
-
-    filename = f'traces{name_ext}.jpg'
-    trace_fig.savefig(SUPPLEMENT_PATH / filename)
-    tex_doc.include_figure(
-        'Parameter posteriors and traces by chain.', 
-        filename,
-        'Calibration', 
-    )
-    if show_fig:
-        trace_fig.show()
+    return trace_fig
 
 
 def plot_posterior_comparison(
@@ -181,25 +164,6 @@ def plot_posterior_comparison(
         y_vals = req_priors[i_ax].pdf(x_vals)
         ax.fill_between(x_vals, y_vals, color='k', alpha=0.2, linewidth=2)
     return comparison_plot[0, 0].figure
-
-
-def view_posterior_comparison(
-    idata: az.InferenceData, 
-    priors: list, 
-    request_vars: list, 
-    display_names: dict,
-    dens_interval_req: float,
-    tex_doc: StandardTexDoc,
-    name_ext: str='',
-    show_fig=False,
-):
-    comp_fig = plot_posterior_comparison(idata, priors, request_vars, display_names, dens_interval_req)
-    filename = f'post_prior{name_ext}.jpg'
-    comp_fig.savefig(SUPPLEMENT_PATH / filename)
-    caption = 'Comparison of posterior densities against prior distributions.'
-    tex_doc.include_figure(caption, filename, 'Calibration')
-    if show_fig:
-        comp_fig.show()
 
 
 def tabulate_priors(
@@ -249,77 +213,6 @@ def tabulate_param_results(
     table = table.drop(['mcse_mean', 'mcse_sd', 'hdi_3%', 'hdi_97%'], axis=1)
     table.columns = ['Mean', 'Standard deviation', 'ESS bulk', 'ESS tail', '\\textit{\^{R}}', 'High-density interval']
     return table
-
-
-def sample_idata(
-    idata: az.InferenceData, 
-    n_samples: int, 
-    model: BayesianCompartmentalModel,
-) -> pd.DataFrame:
-    """
-    Sample from inference data, retain only data pertaining to the parameters,
-    and sort by draw and chain.
-
-    Args:
-        idata: The inference data
-        n_samples: Number of samples to select
-        model: The Bayesian calibration object, only used for getting parameter names
-
-    Returns:
-        Sampled data converted to dataframe with columns for parameters and multi-index for chain and draw
-    """
-    prior_names = [k for k in model.priors.keys() if 'dispersion' not in k]
-    return az.extract(idata, num_samples=n_samples).to_dataframe()[prior_names].sort_index(level='draw').sort_index(level='chain')
-
-
-def get_sampled_outputs(
-    model: BayesianCompartmentalModel, 
-    sampled_idata: pd.DataFrame, 
-    outputs: list, 
-    parameters: dict,
-) -> pd.DataFrame:
-    """
-    Take output of sample_idata and run through model to get results of multiple runs of model.
-
-    Args:
-        model: The Bayesian calibration object, needed to run the parameters through to get results again
-        sampled_idata: Output of sampled_idata
-        outputs: The names of the derived outputs we want to examine
-        parameters: The base parameter names to be updated by the samples
-
-    Returns:
-        Sampled runs with multi-index for columns output, chain and draw, and index being independent variable of model (i.e. time)
-    """
-    spaghetti_df = pd.concat([pd.DataFrame(columns=sampled_idata.index)] * len(outputs), keys=outputs, axis=1)
-    for (chain, draw), params in sampled_idata.iterrows():
-        run_results = model.run(parameters | params.to_dict()).derived_outputs
-        for output in outputs:
-            spaghetti_df[(output, chain, draw)] = run_results[output]
-    return spaghetti_df
-
-
-def melt_spaghetti(
-    spaghetti_df: pd.DataFrame, 
-    output: str, 
-    sampled_idata: az.InferenceData,
-) -> pd.DataFrame:
-    """
-    Take output of get_sampled_outputs, 'melt'/convert to long format and add columns for parameter values.
-    This is done in preparation for producing a 'spaghetti plot' of sequential model runs.
-
-    Args:
-        spaghetti_df: Output of get_sampled_outputs
-        output: The name of the derived output of interest
-        idata: The output of sample_idata
-
-    Returns:
-        The melted sequential runs spaghetti
-    """
-    melted_df = spaghetti_df[output].melt(ignore_index=False)
-    for (chain, draw), params in sampled_idata.iterrows():
-        for param, value in params.iteritems():
-            melted_df.loc[(melted_df['chain']==chain) & (melted_df['draw'] == draw), param] = round_sigfig(value, 3)
-    return melted_df
 
 
 def get_negbinom_target_widths(
@@ -435,11 +328,9 @@ def plot_spaghetti(
         target = next((t.data for t in targets if t.name == ind), None)
         if target is not None:
             target = target[(PLOT_START_DATE < target.index) & (target.index < ANALYSIS_END_DATE)]
-            fig.add_trace(
-                go.Scatter(x=target.index, y=target, marker=dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey')), name='targets', mode='markers'), 
-                row=row, 
-                col=col,
-            )
+            target_marker_config = dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey'))
+            lines = go.Scatter(x=target.index, y=target, marker=target_marker_config, name='targets', mode='markers')
+            fig.add_trace(lines, row=row, col=col)
     fig.update_layout(showlegend=False, height=400 * rows)
     return fig
 
