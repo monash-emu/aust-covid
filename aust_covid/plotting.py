@@ -204,7 +204,7 @@ def plot_processed_mobility(mob_types):
     return fig
 
 
-def plot_example_model_matrices(model, parameters, tex_doc, show_fig=False):
+def plot_example_model_matrices(model, parameters):
     epoch = model.get_epoch()
     matrix_func = model.graph.filter('mixing_matrix').get_callable()
     dates = [datetime(2022, month, 1) for month in range(1, 13)]
@@ -219,13 +219,4 @@ def plot_example_model_matrices(model, parameters, tex_doc, show_fig=False):
             row=int(np.floor(i_date /4) + 1), 
             col=i_date % 4 + 1,
         )
-    
-    filename = 'example_matrices.jpg'
-    fig.write_image(SUPPLEMENT_PATH / filename)
-    tex_doc.include_figure(
-        'Snapshots of modelled dynamic matrices.', 
-        filename,
-        'Mobility',
-    )
-    if show_fig:
-        fig.show()
+    return fig
