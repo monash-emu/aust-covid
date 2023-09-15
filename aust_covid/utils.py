@@ -1,9 +1,14 @@
+from typing import Union
 from jax import numpy as jnp
 from jax import scipy as jsp
 import numpy as np
+from matplotlib.figure import Figure as MplFig
+from plotly.graph_objects import Figure as PlotlyFig
 
+from emutools.tex import StandardTexDoc
 from summer2.parameters import Function, Data, DerivedOutput
 
+from inputs.constants import SUPPLEMENT_PATH
 
 def triangle_wave_func(
     time: float, 
@@ -86,3 +91,33 @@ def build_gamma_dens_interval_func(
     lags = Data(model_times - model_times[0])
     cdf_values = Function(gamma_cdf, [shape, mean, lags])
     return Function(jnp.gradient, [cdf_values])
+
+
+def add_image_to_doc(
+    fig: Union[MplFig, PlotlyFig], 
+    filename: str, 
+    caption: str, 
+    tex_doc: StandardTexDoc, 
+    section: str,
+):
+    """
+    Save an figure image to a local directory and include in TeX doc.
+
+    Args:
+        fig: The figure object
+        filename: A string for the filenam to save the figure as
+        caption: Figure caption for the document
+        tex_doc: The working document
+        section: Section of the document to include the figure in
+
+    Raises:
+        TypeError: If the figure is not one of the two supported formats
+    """
+    full_filename = f'{filename}.jpg'
+    if isinstance(fig, MplFig):
+        fig.savefig(SUPPLEMENT_PATH / full_filename)
+    elif isinstance(fig, PlotlyFig):
+        fig.write_image(SUPPLEMENT_PATH / full_filename)
+    else:
+        raise TypeError('Figure type not supported')
+    tex_doc.include_figure(caption, full_filename, section)

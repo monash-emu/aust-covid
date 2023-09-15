@@ -320,7 +320,7 @@ def plot_spaghetti(
 
         # Model outputs
         ind_spagh = spaghetti[ind]
-        ind_spagh.columns = [f'chain:{col[0]}, draw:{col[1]}' for col in ind_spagh.columns]
+        ind_spagh.columns = ind_spagh.columns.map(lambda col: f'{col[0]}, {col[1]}')
         ind_spagh = ind_spagh[(PLOT_START_DATE < ind_spagh.index) & (ind_spagh.index < ANALYSIS_END_DATE)]
         fig.add_traces(px.line(ind_spagh).data, rows=row, cols=col)
 
