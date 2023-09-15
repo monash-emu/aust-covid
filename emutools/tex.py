@@ -172,6 +172,7 @@ class TexDoc:
         with open(self.path / f'{self.doc_name}.yml', 'r') as file:
             self.content = yml.load(file, Loader=yml.FullLoader)
 
+
 class StandardTexDoc(TexDoc):
     def prepare_doc(self):
         """
