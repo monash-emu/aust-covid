@@ -6,7 +6,15 @@ from abc import abstractmethod
 
 def get_tex_formatted_date(date):
     date_of_month = date.strftime('%-d')
-    special_cases = {'1': 'st', '2': 'nd'}
+    special_cases = {
+        '1': 'st', 
+        '2': 'nd',
+        '3': 'rd',
+        '21': 'st',
+        '22': 'nd',
+        '23': 'rd',
+        '31': 'st',
+    }
     text_super = special_cases[date_of_month] if date_of_month in special_cases else 'th'
     return f'{date_of_month}\\textsuperscript{{{text_super}}}{date.strftime(" of %B %Y")}'
 
