@@ -7,8 +7,8 @@ import estival.priors as esp
 import estival.targets as est
 
 from emutools.tex import StandardTexDoc
+from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
 from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data
-from inputs.constants import TARGETS_START_DATE
 
 
 def get_priors() -> list:
@@ -47,9 +47,7 @@ def truncation_ceiling(modelled, obs, parameters, time_weights):
     return jnp.where(modelled > obs, -1e11, 0.0)
 
 
-def get_targets(
-    tex_doc: StandardTexDoc,
-) -> list:
+def get_targets(tex_doc: StandardTexDoc) -> list:
     """
     Get the standard targets used for the analysis.
 
@@ -59,7 +57,10 @@ def get_targets(
     Returns:
         Final targets
     """
-    case_targets = load_calibration_targets(tex_doc)
+    description = f'The composite daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
+    tex_doc.add_line(description, 'Targets', 'Notifications')
+
+    case_targets = load_calibration_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     death_targets = load_who_data(tex_doc)[TARGETS_START_DATE:]
     serosurvey_targets = load_serosurvey_data(tex_doc)
     targets = [

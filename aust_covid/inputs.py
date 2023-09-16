@@ -1,43 +1,49 @@
-from pathlib import Path
 import pandas as pd
 import numpy as np
 from copy import copy
 from datetime import datetime, timedelta
-from emutools.tex import StandardTexDoc
 from plotly import graph_objects as go
 
+from emutools.tex import TexDoc, StandardTexDoc
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
-from inputs.constants import DATA_PATH, SUPPLEMENT_PATH
+from inputs.constants import DATA_PATH, SUPPLEMENT_PATH, NATIONAL_DATA_START_DATE
+
 CHANGE_STR = '_percent_change_from_baseline'
 
 
-def load_calibration_targets(
-    tex_doc: StandardTexDoc,
-) -> tuple:
+def load_national_data(tex_doc: TexDoc) -> pd.Series:
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
         '\href{https://www.health.gov.au/health-alerts/covid-19/weekly-reporting}{The Department of Health} ' \
-        'on the 2\\textsuperscript{nd} of May 2023. Data that extended back to 2021 were obtained from ' \
-        '\href{https://github.com/owid/covid-19-data/tree/master/public/data#license}{Our World in Data (OWID)} on ' \
-        'the 16\\textsuperscript{th} of June 2023.' \
-        'The final calibration target for cases was constructed as the OWID data for 2021 ' \
-        'concatenated with the Australian Government data for 2022. ' \
-        f'These daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
+        'on the 2\\textsuperscript{nd} of May 2023. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
-    # National data
     national_data = pd.read_csv(DATA_PATH / 'Aus_covid_data.csv', index_col='date')
     national_data.index = pd.to_datetime(national_data.index)
     national_data = national_data[national_data['region'] == 'AUS']
+    return national_data['cases']
 
-    # OWID data
+
+def load_owid_data(tex_doc: TexDoc) -> pd.Series:
+    description = 'Data that extended back to 2021 were obtained from ' \
+        '\href{https://github.com/owid/covid-19-data/tree/master/public/data#license}{Our World in Data (OWID)} on ' \
+        'the 16\\textsuperscript{th} of June 2023.'
+    tex_doc.add_line(description, 'Targets', subsection='Notifications')
+
     owid_data = pd.read_csv(DATA_PATH / 'aust_2021_surv_data.csv', index_col=0)['new_cases']
     owid_data.index = pd.to_datetime(owid_data.index)
+    return owid_data
 
-    # Join, truncate, smooth
-    national_data_start = datetime(2022, 1, 1)
-    interval = (TARGETS_START_DATE < owid_data.index) & (owid_data.index < national_data_start)
-    composite_aust_data = pd.concat([owid_data[interval], national_data['cases']])
-    return composite_aust_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
+
+def load_calibration_targets(tex_doc: TexDoc) -> tuple:
+    national_data = load_national_data(tex_doc)
+    owid_data = load_owid_data(tex_doc)
+
+    description = 'The final calibration target for cases was constructed as the OWID data for 2021 ' \
+        'concatenated with the Australian Government data for 2022. '
+    tex_doc.add_line(description, 'Targets', subsection='Notifications')
+
+    interval = (TARGETS_START_DATE < owid_data.index) & (owid_data.index < NATIONAL_DATA_START_DATE)
+    return pd.concat([owid_data[interval], national_data])
 
 
 def load_who_data(

@@ -3,6 +3,7 @@ import pandas as pd
 import yaml as yml
 from abc import abstractmethod
 
+
 class TexDoc:
     def __init__(
         self, 
