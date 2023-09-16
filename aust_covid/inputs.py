@@ -4,7 +4,7 @@ from copy import copy
 from datetime import datetime, timedelta
 from plotly import graph_objects as go
 
-from emutools.tex import TexDoc, StandardTexDoc
+from emutools.tex import get_tex_formatted_date, TexDoc, StandardTexDoc
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
 from inputs.constants import DATA_PATH, SUPPLEMENT_PATH, NATIONAL_DATA_START_DATE
 
@@ -14,7 +14,7 @@ CHANGE_STR = '_percent_change_from_baseline'
 def load_national_data(tex_doc: TexDoc) -> pd.Series:
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
         '\href{https://www.health.gov.au/health-alerts/covid-19/weekly-reporting}{The Department of Health} ' \
-        'on the 2\\textsuperscript{nd} of May 2023. '
+        f'on the {get_tex_formatted_date(datetime(2023, 5, 2))}. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
     national_data = pd.read_csv(DATA_PATH / 'Aus_covid_data.csv', index_col='date')
@@ -26,7 +26,7 @@ def load_national_data(tex_doc: TexDoc) -> pd.Series:
 def load_owid_data(tex_doc: TexDoc) -> pd.Series:
     description = 'Data that extended back to 2021 were obtained from ' \
         '\href{https://github.com/owid/covid-19-data/tree/master/public/data#license}{Our World in Data (OWID)} on ' \
-        'the 16\\textsuperscript{th} of June 2023.'
+        f'the {get_tex_formatted_date(datetime(2023, 6, 16))}. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
     owid_data = pd.read_csv(DATA_PATH / 'aust_2021_surv_data.csv', index_col=0)['new_cases']
@@ -51,9 +51,8 @@ def load_who_data(
 ) -> tuple:
     description = 'The daily time series of deaths for Australia was obtained from the ' \
         "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
-        '{Coronavirus (COVID-19) Dashboard} downloaded on 18\\textsuperscript{th} July 2023. ' \
-        f'These daily deaths data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day ' \
-        'moving average. '
+        f'{{Coronavirus (COVID-19) Dashboard}} downloaded on {get_tex_formatted_date(datetime(2023, 7, 18))}. ' \
+        f'These daily deaths data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
     tex_doc.add_line(description, 'Targets', subsection='Deaths')
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
