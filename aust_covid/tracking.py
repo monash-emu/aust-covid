@@ -11,7 +11,7 @@ from summer2.parameters import Parameter, DerivedOutput, Function
 from inputs.constants import TARGETS_AVERAGE_WINDOW, SUPPLEMENT_PATH
 from aust_covid.utils import convolve_probability, build_gamma_dens_interval_func
 from aust_covid.inputs import load_household_impacts_data
-from emutools.tex import StandardTexDoc
+from emutools.tex import get_tex_formatted_date, StandardTexDoc
 from inputs.constants import INFECTION_PROCESSES
 
 
@@ -80,7 +80,7 @@ def track_notifications(
         '{https://www.abs.gov.au/statistics/people/people-and-communities/household-impacts-covid-19-survey/latest-release}' \
         '{Australian Bureau of Statistics Household Impacts of COVID-19 surveys}, which were undertaken periodically ' \
         'throughout 2022 with standardised questions at each round ' \
-        '(downloded on the 12\\textsuperscript{th} June 2023). ' \
+        f'(downloded on the {get_tex_formatted_date(datetime(2023, 6, 12))}). ' \
         'These surveys reported on several indicators, ' \
         'including the proportion of households reporting a household member with symptoms of cold, flu or COVID-19, ' \
         'and the proportion of households reporting a household member has had a COVID-19 test. ' \

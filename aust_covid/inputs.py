@@ -105,7 +105,7 @@ def load_pop_data(
     sheet_name = '31010do002_202206.xlsx'
     sheet = sheet_name.replace('_', '\_')
     description = f'For estimates of the Australian population, the spreadsheet was downloaded ' \
-        'from the Australian Bureau of Statistics website on 1\\textsuperscript{st} March 2023 \cite{abs2022} ' \
+        f'from the Australian Bureau of Statistics website on {get_tex_formatted_date(datetime(2023, 3, 1))} \cite{{abs2022}} ' \
         f"(sheet {sheet}). Minor jurisdictions other than Australia's eight major state and territories " \
         '(i.e. Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory) are excluded from these data. ' \
         'These much smaller jurisdictions likely contribute little to overall COVID-19 epidemiology ' \
