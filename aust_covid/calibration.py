@@ -61,7 +61,7 @@ def get_targets(tex_doc: StandardTexDoc) -> list:
     tex_doc.add_line(description, 'Targets', 'Notifications')
 
     case_targets = load_calibration_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
-    death_targets = load_who_data(tex_doc)[TARGETS_START_DATE:]
+    death_targets = load_who_data(tex_doc)[TARGETS_START_DATE:].rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     serosurvey_targets = load_serosurvey_data(tex_doc)
     targets = [
         est.NegativeBinomialTarget('notifications_ma', case_targets, dispersion_param=esp.UniformPrior('notifications_ma_dispersion', (10.0, 140.0))),
