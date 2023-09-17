@@ -187,20 +187,22 @@ def plot_state_mobility(state_data, jurisdictions, mob_locs):
     return fig
 
 
-def plot_processed_mobility(mob_types):
-    fig = make_subplots(rows=1, cols=2, subplot_titles=['Western Australia', 'weighted average for rest of Australia'])
+def plot_processed_mobility(model_mob, smoothed_model_mob):
+    locations = {
+        'wa': 'Western Australia',
+        'non_wa': 'rest of Australia',
+    }
+    fig = make_subplots(rows=1, cols=2, subplot_titles=list(locations.values()))
     fig.update_layout(height=500)
-    levels = mob_types['original'].columns
-    for p, patch in enumerate(set(levels.get_level_values(0))):
-        colour = 0
-        for mob_loc in set(levels.get_level_values(1)):
-            for m, mob_type in mob_types.items():
-                colour += 1
-                values = mob_type.loc[:, (patch, mob_loc)]
-                fig.add_trace(
-                    go.Scatter(x=values.index, y=values, name=f'{m}, {mob_loc}'.replace('_', ' '), showlegend=p==0, line=dict(color=COLOURS[colour])),
-                    row=1, col=p + 1,
-                )
+    for p, patch in enumerate(set(model_mob.columns.get_level_values(0))):
+        for l, mob_loc in enumerate(set(model_mob.columns.get_level_values(1))):
+            values = model_mob.loc[:, (patch, mob_loc)]
+            trace_name = f'{mob_loc}, {locations[patch]}'
+            mob_trace = go.Scatter(x=values.index, y=values, name=trace_name, line=dict(color=COLOURS[l]))
+            fig.add_trace(mob_trace, row=1, col=p + 1)
+            values = smoothed_model_mob.loc[:, (patch, mob_loc)]
+            smoothed_mob_trace = go.Scatter(x=values.index, y=values, name=f'smoothed {trace_name}', line=dict(color=COLOURS[l + 2]))
+            fig.add_trace(smoothed_mob_trace, row=1, col=p + 1)
     return fig
 
 
