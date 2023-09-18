@@ -1,9 +1,88 @@
 from pathlib import Path
 import pandas as pd
 import yaml as yml
+from abc import abstractmethod, ABC
 
 
-class TexDoc:
+def get_tex_formatted_date(date):
+    date_of_month = date.strftime('%-d')
+    special_cases = {
+        '1': 'st', 
+        '2': 'nd',
+        '3': 'rd',
+        '21': 'st',
+        '22': 'nd',
+        '23': 'rd',
+        '31': 'st',
+    }
+    text_super = special_cases[date_of_month] if date_of_month in special_cases else 'th'
+    return f'{date_of_month}\\textsuperscript{{{text_super}}}{date.strftime(" of %B %Y")}'
+
+
+class TexDoc(ABC):
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def add_line(self, line: str, section: str, subsection: str=''):
+        pass
+
+    @abstractmethod
+    def prepare_doc(self):
+        pass
+
+    @abstractmethod
+    def write_doc(self, order: list=[]):
+        pass
+
+    @abstractmethod
+    def emit_doc(self, section_order: list=[]) -> str:
+        pass
+
+    @abstractmethod
+    def include_figure(self, caption: str, filename: str, section: str, subsection: str=''):
+        pass
+
+    @abstractmethod
+    def include_table(self, table: pd.DataFrame, section: str, subsection: str='', col_splits=None, table_width=14.0, longtable=False):
+        pass
+
+    @abstractmethod
+    def save_content(self):
+        pass
+
+    @abstractmethod
+    def load_content(self):
+        pass
+
+
+class DummyTexDoc(TexDoc):
+    def add_line(self, line: str, section: str, subsection: str=''):
+        pass
+
+    def prepare_doc(self):
+        pass
+
+    def write_doc(self, order: list=[]):
+        pass
+
+    def emit_doc(self, section_order: list=[]) -> str:
+        pass
+
+    def include_figure(self, caption: str, filename: str, section: str, subsection: str=''):
+        pass
+
+    def include_table(self, table: pd.DataFrame, section: str, subsection: str='', col_splits=None, table_width=14.0, longtable=False):
+        pass
+
+    def save_content(self):
+        pass
+
+    def load_content(self):
+        pass
+
+
+class ConcreteTexDoc:
     def __init__(
         self, 
         path: Path, 
@@ -173,7 +252,7 @@ class TexDoc:
             self.content = yml.load(file, Loader=yml.FullLoader)
 
 
-class StandardTexDoc(TexDoc):
+class StandardTexDoc(ConcreteTexDoc):
     def prepare_doc(self):
         """
         Add packages and text that standard documents need to include the other features.
