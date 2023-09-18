@@ -5,7 +5,7 @@ from abc import abstractmethod, ABC
 
 
 def get_tex_formatted_date(date):
-    date_of_month = date.strftime('%-d')
+    date_of_month = date.strftime('%d').lstrip('0')
     special_cases = {
         '1': 'st', 
         '2': 'nd',
