@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import yaml as yml
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 
 def get_tex_formatted_date(date):
@@ -19,10 +19,8 @@ def get_tex_formatted_date(date):
     return f'{date_of_month}\\textsuperscript{{{text_super}}}{date.strftime(" of %B %Y")}'
 
 
-class TexDoc:
-    def __init__(
-        self, 
-    ):
+class TexDoc(ABC):
+    def __init__(self):
         pass
 
     @abstractmethod
@@ -59,7 +57,29 @@ class TexDoc:
 
 
 class DummyTexDoc(TexDoc):
-    pass
+    def add_line(self, line: str, section: str, subsection: str=''):
+        pass
+
+    def prepare_doc(self):
+        pass
+
+    def write_doc(self, order: list=[]):
+        pass
+
+    def emit_doc(self, section_order: list=[]) -> str:
+        pass
+
+    def include_figure(self, caption: str, filename: str, section: str, subsection: str=''):
+        pass
+
+    def include_table(self, table: pd.DataFrame, section: str, subsection: str='', col_splits=None, table_width=14.0, longtable=False):
+        pass
+
+    def save_content(self):
+        pass
+
+    def load_content(self):
+        pass
 
 
 class ConcreteTexDoc:
