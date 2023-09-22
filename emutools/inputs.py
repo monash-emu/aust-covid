@@ -4,12 +4,9 @@ import yaml as yml
 from inputs.constants import INPUTS_PATH
 
 
-def load_param_info(
-    data_path: Path, 
-) -> pd.DataFrame:
+def load_param_info() -> pd.DataFrame:
     """
-    Load specific parameter information from 
-    a ridigly formatted yaml file or crash otherwise.
+    Load specific parameter information from a ridigly formatted yaml file, and crash otherwise.
 
     Args:
         data_path: Location of the source file
@@ -21,9 +18,17 @@ def load_param_info(
             descriptions: A brief reader-digestible name/description for the parameter
             units: The unit of measurement for the quantity (empty string if dimensionless)
             evidence: TeX-formatted full description of the evidence underpinning the choice of value
-            abbrevaitions: Short name for parameters, e.g. for some plots
-            value: The values provided in the parameters argument
+            abbreviations: Short name for parameters, e.g. for some plots
     """
-    with open(INPUTS_PATH / data_path, 'r') as param_file:
-        all_data = yml.safe_load(param_file)
-    return pd.DataFrame(all_data)
+    with open(INPUTS_PATH / 'parameters.yml', 'r') as param_file:
+        param_info = yml.safe_load(param_file)
+
+    # Check each loaded set of keys (parameter names) are the same as the arbitrarily chosen first key
+    first_key_set = param_info[list(param_info.keys())[0]].keys()
+    for cat in param_info:
+        working_keys = param_info[cat].keys()
+        if working_keys != first_key_set:
+            msg = f'Keys to {cat} category: {working_keys} - do not match first category {first_key_set}'
+            raise ValueError(msg)
+    
+    return pd.DataFrame(param_info)
