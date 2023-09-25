@@ -2,10 +2,21 @@ from typing import Dict, List
 import pandas as pd
 from datetime import datetime
 
+from inputs.constants import VACC_AVERAGE_WINDOW, VACC_IMMUNE_DURATION
+
 
 def get_vacc_data_masks(
     df: pd.DataFrame,
 ) -> Dict[str, List[str]]:
+    """
+    Get masks for vaccination dataframe to identify the various programs.
+
+    Args:
+        df: The vaccination dataframe returned by get_base_vacc_data
+
+    Returns:
+        Dictionary containing lists of the names of columns relevant to each program
+    """
     masks = {
         'age 16+, 2+ doses': [
             c for c in df.columns if 'Number of people fully vaccinated' in c and 
@@ -44,14 +55,23 @@ def get_vacc_data_masks(
 
 def add_booster_data_to_vacc(
     df: pd.DataFrame, 
-    rolling_window: int, 
-    immune_duration: int,
 ) -> pd.DataFrame:
+    """
+    Add the additional columns needed in the vaccination dataframe that are not included as raw data.
+
+    Args:
+        df: The vaccination dataframe returned by get_base_vacc_data
+        rolling_window: Period over which to calculate the rolling average
+        immune_duration: Duration of immunity over which to look back for vaccination
+
+    Returns:
+        Augmented vaccination dataframe with additional columns
+    """
     masks = get_vacc_data_masks(df)
     df['adult booster'] = df.loc[:, masks['age 16+, 3+ doses'] + masks['age 16+, 4+ doses']].sum(axis=1)
     df = df.drop(datetime(2022, 7, 8))
-    df['adult booster smooth'] = df.loc[:, 'adult booster'].rolling(rolling_window).mean()
+    df['adult booster smooth'] = df.loc[:, 'adult booster'].rolling(VACC_AVERAGE_WINDOW).mean()
     df['incremental adult booster'] = df['adult booster smooth'].diff()
-    df['boosted in preceding'] = df['incremental adult booster'].rolling(immune_duration).sum()
+    df['boosted in preceding'] = df['incremental adult booster'].rolling(VACC_IMMUNE_DURATION).sum()
     df['prop boosted in preceding'] = df['boosted in preceding'] / df['National - Population 16 and over']
     return df

@@ -324,6 +324,12 @@ def get_raw_state_mobility(
 
 
 def get_base_vacc_data() -> pd.DataFrame:
+    """
+    Get raw vaccination data obtained from Commonwealth.
+
+    Returns:
+        Collated vaccination data in its rawest form
+    """
     vacc_df = pd.read_csv(DATA_PATH / 'aus_vax_data.csv', index_col=424)
     vacc_df.index = pd.to_datetime(vacc_df.index, infer_datetime_format=True)
     return vacc_df.sort_index()
