@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from plotly.express.colors import colorbrewer
 from typing import Dict
 
 from summer2.parameters import Function
