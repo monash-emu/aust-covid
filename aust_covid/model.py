@@ -1,5 +1,3 @@
-from pathlib import Path
-from datetime import datetime
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -14,7 +12,7 @@ from summer2.parameters import Parameter, Function, Time
 
 from aust_covid.utils import triangle_wave_func
 from aust_covid.inputs import load_pop_data, load_uk_pop_data
-from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number
+from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number, track_immune_prop
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
 from emutools.tex import StandardTexDoc
 from emutools.parameters import capture_kwargs
@@ -91,6 +89,7 @@ def build_model(
     track_deaths(aust_model, tex_doc)
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
     track_strain_prop(aust_model, infectious_compartments, tex_doc)
+    track_immune_prop(aust_model)
     track_reproduction_number(aust_model, infectious_compartments, tex_doc)
 
     for comp in compartments:
