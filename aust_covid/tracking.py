@@ -210,6 +210,14 @@ def track_strain_prop(
         model.request_function_output(f'{strain}_prop', DerivedOutput(f'{strain}_prev') / DerivedOutput('prev'))
 
 
+def track_immune_prop(model):
+    model_comps = set([c.name for c in model.compartments])
+    model.request_output_for_compartments('total_pop', model_comps)
+    for stratum in model.stratifications['immunity'].strata:
+        model.request_output_for_compartments(f'number_{stratum}', model_comps, {'immunity': stratum})
+        model.request_function_output(f'prop_{stratum}', DerivedOutput(f'number_{stratum}') / DerivedOutput('total_pop'))
+
+
 def track_reproduction_number(
     model: CompartmentalModel,
     infectious_compartments: list,
