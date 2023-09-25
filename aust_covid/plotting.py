@@ -1,15 +1,16 @@
 from datetime import datetime, timedelta
+from typing import List
 import pandas as pd
 import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import plotly.express as px
 import arviz as az
 
 from summer2 import CompartmentalModel
 
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
-from emutools.tex import StandardTexDoc
 from emutools.calibration import get_negbinom_target_widths
 from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, SUPPLEMENT_PATH, CHANGE_STR, COLOURS
 
@@ -229,3 +230,30 @@ def plot_example_model_matrices(model, parameters, tex_doc, show_fig=False):
     )
     if show_fig:
         fig.show()
+
+
+def plot_full_vacc(
+    full_vacc_masks: List[str], 
+    df: pd.DataFrame,
+) -> go.Figure:
+    fig = go.Figure()
+    for a, age in enumerate(full_vacc_masks):
+        prop = int(np.round(a / len(full_vacc_masks) * 250.0))
+        colour = f'rgb({prop},{250 - prop},250)'
+        trace_name = age.replace('- Number of people fully vaccinated', '').replace('Age group - ', '')
+        data = df[age].dropna()
+        fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}))
+    return fig
+
+
+def plot_program_coverage(
+    program_masks: List[str], 
+    df: pd.DataFrame,
+) -> go.Figure:
+    fig = make_subplots(rows=2, cols=2, subplot_titles=list(program_masks.keys()))
+    for m, mask in enumerate(program_masks):
+        col = m % 2 + 1
+        row = int(np.floor(m / 2)) + 1
+        fig.add_traces(px.line(df[program_masks[mask]]).data, rows=row, cols=col)
+    fig.update_layout(height=600, showlegend=False, title='Coverage by program')
+    return fig

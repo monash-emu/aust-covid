@@ -1,4 +1,4 @@
-from pathlib import Path
+from typing import Dict, List
 import pandas as pd
 import numpy as np
 from copy import copy
@@ -321,3 +321,9 @@ def get_raw_state_mobility(
     jurisdictions = set([j for j in state_data['sub_region_1'] if j != 'Australia'])
     mob_locs = [c for c in state_data.columns if CHANGE_STR in c]
     return state_data, jurisdictions, mob_locs
+
+
+def get_base_vacc_data() -> pd.DataFrame:
+    vacc_df = pd.read_csv(DATA_PATH / 'aus_vax_data.csv', index_col=424)
+    vacc_df.index = pd.to_datetime(vacc_df.index, infer_datetime_format=True)
+    return vacc_df.sort_index()
