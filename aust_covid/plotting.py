@@ -282,10 +282,12 @@ def plot_program_coverage(
 def plot_immune_props(
     model: CompartmentalModel,
     target: pd.Series,
+    raw: pd.Series,
 ) -> go.Figure:
     epoch = model.get_epoch()
     fig = model.get_derived_outputs_df()[['prop_imm', 'prop_nonimm']].plot.area()
     fig.data[0].line.width = 0
     fig.add_trace(go.Scatter(x=target.index, y=target, name='input data', line={'color': 'black', 'dash': 'dash'}))
+    fig.add_trace(go.Scatter(x=raw.index, y=raw, name='unlagged data', line={'color': 'black', 'dash': 'dot'}))
     fig.update_layout(xaxis_range=epoch.index_to_dti([model.times[0], model.times[-1]]), yaxis_range=[0.0, 1.0])
     return fig

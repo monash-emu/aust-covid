@@ -11,9 +11,10 @@ from summer2 import CompartmentalModel, Stratification, StrainStratification, Mu
 from summer2.parameters import Parameter, Function, Time
 
 from aust_covid.utils import triangle_wave_func
-from aust_covid.inputs import load_pop_data, load_uk_pop_data
+from aust_covid.inputs import load_pop_data, load_uk_pop_data, get_base_vacc_data
 from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number, track_immune_prop
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
+from aust_covid.vaccination import add_booster_data_to_vacc, calc_vacc_funcs_from_props, get_model_vacc_vals_from_data
 from emutools.tex import StandardTexDoc
 from emutools.parameters import capture_kwargs
 from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
@@ -31,6 +32,7 @@ in the documentation is best description of the code's function.
 def build_model(
     tex_doc: StandardTexDoc,
     mobility_sens: bool=False,
+    vacc_sens: bool=False,
 ):
     
     # Model construction
@@ -78,6 +80,30 @@ def build_model(
 
     imm_strat = get_imm_stratification(compartments, tex_doc)
     aust_model.stratify_with(imm_strat)
+
+    # Vaccination sensitivity analysis
+    vacc_df = get_base_vacc_data()
+    vacc_df = add_booster_data_to_vacc(vacc_df)
+    vacc_data = get_model_vacc_vals_from_data(vacc_df)
+    functions = calc_vacc_funcs_from_props(vacc_data, aust_model.get_epoch())
+    if vacc_sens:
+        for comp in set([c.name for c in aust_model.compartments]):
+            aust_model.add_transition_flow(
+                'vaccination',
+                functions['vaccination'],
+                source=comp,
+                dest=comp,
+                source_strata={'immunity': 'nonimm'},
+                dest_strata={'immunity': 'imm'},
+            )
+            aust_model.add_transition_flow(
+                'waning',
+                functions['waning'],
+                source=comp,
+                dest=comp,
+                source_strata={'immunity': 'imm'},
+                dest_strata={'immunity': 'nonimm'},
+            )
 
     spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func, state_props)
     aust_model.stratify_with(spatial_strat)
