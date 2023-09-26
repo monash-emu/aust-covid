@@ -82,27 +82,19 @@ def build_model(
     aust_model.stratify_with(imm_strat)
 
     # Vaccination sensitivity analysis
-    vacc_df = get_base_vacc_data()
-    vacc_df = add_booster_data_to_vacc(vacc_df)
-    vacc_data = get_model_vacc_vals_from_data(vacc_df)
-    functions = calc_vacc_funcs_from_props(vacc_data, aust_model.get_epoch())
     if vacc_sens:
+        vacc_df = get_base_vacc_data()
+        boosted_df = add_booster_data_to_vacc(vacc_df)
+        vacc_data = get_model_vacc_vals_from_data(boosted_df)
+        functions = calc_vacc_funcs_from_props(vacc_data, aust_model.get_epoch())
         for comp in set([c.name for c in aust_model.compartments]):
             aust_model.add_transition_flow(
                 'vaccination',
-                functions['vaccination'],
+                functions,
                 source=comp,
                 dest=comp,
                 source_strata={'immunity': 'nonimm'},
                 dest_strata={'immunity': 'imm'},
-            )
-            aust_model.add_transition_flow(
-                'waning',
-                functions['waning'],
-                source=comp,
-                dest=comp,
-                source_strata={'immunity': 'imm'},
-                dest_strata={'immunity': 'nonimm'},
             )
 
     spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func, state_props)

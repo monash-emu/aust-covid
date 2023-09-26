@@ -165,23 +165,19 @@ def get_model_vacc_vals_from_data(vacc_df):
     return data[~data.index.duplicated(keep='first')]
 
 
+def get_rate_from_prop(prop1, prop2, duration):
+    return (np.log(1.0 - prop1) - np.log(1.0 - prop2)) / duration
+
+
 def calc_vacc_funcs_from_props(data, epoch):
 
     # Get rates from data
-    vacc_props = pd.DataFrame({'imm': data, 'nonimm': 1.0 - data})
-    rates_df = pd.DataFrame(columns=['vaccination', 'waning'])
-    flows = {'vaccination': ['nonimm', 'imm'], 'waning': ['imm', 'nonimm']}
+    rates_df = []
     for i_date, date in enumerate(data.index[:-1]):
-        start_props = vacc_props.loc[date, :]
         next_date = data.index[i_date + 1]
-        end_props = vacc_props.loc[next_date, :]
-        duration = (next_date - date).days
-        rates_df.loc[date, :] = calc_rates_for_interval(start_props, end_props, duration, ['imm', 'nonimm'], flows)
+        rates_df.append(get_rate_from_prop(data[date], data[next_date], (next_date - date).days))
         
     # Get functions from rates
     time_vals = Data(jnp.array([*epoch.datetime_to_number(data.index)]))
-    functions = {}
-    for process in ['vaccination', 'waning']:
-        vals = Data(jnp.array((0.0, *rates_df[process], 0.0)))
-        functions[process] = Function(piecewise_constant, [Time, time_vals, vals])        
-    return functions
+    vals = Data(jnp.array((0.0, *rates_df, 0.0)))
+    return Function(piecewise_constant, [Time, time_vals, vals])        
