@@ -159,17 +159,59 @@ def piecewise_constant(x, breakpoints, values):
     return values[sum(x >= breakpoints)]
 
 
-def get_model_vacc_vals_from_data(vacc_df):
+def get_model_vacc_vals_from_data(
+    vacc_df: pd.DataFrame,
+) -> pd.Series:
+    """
+    Extract, tidy and adapt data needed from vaccination dataframe.
+
+    Args:
+        vacc_df: Vaccination data including calculated boosting proportions
+
+    Returns:
+        Just the series of the booster coverage needed by the model
+    """
     data = vacc_df['prop boosted in preceding'].dropna()
     data.index += timedelta(days=IMMUNITY_LAG)
     return data[~data.index.duplicated(keep='first')]
 
 
-def get_rate_from_prop(prop1, prop2, duration):
+def get_rate_from_prop(
+    prop1: float, 
+    prop2: float, 
+    duration: float,
+) -> float:
+    """
+    Calculate the transition rate needed to achieve a requested end proportion
+    given a specific starting proportion and duration for two model strata.
+    Equation solves the expression:
+        (1 - prop2) / (1 - prop1) = exp(-rate * duration)
+
+    Args:
+        prop1: Starting proportion
+        prop2: Ending proportion
+        duration: Time interval between targeted proportions
+
+    Returns:
+        Per capita transition rate
+    """
     return (np.log(1.0 - prop1) - np.log(1.0 - prop2)) / duration
 
 
-def calc_vacc_funcs_from_props(data, epoch):
+def calc_vacc_funcs_from_props(
+    data: pd.Series, 
+    epoch,
+) -> Function:
+    """
+    Get transition function for moving population between immune and non-immune categories.
+
+    Args:
+        data: Vaccination coverage values over time index
+        epoch: Model's epoch
+
+    Returns:
+        Piecewise constant function for implementation as flow between strata
+    """
 
     # Get rates from data
     rates_df = []
