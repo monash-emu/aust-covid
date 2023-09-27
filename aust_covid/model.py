@@ -116,11 +116,10 @@ def build_model(
     if vacc_sens:
         start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
         for age in AGE_STRATA:
-            start_prop = start_props[age]
             aust_model.adjust_population_split(
                 'immunity',
                 {'agegroup': str(age)},
-                {'imm': start_prop, 'nonimm': 1.0 - start_prop},
+                {'imm': start_props[age], 'nonimm': 1.0 - start_props[age]},
             )
 
     # Outputs
