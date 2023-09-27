@@ -81,7 +81,11 @@ def build_model(
     imm_strat = get_imm_stratification(compartments, tex_doc)
     aust_model.stratify_with(imm_strat)
 
-    # Vaccination sensitivity analysis
+    spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func, state_props)
+    aust_model.stratify_with(spatial_strat)
+    adjust_state_pops(model_pops, aust_model, tex_doc)
+
+    # Start fully susceptible for the two age groups without modelled programs or at starting roll-out values otherwise
     if vacc_sens:
         vacc_df = get_base_vacc_data()
         ext_vacc_df = add_derived_data_to_vacc(vacc_df)
@@ -107,13 +111,6 @@ def build_model(
                 source_strata={'immunity': 'nonimm', 'agegroup': '5'},
                 dest_strata={'immunity': 'imm', 'agegroup': '5'},
             )
-
-    spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func, state_props)
-    aust_model.stratify_with(spatial_strat)
-    adjust_state_pops(model_pops, aust_model, tex_doc)
-
-    # Start fully susceptible for the two age groups without modelled programs or at starting roll-out values otherwise
-    if vacc_sens:
         start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
         for age in AGE_STRATA:
             aust_model.adjust_population_split(
