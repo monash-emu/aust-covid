@@ -211,11 +211,16 @@ def track_strain_prop(
 
 
 def track_immune_prop(model: CompartmentalModel):
-    model_comps = set([c.name for c in model.compartments])
-    model.request_output_for_compartments('total_pop', model_comps)
+    model_comps = [c.name for c in model._original_compartment_names]
+    age_strata = model.stratifications['agegroup'].strata[3:]
+    for age in age_strata:
+        model.request_output_for_compartments(f'pop_{age}', model_comps, {'agegroup': age})
+    model.request_function_output('pop', sum([DerivedOutput(f'pop_{age}') for age in age_strata]))
     for stratum in model.stratifications['immunity'].strata:
-        model.request_output_for_compartments(f'number_{stratum}', model_comps, {'immunity': stratum})
-        model.request_function_output(f'prop_{stratum}', DerivedOutput(f'number_{stratum}') / DerivedOutput('total_pop'))
+        for age in age_strata:
+            model.request_output_for_compartments(f'number_{stratum}_{age}', model_comps, {'immunity': stratum, 'agegroup': age})
+        model.request_function_output(f'number_{stratum}', sum([DerivedOutput(f'number_{stratum}_{age}') for age in age_strata]))
+        model.request_function_output(f'prop_{stratum}', DerivedOutput(f'number_{stratum}') / DerivedOutput('pop'))
 
 
 def track_reproduction_number(
