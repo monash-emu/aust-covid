@@ -285,7 +285,7 @@ def plot_immune_props(
     raw: pd.Series,
 ) -> go.Figure:
     epoch = model.get_epoch()
-    fig = model.get_derived_outputs_df()[['prop_imm', 'prop_nonimm']].plot.area()
+    fig = model.get_derived_outputs_df()[['prop_15_imm', 'prop_15_nonimm']].plot.area()
     fig.data[0].line.width = 0
     fig.add_trace(go.Scatter(x=target.index, y=target, name='input data', line={'color': 'black', 'dash': 'dash'}))
     fig.add_trace(go.Scatter(x=raw.index, y=raw, name='unlagged data', line={'color': 'black', 'dash': 'dot'}))
