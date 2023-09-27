@@ -87,16 +87,15 @@ def build_model(
         boosted_df = add_booster_data_to_vacc(vacc_df)
         vacc_data = get_model_vacc_vals_from_data(boosted_df)
         boost_func = calc_vacc_funcs_from_props(vacc_data, aust_model.get_epoch())
-        for age_strat in AGE_STRATA:
-            boost_rate = 0.0 if age_strat in AGE_STRATA[:3] else boost_func
+        for age_strat in AGE_STRATA[3:]:
             for comp in aust_model._original_compartment_names:
                 aust_model.add_transition_flow(
                     'vaccination',
-                    boost_rate,
+                    boost_func,
                     source=comp.name,
                     dest=comp.name,
-                    source_strata={'immunity': 'nonimm', 'agegroup': age_strat},
-                    dest_strata={'immunity': 'imm', 'agegroup': age_strat},
+                    source_strata={'immunity': 'nonimm', 'agegroup': str(age_strat)},
+                    dest_strata={'immunity': 'imm', 'agegroup': str(age_strat)},
                 )
 
     spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func, state_props)
