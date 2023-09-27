@@ -11,6 +11,7 @@ from summer2 import CompartmentalModel
 
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
+from aust_covid.vaccination import get_model_vacc_vals_from_data
 from emutools.calibration import get_negbinom_target_widths
 from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, SUPPLEMENT_PATH, CHANGE_STR, COLOURS
 
@@ -281,13 +282,16 @@ def plot_program_coverage(
 
 def plot_immune_props(
     model: CompartmentalModel,
-    target: pd.Series,
-    raw: pd.Series,
+    ext_vacc_df: pd.Series,
 ) -> go.Figure:
     epoch = model.get_epoch()
-    fig = model.get_derived_outputs_df()[['prop_15_imm', 'prop_15_nonimm']].plot.area()
-    fig.data[0].line.width = 0
-    fig.add_trace(go.Scatter(x=target.index, y=target, name='input data', line={'color': 'black', 'dash': 'dash'}))
-    fig.add_trace(go.Scatter(x=raw.index, y=raw, name='unlagged data', line={'color': 'black', 'dash': 'dot'}))
-    fig.update_layout(xaxis_range=epoch.index_to_dti([model.times[0], model.times[-1]]), yaxis_range=[0.0, 1.0])
+    ext_df_keys = {'5': 'prop primary full in preceding', '15': 'prop boosted in preceding'}
+    fig = make_subplots(1, 2, subplot_titles=[f'{k} age group' for k in ext_df_keys])
+    for i_plot, age in enumerate(['5', '15']):
+        fig.add_traces(model.get_derived_outputs_df()[[f'prop_{age}_imm', f'prop_{age}_nonimm']].plot.area().data, 1, i_plot + 1)
+        lagged_data = get_model_vacc_vals_from_data(ext_vacc_df, ext_df_keys[age])
+        fig.add_trace(go.Scatter(x=lagged_data.index, y=lagged_data, name=f'data {age}', line={'color': 'black', 'dash': 'dash'}), 1, i_plot + 1)
+        fig.add_trace(go.Scatter(x=ext_vacc_df[ext_df_keys[age]].index, y=ext_vacc_df[ext_df_keys[age]], name=f'lagged data {age}', line={'color': 'black', 'dash': 'dot'}), 1, i_plot + 1)
+    fig.update_xaxes(range=epoch.index_to_dti([model.times[0], model.times[-1]]))
+    fig.update_yaxes(range=[0.0, 1.0])
     return fig
