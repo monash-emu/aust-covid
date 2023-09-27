@@ -111,13 +111,13 @@ def build_model(
                 source_strata={'immunity': 'nonimm', 'agegroup': '5'},
                 dest_strata={'immunity': 'imm', 'agegroup': '5'},
             )
+    
+    for age in AGE_STRATA:
         start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
-        for age in AGE_STRATA:
-            aust_model.adjust_population_split(
-                'immunity',
-                {'agegroup': str(age)},
-                {'imm': start_props[age], 'nonimm': 1.0 - start_props[age]},
-            )
+        default_split = {'imm': Parameter('imm_prop'), 'nonimm': 1.0 - Parameter('imm_prop')}
+        vacc_sens_split = {'imm': start_props[age], 'nonimm': 1.0 - start_props[age]}
+        imm_pop_split = vacc_sens_split if vacc_sens else default_split
+        aust_model.adjust_population_split('immunity', {'agegroup': str(age)}, imm_pop_split)
 
     # Outputs
     track_incidence(aust_model, tex_doc)
@@ -415,8 +415,6 @@ def get_imm_stratification(
     for infection_process in INFECTION_PROCESSES:
         heterogeneity = {'imm': Multiply(1.0 - Parameter('imm_infect_protect')), 'nonimm': None}
         imm_strat.set_flow_adjustments(infection_process, heterogeneity)
-    hetero_pop_split = {'imm': Parameter('imm_prop'), 'nonimm': 1.0 - Parameter('imm_prop')}
-    imm_strat.set_population_split(hetero_pop_split)
     return imm_strat
 
 
