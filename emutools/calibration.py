@@ -10,11 +10,9 @@ import matplotlib as mpl
 from scipy import stats
 
 from summer2 import CompartmentalModel
-from estival.model import BayesianCompartmentalModel
 import estival.priors as esp
 
-from emutools.tex import StandardTexDoc
-from inputs.constants import SUPPLEMENT_PATH, PLOT_START_DATE, ANALYSIS_END_DATE
+from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE
 
 
 def round_sigfig(
