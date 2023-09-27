@@ -112,12 +112,10 @@ def build_model(
                 dest_strata={'immunity': 'imm', 'agegroup': '5'},
             )
         start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
-        imm_pop_split = {age: {'imm': start_props[age], 'nonimm': 1.0 - start_props[age]} for age in AGE_STRATA}
-    else:
-        imm_pop_split = {age: {'imm': Parameter('imm_prop'), 'nonimm': 1.0 - Parameter('imm_prop')} for age in AGE_STRATA}
     
     for age in AGE_STRATA:
-        aust_model.adjust_population_split('immunity', {'agegroup': str(age)}, imm_pop_split[age])
+        imm_prop = start_props[age] if vacc_sens else Parameter('prop_imm')
+        aust_model.adjust_population_split('immunity', {'agegroup': str(age)}, {'imm': imm_prop, 'nonimm': 1.0 - imm_prop})
 
     # Outputs
     track_incidence(aust_model, tex_doc)
