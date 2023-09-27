@@ -131,7 +131,7 @@ def get_vacc_data_masks(
     return masks
 
 
-def add_booster_data_to_vacc(
+def add_derived_data_to_vacc(
     df: pd.DataFrame, 
 ) -> pd.DataFrame:
     """
@@ -147,11 +147,17 @@ def add_booster_data_to_vacc(
     """
     masks = get_vacc_data_masks(df)
     df['adult booster'] = df.loc[:, masks['age 16+, 3+ doses'] + masks['age 16+, 4+ doses']].sum(axis=1)
+    df['primary full'] = df[masks['age 5-11, 2+ doses']].sum(axis=1)
     df = df.drop(datetime(2022, 7, 8))
+    df.loc[df['primary full'] < 0.0, 'primary full'] = 0.0
     df['adult booster smooth'] = df.loc[:, 'adult booster'].rolling(VACC_AVERAGE_WINDOW).mean()
+    df['primary full smooth'] = df.loc[:, 'primary full'].rolling(VACC_AVERAGE_WINDOW).mean()
     df['incremental adult booster'] = df['adult booster smooth'].diff()
+    df['incremental primary full'] = df['primary full smooth'].diff()
     df['boosted in preceding'] = df['incremental adult booster'].rolling(VACC_IMMUNE_DURATION).sum()
+    df['primary full in preceding'] = df['incremental primary full'].rolling(VACC_IMMUNE_DURATION).sum()
     df['prop boosted in preceding'] = df['boosted in preceding'] / df['National - Population 16 and over']
+    df['prop primary full in preceding'] = df['primary full in preceding'] / df['National - Population 5-11']
     return df
 
 

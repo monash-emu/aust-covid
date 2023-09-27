@@ -14,7 +14,7 @@ from aust_covid.utils import triangle_wave_func
 from aust_covid.inputs import load_pop_data, load_uk_pop_data, get_base_vacc_data
 from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number, track_immune_prop
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
-from aust_covid.vaccination import add_booster_data_to_vacc, calc_vacc_funcs_from_props, get_model_vacc_vals_from_data
+from aust_covid.vaccination import add_derived_data_to_vacc, calc_vacc_funcs_from_props, get_model_vacc_vals_from_data
 from emutools.tex import StandardTexDoc
 from emutools.parameters import capture_kwargs
 from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
@@ -84,7 +84,7 @@ def build_model(
     # Vaccination sensitivity analysis
     if vacc_sens:
         vacc_df = get_base_vacc_data()
-        boosted_df = add_booster_data_to_vacc(vacc_df)
+        boosted_df = add_derived_data_to_vacc(vacc_df)
         vacc_data = get_model_vacc_vals_from_data(boosted_df)
         boost_func = calc_vacc_funcs_from_props(vacc_data, aust_model.get_epoch())
         for age_strat in AGE_STRATA[3:]:
