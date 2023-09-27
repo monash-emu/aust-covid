@@ -167,6 +167,7 @@ def piecewise_constant(x, breakpoints, values):
 
 def get_model_vacc_vals_from_data(
     vacc_df: pd.DataFrame,
+    column: str,
 ) -> pd.Series:
     """
     Extract, tidy and adapt data needed from vaccination dataframe.
@@ -177,7 +178,7 @@ def get_model_vacc_vals_from_data(
     Returns:
         Just the series of the booster coverage needed by the model
     """
-    data = vacc_df['prop boosted in preceding'].dropna()
+    data = vacc_df[column].dropna()
     data.index += timedelta(days=IMMUNITY_LAG)
     return data[~data.index.duplicated(keep='first')]
 

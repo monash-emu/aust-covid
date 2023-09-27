@@ -84,11 +84,13 @@ def build_model(
     # Vaccination sensitivity analysis
     if vacc_sens:
         vacc_df = get_base_vacc_data()
-        boosted_df = add_derived_data_to_vacc(vacc_df)
-        vacc_data = get_model_vacc_vals_from_data(boosted_df)
-        boost_func = calc_vacc_funcs_from_props(vacc_data, aust_model.get_epoch())
-        for age_strat in AGE_STRATA[3:]:
-            for comp in aust_model._original_compartment_names:
+        ext_vacc_df = add_derived_data_to_vacc(vacc_df)
+        boost_data = get_model_vacc_vals_from_data(ext_vacc_df, 'prop boosted in preceding')
+        primary_data = get_model_vacc_vals_from_data(ext_vacc_df, 'prop primary full in preceding')
+        boost_func = calc_vacc_funcs_from_props(boost_data, aust_model.get_epoch())
+        primary_func = calc_vacc_funcs_from_props(primary_data, aust_model.get_epoch())
+        for comp in aust_model._original_compartment_names:
+            for age_strat in AGE_STRATA[3:]:
                 aust_model.add_transition_flow(
                     'vaccination',
                     boost_func,
@@ -97,6 +99,14 @@ def build_model(
                     source_strata={'immunity': 'nonimm', 'agegroup': str(age_strat)},
                     dest_strata={'immunity': 'imm', 'agegroup': str(age_strat)},
                 )
+            aust_model.add_transition_flow(
+                'vaccination',
+                primary_func,
+                source=comp.name,
+                dest=comp.name,
+                source_strata={'immunity': 'nonimm', 'agegroup': '5'},
+                dest_strata={'immunity': 'imm', 'agegroup': '5'},
+            )
 
     spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func, state_props)
     aust_model.stratify_with(spatial_strat)
