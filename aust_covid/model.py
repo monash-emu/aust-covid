@@ -112,6 +112,17 @@ def build_model(
     aust_model.stratify_with(spatial_strat)
     adjust_state_pops(model_pops, aust_model, tex_doc)
 
+    # Start fully susceptible for the two age groups without modelled programs or at starting roll-out values otherwise
+    if vacc_sens:
+        start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
+        for age in AGE_STRATA:
+            start_prop = start_props[age]
+            aust_model.adjust_population_split(
+                'immunity',
+                {'agegroup': str(age)},
+                {'imm': start_prop, 'nonimm': 1.0 - start_prop},
+            )
+
     # Outputs
     track_incidence(aust_model, tex_doc)
     track_notifications(aust_model, tex_doc)
