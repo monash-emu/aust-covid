@@ -1,4 +1,3 @@
-from typing import Dict, List
 import pandas as pd
 import numpy as np
 from copy import copy
@@ -11,9 +10,16 @@ from inputs.constants import DATA_PATH, SUPPLEMENT_PATH
 CHANGE_STR = '_percent_change_from_baseline'
 
 
-def load_calibration_targets(
-    tex_doc: StandardTexDoc,
-) -> tuple:
+def load_calibration_targets(tex_doc: StandardTexDoc) -> pd.Series:
+    """
+    See 'description' object text.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        Case targets
+    """
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
         '\href{https://www.health.gov.au/health-alerts/covid-19/weekly-reporting}{The Department of Health} ' \
         'on the 2\\textsuperscript{nd} of May 2023. Data that extended back to 2021 were obtained from ' \
@@ -40,9 +46,16 @@ def load_calibration_targets(
     return composite_aust_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
 
 
-def load_who_data(
-    tex_doc: StandardTexDoc,
-) -> tuple:
+def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
+    """
+    See 'description' object text.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        Death targets
+    """
     description = 'The daily time series of deaths for Australia was obtained from the ' \
         "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
         '{Coronavirus (COVID-19) Dashboard} downloaded on 18\\textsuperscript{th} July 2023. ' \
@@ -60,9 +73,16 @@ def load_who_data(
     return death_data
 
 
-def load_serosurvey_data(
-    tex_doc: StandardTexDoc,
-) -> pd.Series:
+def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
+    """
+    See 'description' object text.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        Serosurvey targets
+    """
     description = 'We obtained estimates of the seroprevalence of antibodies to ' \
         'nucleocapsid antigen from Australia blood donors from Kirby Institute serosurveillance reports. ' \
         'Data are available from \href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf}' \
@@ -84,9 +104,16 @@ def load_serosurvey_data(
     return data
 
 
-def load_raw_pop_data(
-    sheet_name: str,
-) -> pd.DataFrame:
+def load_raw_pop_data(sheet_name: str) -> pd.DataFrame:
+    """
+    Load Australian population data from original spreadsheet.
+
+    Args:
+        sheet_name: Spreadsheet filenam
+
+    Returns:
+        Population data
+    """
     skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
     for group in range(16):
         skip_rows += list(range(228 + group * 6, 233 + group * 6))
@@ -94,9 +121,16 @@ def load_raw_pop_data(
     return raw_data
 
 
-def load_pop_data(
-    tex_doc: StandardTexDoc,
-) -> tuple:
+def load_pop_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
+    """
+    See 'description' object text.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        Population by age and jurisdiction
+    """
     sheet_name = '31010do002_202206.xlsx'
     sheet = sheet_name.replace('_', '\_')
     description = f'For estimates of the Australian population, the spreadsheet was downloaded ' \
@@ -119,13 +153,14 @@ def load_pop_data(
     return model_pop_data
 
 
-def load_uk_pop_data(
-    tex_doc: StandardTexDoc,
-) -> pd.Series:
+def load_uk_pop_data(tex_doc: StandardTexDoc) -> pd.Series:
     """
     Get the UK census data. Data are in raw form,
     except for renaming the sheet to omit a space (from "Sheet 1"),
     to reduce the number of warnings.
+
+    Args:
+        tex_doc: Documentation object
 
     Returns:
         The population data
@@ -135,18 +170,18 @@ def load_uk_pop_data(
         'from the \href{https://ec.europa.eu/eurostat}{Eurostat database}. '
     tex_doc.add_line(description, 'Mixing')
     
-    sheet_name = "cens_01nscbirth__custom_6028079_page_spreadsheet.xlsx"
+    sheet_name = 'cens_01nscbirth__custom_6028079_page_spreadsheet.xlsx'
     data = pd.read_excel(
         DATA_PATH / sheet_name, 
-        sheet_name="Sheet_1", 
+        sheet_name='Sheet_1', 
         skiprows=list(range(0, 11)) + list(range(30, 37)), 
-        usecols="B:C", 
+        usecols='B:C', 
         index_col=0,
     )
-    data.index.name = "age_group"
-    data.columns = ["uk_pops"]
+    data.index.name = 'age_group'
+    data.columns = ['uk_pops']
     data.index = data.index.map(lambda string: string.replace('From ', '').replace(' years', ''))
-    return data["uk_pops"]
+    return data['uk_pops']
 
 
 def load_household_impacts_data():
