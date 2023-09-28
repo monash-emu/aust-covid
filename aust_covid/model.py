@@ -546,11 +546,11 @@ def initialise_comps(
         'first value for time-varying proportion recently boosted/vaccinated. '
     tex_doc.add_line(description, 'Initialisation')
 
-    def get_init_pop(imm_prop, pops, model, start_props, vacc_sens):
+    def get_init_pop(imm_prop):
         init_pop = jnp.zeros(len(model.compartments), dtype=np.float64)
         for age in AGE_STRATA:
-            for state in pops:
-                pop = pops.loc[age, state]
+            for state in model_pops:
+                pop = model_pops.loc[age, state]
                 imm_prop = start_props[age] if vacc_sens else imm_prop
                 for imm_status in IMMUNITY_STRATA:
                     immunity_prop = imm_prop if imm_status == 'imm' else 1.0 - imm_prop
@@ -559,4 +559,4 @@ def initialise_comps(
                     init_pop = init_pop.at[query].set(pop * immunity_prop)
         return init_pop
 
-    model.init_population_with_graphobject(Function(get_init_pop, [Parameter(imm_prop_param), model_pops, model, start_props, vacc_sens]))
+    model.init_population_with_graphobject(Function(get_init_pop, [Parameter(imm_prop_param)]))
