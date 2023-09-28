@@ -11,7 +11,11 @@ from inputs.constants import DATA_PATH, SUPPLEMENT_PATH, NATIONAL_DATA_START_DAT
 CHANGE_STR = '_percent_change_from_baseline'
 
 
+<<<<<<< HEAD
+def load_national_data(tex_doc: StandardTexDoc) -> pd.Series:
+=======
 def load_calibration_targets(tex_doc: StandardTexDoc) -> pd.Series:
+>>>>>>> main
     """
     See 'description' object text.
 
@@ -21,6 +25,12 @@ def load_calibration_targets(tex_doc: StandardTexDoc) -> pd.Series:
     Returns:
         Case targets
     """
+<<<<<<< HEAD
+
+    description = 'The final calibration target for cases was constructed as the OWID data for 2021 ' \
+        'concatenated with the Australian Government data for 2022. '
+=======
+>>>>>>> main
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
         '\href{https://www.health.gov.au/health-alerts/covid-19/weekly-reporting}{The Department of Health} ' \
         f'on the {get_tex_formatted_date(datetime(2023, 5, 2))}. '
@@ -55,6 +65,16 @@ def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
     Args:
         tex_doc: Documentation object
 
+<<<<<<< HEAD
+def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
+    """
+    See 'description' object text.
+
+    Args:
+        tex_doc: Documentation object
+
+=======
+>>>>>>> main
     Returns:
         Death targets
     """

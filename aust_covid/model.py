@@ -58,10 +58,11 @@ def build_model(
 
     # Mobility effects
     if mobility_sens:
+        state_props = model_pops.sum() / model_pops.sum().sum()
         model_mob = get_processed_mobility_data(tex_doc)
         interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
         wa_reopen_func = get_wa_infection_scaling(aust_model)
-        wa_prop_func = wa_reopen_func * model_pops.sum() / model_pops.sum().sum()
+        wa_prop_func = wa_reopen_func * state_props['wa']
         wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['wa'])
         non_wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['non_wa'])
         mob_funcs = Function(capture_kwargs, kwargs={'wa': wa_funcs, 'non_wa': non_wa_funcs})
