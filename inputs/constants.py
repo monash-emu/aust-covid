@@ -13,7 +13,9 @@ NATIONAL_DATA_START_DATE = datetime(2022, 1, 1)
 
 TARGETS_AVERAGE_WINDOW = 7
 MOBILITY_AVERAGE_WINDOW = 7 
+VACC_AVERAGE_WINDOW = 7
 IMMUNITY_LAG = 14.0
+VACC_IMMUNE_DURATION = 100
 N_LATENT_COMPARTMENTS = 4
 
 MATRIX_LOCATIONS = [
@@ -51,6 +53,7 @@ INPUTS_PATH = PROJECT_PATH / 'inputs'
 
 AGE_STRATA = list(range(0, 80, 5))
 STRAIN_STRATA = ['ba1', 'ba2', 'ba5']
+IMMUNITY_STRATA = ['imm', 'nonimm']
 INFECTION_PROCESSES = ['infection', 'early_reinfection', 'late_reinfection']
 
 COLOURS = colorbrewer.Accent

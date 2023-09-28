@@ -11,7 +11,16 @@ from inputs.constants import DATA_PATH, SUPPLEMENT_PATH, NATIONAL_DATA_START_DAT
 CHANGE_STR = '_percent_change_from_baseline'
 
 
-def load_national_data(tex_doc: TexDoc) -> pd.Series:
+def load_calibration_targets(tex_doc: StandardTexDoc) -> pd.Series:
+    """
+    See 'description' object text.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        Case targets
+    """
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
         '\href{https://www.health.gov.au/health-alerts/covid-19/weekly-reporting}{The Department of Health} ' \
         f'on the {get_tex_formatted_date(datetime(2023, 5, 2))}. '
@@ -39,13 +48,16 @@ def load_calibration_targets(tex_doc: TexDoc) -> tuple:
         'concatenated with the Australian Government data for 2022. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
-    national_data = load_national_data(tex_doc)
-    owid_data = load_owid_data(tex_doc)
-    interval = (TARGETS_START_DATE < owid_data.index) & (owid_data.index < NATIONAL_DATA_START_DATE)
-    return pd.concat([owid_data[interval], national_data])
+def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
+    """
+    See 'description' object text.
 
+    Args:
+        tex_doc: Documentation object
 
-def load_who_data(tex_doc: StandardTexDoc) -> tuple:
+    Returns:
+        Death targets
+    """
     description = 'The daily time series of deaths for Australia was obtained from the ' \
         "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
         f'{{Coronavirus (COVID-19) Dashboard}} downloaded on {get_tex_formatted_date(datetime(2023, 7, 18))}. ' \
@@ -62,6 +74,15 @@ def load_who_data(tex_doc: StandardTexDoc) -> tuple:
 
 
 def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
+    """
+    See 'description' object text.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        Serosurvey targets
+    """
     description = 'We obtained estimates of the seroprevalence of antibodies to ' \
         'nucleocapsid antigen from Australia blood donors from Kirby Institute serosurveillance reports. ' \
         'Data are available from \href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf}' \
@@ -85,7 +106,13 @@ def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
 
 def load_raw_pop_data(sheet_name: str) -> pd.DataFrame:
     """
-    Essentially part of load_pop_data, but separated because called elsewhere too.
+    Load Australian population data from original spreadsheet.
+
+    Args:
+        sheet_name: Spreadsheet filenam
+
+    Returns:
+        Population data
     """
     skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
     for group in range(16):
@@ -94,7 +121,16 @@ def load_raw_pop_data(sheet_name: str) -> pd.DataFrame:
     return raw_data
 
 
-def load_pop_data(tex_doc: StandardTexDoc) -> tuple:
+def load_pop_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
+    """
+    See 'description' object text.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        Population by age and jurisdiction
+    """
     sheet_name = '31010do002_202206.xlsx'
     sheet = sheet_name.replace('_', '\_')
     description = f'For estimates of the Australian population, the spreadsheet was downloaded ' \
@@ -119,8 +155,15 @@ def load_pop_data(tex_doc: StandardTexDoc) -> tuple:
 
 def load_uk_pop_data(tex_doc: StandardTexDoc) -> pd.Series:
     """
-    Get the UK census data. Data in repository are in raw form, except for renaming one tab 
-    to omit a space (from "Sheet 1"), which reduces the number of warnings.
+    Get the UK census data. Data are in raw form,
+    except for renaming the sheet to omit a space (from "Sheet 1"),
+    to reduce the number of warnings.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        The population data
     """
     description = 'To align with the methodology of the POLYMOD study \cite{mossong2008} ' \
         'we sourced the 2001 UK census population for those living in the UK at the time of the census ' \
@@ -308,3 +351,15 @@ def get_raw_state_mobility(tex_doc: StandardTexDoc) -> pd.DataFrame:
     jurisdictions = set([j for j in state_data['sub_region_1'] if j != 'Australia'])
     mob_locs = [c for c in state_data.columns if CHANGE_STR in c]
     return state_data, jurisdictions, mob_locs
+
+
+def get_base_vacc_data() -> pd.DataFrame:
+    """
+    Get raw vaccination data obtained from Commonwealth.
+
+    Returns:
+        Collated vaccination data in its rawest form
+    """
+    vacc_df = pd.read_csv(DATA_PATH / 'aus_vax_data.csv', index_col=424)
+    vacc_df.index = pd.to_datetime(vacc_df.index, infer_datetime_format=True)
+    return vacc_df.sort_index()

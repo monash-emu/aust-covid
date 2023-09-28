@@ -211,6 +211,30 @@ def track_strain_prop(
         model.request_function_output(f'{strain}_prop', DerivedOutput(f'{strain}_prev') / DerivedOutput('prev'))
 
 
+def track_immune_prop(model: CompartmentalModel):
+    model_comps = [c.name for c in model._original_compartment_names]
+    age_strata = model.stratifications['agegroup'].strata
+
+    # Track all age-group specific population sizes
+    for age in age_strata:
+        model.request_output_for_compartments(f'pop_{age}', model_comps, {'agegroup': age}, save_results=False)
+
+    # Collate 15+ age groups
+    model.request_function_output('pop_15+', sum([DerivedOutput(f'pop_{age}') for age in age_strata[3:]]), save_results=False)
+
+    # Get all age- and immunity-specific population sizes
+    for stratum in model.stratifications['immunity'].strata:
+        for age in age_strata:
+            model.request_output_for_compartments(f'number_{stratum}_{age}', model_comps, {'immunity': stratum, 'agegroup': age}, save_results=False)
+
+        # Get 15+ proportion immune category
+        model.request_function_output(f'number_{stratum}', sum([DerivedOutput(f'number_{stratum}_{age}') for age in age_strata[3:]]), save_results=False)
+        model.request_function_output(f'prop_15_{stratum}', DerivedOutput(f'number_{stratum}') / DerivedOutput('pop_15+'))
+
+        # Get 5-9 proportion by immune category
+        model.request_function_output(f'prop_5_{stratum}', DerivedOutput(f'number_{stratum}_5') / DerivedOutput('pop_5'))
+
+
 def track_reproduction_number(
     model: CompartmentalModel,
     infectious_compartments: list,
