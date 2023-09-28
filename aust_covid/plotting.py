@@ -223,15 +223,7 @@ def plot_example_model_matrices(model, parameters):
             row=int(np.floor(i_date /4) + 1), 
             col=i_date % 4 + 1,
         )
-    filename = 'example_matrices.jpg'
-    fig.write_image(SUPPLEMENT_PATH / filename)
-    tex_doc.include_figure(
-        'Snapshots of modelled dynamic matrices.', 
-        filename,
-        'Mobility',
-    )
-    if show_fig:
-        fig.show()
+    return fig
 
 
 def plot_full_vacc(
