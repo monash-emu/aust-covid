@@ -2,11 +2,12 @@ import pandas as pd
 import numpy as np
 from copy import copy
 from datetime import datetime, timedelta
-from emutools.tex import StandardTexDoc
 from plotly import graph_objects as go
 
+from emutools.tex import get_tex_formatted_date, TexDoc, StandardTexDoc
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
-from inputs.constants import DATA_PATH, SUPPLEMENT_PATH
+from inputs.constants import DATA_PATH, SUPPLEMENT_PATH, NATIONAL_DATA_START_DATE
+
 CHANGE_STR = '_percent_change_from_baseline'
 
 
@@ -22,29 +23,30 @@ def load_calibration_targets(tex_doc: StandardTexDoc) -> pd.Series:
     """
     description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
         '\href{https://www.health.gov.au/health-alerts/covid-19/weekly-reporting}{The Department of Health} ' \
-        'on the 2\\textsuperscript{nd} of May 2023. Data that extended back to 2021 were obtained from ' \
-        '\href{https://github.com/owid/covid-19-data/tree/master/public/data#license}{Our World in Data (OWID)} on ' \
-        'the 16\\textsuperscript{th} of June 2023.' \
-        'The final calibration target for cases was constructed as the OWID data for 2021 ' \
-        'concatenated with the Australian Government data for 2022. ' \
-        f'These daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
+        f'on the {get_tex_formatted_date(datetime(2023, 5, 2))}. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
-    # National data
     national_data = pd.read_csv(DATA_PATH / 'Aus_covid_data.csv', index_col='date')
     national_data.index = pd.to_datetime(national_data.index)
     national_data = national_data[national_data['region'] == 'AUS']
+    return national_data['cases']
 
-    # OWID data
+
+def load_owid_data(tex_doc: TexDoc) -> pd.Series:
+    description = 'Data that extended back to 2021 were obtained from ' \
+        '\href{https://github.com/owid/covid-19-data/tree/master/public/data#license}{Our World in Data (OWID)} on ' \
+        f'the {get_tex_formatted_date(datetime(2023, 6, 16))}. '
+    tex_doc.add_line(description, 'Targets', subsection='Notifications')
+
     owid_data = pd.read_csv(DATA_PATH / 'aust_2021_surv_data.csv', index_col=0)['new_cases']
     owid_data.index = pd.to_datetime(owid_data.index)
+    return owid_data
 
-    # Join, truncate, smooth
-    national_data_start = datetime(2022, 1, 1)
-    interval = (TARGETS_START_DATE < owid_data.index) & (owid_data.index < national_data_start)
-    composite_aust_data = pd.concat([owid_data[interval], national_data['cases']])
-    return composite_aust_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
 
+def load_calibration_targets(tex_doc: TexDoc) -> tuple:
+    description = 'The final calibration target for cases was constructed as the OWID data for 2021 ' \
+        'concatenated with the Australian Government data for 2022. '
+    tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
 def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
     """
@@ -58,9 +60,8 @@ def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
     """
     description = 'The daily time series of deaths for Australia was obtained from the ' \
         "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
-        '{Coronavirus (COVID-19) Dashboard} downloaded on 18\\textsuperscript{th} July 2023. ' \
-        f'These daily deaths data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day ' \
-        'moving average. '
+        f'{{Coronavirus (COVID-19) Dashboard}} downloaded on {get_tex_formatted_date(datetime(2023, 7, 18))}. ' \
+        f'These daily deaths data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
     tex_doc.add_line(description, 'Targets', subsection='Deaths')
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
@@ -69,7 +70,6 @@ def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
     processed_data = processed_data.loc[:WHO_CHANGE_WEEKLY_REPORT_DATE, :]
     death_data = processed_data['New_deaths']
     death_data = death_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
-
     return death_data
 
 
@@ -134,7 +134,7 @@ def load_pop_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
     sheet_name = '31010do002_202206.xlsx'
     sheet = sheet_name.replace('_', '\_')
     description = f'For estimates of the Australian population, the spreadsheet was downloaded ' \
-        'from the Australian Bureau of Statistics website on 1\\textsuperscript{st} March 2023 \cite{abs2022} ' \
+        f'from the Australian Bureau of Statistics website on {get_tex_formatted_date(datetime(2023, 3, 1))} \cite{{abs2022}} ' \
         f"(sheet {sheet}). Minor jurisdictions other than Australia's eight major state and territories " \
         '(i.e. Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory) are excluded from these data. ' \
         'These much smaller jurisdictions likely contribute little to overall COVID-19 epidemiology ' \
@@ -185,20 +185,17 @@ def load_uk_pop_data(tex_doc: StandardTexDoc) -> pd.Series:
 
 
 def load_household_impacts_data():
-    data = pd.read_csv(
-        DATA_PATH / "Australian Households, cold-flu-COVID-19 symptoms, tests, and positive cases in the past four weeks, by time of reporting .csv",
-        skiprows=[0] + list(range(5, 12)),
-        index_col=0,
-    )
+    filename = DATA_PATH / 'Australian Households, cold-flu-COVID-19 symptoms, tests, and positive cases in the past four weeks, by time of reporting .csv'
+    data = pd.read_csv(filename, skiprows=[0] + list(range(5, 12)), index_col=0)
     data.columns = [col.replace(" (%)", "") for col in data.columns]
     index_map = {
-        "A household member has symptoms of cold, flu or COVID-19 (a)": "Proportion symptomatic",
-        "A household member has had a COVID-19 test (b)": "Proportion testing",
-        "A household member who tested for COVID-19 was positive (c)(d)": "Prop diagnosed with COVID-19",
+        'A household member has symptoms of cold, flu or COVID-19 (a)': 'Proportion symptomatic',
+        'A household member has had a COVID-19 test (b)': 'Proportion testing',
+        'A household member who tested for COVID-19 was positive (c)(d)': 'Prop diagnosed with COVID-19',
     }
     data = data.rename(index=index_map)
     data = data.transpose()
-    data.index = pd.to_datetime(data.index, format="%b-%y")
+    data.index = pd.to_datetime(data.index, format='%b-%y')
     return data
 
 
@@ -328,9 +325,7 @@ def get_ifrs(
     return model_breakpoint_values.to_dict()
 
 
-def get_raw_state_mobility(
-    tex_doc: StandardTexDoc
-) -> pd.DataFrame:
+def get_raw_state_mobility(tex_doc: StandardTexDoc) -> pd.DataFrame:
     """
     Get raw Google mobility data, concatenating 2021 and 2022 data,
     retaining only state-level data and converting to date index.
