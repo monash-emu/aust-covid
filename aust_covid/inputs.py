@@ -51,6 +51,13 @@ def load_calibration_targets(tex_doc: TexDoc) -> tuple:
         'concatenated with the Australian Government data for 2022. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
+    national_data = load_national_data(tex_doc)
+    owid_data = load_owid_data(tex_doc)
+
+    interval = (TARGETS_START_DATE < owid_data.index) & (owid_data.index < NATIONAL_DATA_START_DATE)
+    composite_aust_data = pd.concat([owid_data[interval], national_data])
+    return composite_aust_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
+
 
 def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
     """
