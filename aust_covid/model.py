@@ -5,6 +5,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 pd.options.plotting.backend = 'plotly'
 from copy import copy
+from jax import numpy as jnp
 
 from summer2.functions.time import get_linear_interpolation_function as linear_interp
 from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply
@@ -113,14 +114,31 @@ def build_model(
             )
         start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
     
-    for age in AGE_STRATA:
-        imm_prop = start_props[age] if vacc_sens else Parameter('prop_imm')
-        aust_model.adjust_population_split('immunity', {'agegroup': str(age)}, {'imm': imm_prop, 'nonimm': 1.0 - imm_prop})
+    # for age in AGE_STRATA:
+    #     imm_prop = start_props[age] if vacc_sens else Parameter('prop_imm')
+    #     aust_model.adjust_population_split('immunity', {'agegroup': str(age)}, {'imm': imm_prop, 'nonimm': 1.0 - imm_prop})
+    pops_dict = model_pops.to_dict()
+
+    def get_init_pop(imm_split):
+        init_pop = jnp.zeros(len(aust_model.compartments), dtype=np.float64)
+        for agegroup in aust_model.stratifications['agegroup'].strata:
+            for state in aust_model.stratifications['states'].strata:
+                for imm_status in aust_model.stratifications['immunity'].strata:
+                    q = aust_model.query_compartments({'name': 'susceptible', 'agegroup': agegroup, 'states': state, 'immunity': imm_status}, as_idx=True)
+                    pop = pops_dict[state][int(agegroup)] * imm_split[imm_status]
+                    init_pop = init_pop.at[q].set(pop)
+        return init_pop
+
+    vacc_sens_val = 0.0
+    prop_immune = vacc_sens_val if vacc_sens else Parameter('imm_prop')
+    imm_split = {'imm': prop_immune, 'nonimm': 1.0 - prop_immune}
+    aust_model.init_population_with_graphobject(Function(get_init_pop, [imm_split]))
+
 
     # Outputs
     track_incidence(aust_model, tex_doc)
-    track_notifications(aust_model, tex_doc)
-    track_deaths(aust_model, tex_doc)
+    # track_notifications(aust_model, tex_doc)
+    # track_deaths(aust_model, tex_doc)
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
     track_strain_prop(aust_model, infectious_compartments, tex_doc)
     track_immune_prop(aust_model)
@@ -512,7 +530,7 @@ def get_spatial_stratification(
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)
-    spatial_strat.set_population_split(state_props.to_dict())
+    # spatial_strat.set_population_split(state_props.to_dict())
     infection_adj = {strata[0]: reopen_func, strata[1]: None}
     for infection_process in INFECTION_PROCESSES:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
