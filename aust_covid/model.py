@@ -1,3 +1,4 @@
+from typing import Dict
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -51,7 +52,6 @@ def build_model(
     add_waning(aust_model, tex_doc)
 
     # Age and heterogeneous mixing
-    state_props = model_pops.sum() / model_pops.sum().sum()
     wa_reopen_func = get_wa_infection_scaling(aust_model)
     raw_matrices = {l: pd.read_csv(DATA_PATH / f'{l}.csv', index_col=0).to_numpy() for l in MATRIX_LOCATIONS}
     adjusted_matrices = adapt_gb_matrices_to_aust(raw_matrices, model_pops, tex_doc)
@@ -61,7 +61,7 @@ def build_model(
         model_mob = get_processed_mobility_data(tex_doc)
         interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
         wa_reopen_func = get_wa_infection_scaling(aust_model)
-        wa_prop_func = wa_reopen_func * state_props[0]
+        wa_prop_func = wa_reopen_func * model_pops.sum() / model_pops.sum().sum()
         wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['wa'])
         non_wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['non_wa'])
         mob_funcs = Function(capture_kwargs, kwargs={'wa': wa_funcs, 'non_wa': non_wa_funcs})
@@ -82,9 +82,8 @@ def build_model(
     imm_strat = get_imm_stratification(compartments, tex_doc)
     aust_model.stratify_with(imm_strat)
 
-    spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func, state_props)
+    spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func)
     aust_model.stratify_with(spatial_strat)
-    adjust_state_pops(model_pops, aust_model, tex_doc)
 
     # Start fully susceptible for the two age groups without modelled programs or at starting roll-out values otherwise
     if vacc_sens:
@@ -129,7 +128,7 @@ def build_model(
         aust_model.request_output_for_compartments(comp, [comp])
 
     # Compartment initialisation
-    aust_model.init_population_with_graphobject(Function(get_init_pop, [Parameter('imm_prop'), model_pops, aust_model, start_props, vacc_sens]))
+    initialise_comps(model_pops, aust_model, start_props, vacc_sens, tex_doc)
 
     return aust_model
 
@@ -501,7 +500,6 @@ def get_spatial_stratification(
     model_pops: pd.DataFrame, 
     tex_doc: StandardTexDoc,
     reopen_func,
-    state_props,
 ) -> Stratification:
     strata = model_pops.columns
     reopen_param_str = 'wa_reopen_period'
@@ -514,39 +512,51 @@ def get_spatial_stratification(
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)
-    # spatial_strat.set_population_split(state_props.to_dict())
     infection_adj = {strata[0]: reopen_func, strata[1]: None}
     for infection_process in INFECTION_PROCESSES:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
     return spatial_strat
 
 
-def adjust_state_pops(
+def initialise_comps(
     model_pops: pd.DataFrame, 
-    model: CompartmentalModel,
+    model: CompartmentalModel, 
+    start_props: Dict[int, float], 
+    vacc_sens: bool, 
     tex_doc: StandardTexDoc,
 ):
-    strata = model_pops.columns
-    description = 'Starting model populations were distributed by ' \
-        f'age and spatial status ({strata[0].upper()}, {strata[1]}) ' \
-        'according to the age distribution in each of the two simulated regions. '
-    tex_doc.add_line(description, 'Stratification', 'Spatial')
+    """
+    See "description" string below.
 
-    for state in model_pops.columns:
-        props = model_pops[state] / model_pops[state].sum()
-        props.index = props.index.astype(str)
-        model.adjust_population_split('agegroup', {'states': state}, props.to_dict())
+    Args:
+        model_pops: Patch and age-specific population
+        model: The epidemiological model
+        start_props: Starting proportions in the vaccination analysis
+        vacc_sens: Whether the vaccination analysis being run
+        tex_doc: Documentation object
+    """
+    start_comp = 'susceptible'
+    imm_prop_param = 'imm_prop'
+    description = f'Starting model populations were distributed to the {start_comp} compartment by ' \
+        f'age and spatial status ({model_pops.columns[0].upper()}, {model_pops.columns[1]}) ' \
+        'according to the age distribution in each of the two simulated regions. ' \
+        'These populations were then split by immunity status. ' \
+        f'In the base case analysis, the proportion was set according to the {imm_prop_param} parameter. ' \
+        'For the vaccination analysis, the starting immune population was set according to the ' \
+        'first value for time-varying proportion recently boosted/vaccinated. '
+    tex_doc.add_line(description, 'Initialisation')
 
+    def get_init_pop(imm_prop, pops, model, start_props, vacc_sens):
+        init_pop = jnp.zeros(len(model.compartments), dtype=np.float64)
+        for age in AGE_STRATA:
+            for state in pops:
+                pop = pops.loc[age, state]
+                imm_prop = start_props[age] if vacc_sens else imm_prop
+                for imm_status in IMMUNITY_STRATA:
+                    immunity_prop = imm_prop if imm_status == 'imm' else 1.0 - imm_prop
+                    comp_filter = {'name': start_comp, 'agegroup': str(age), 'states': state, 'immunity': imm_status}
+                    query = model.query_compartments(comp_filter, as_idx=True)
+                    init_pop = init_pop.at[query].set(pop * immunity_prop)
+        return init_pop
 
-def get_init_pop(imm_prop, pops, model, start_props, vacc_sens):
-    init_pop = jnp.zeros(len(model.compartments), dtype=np.float64)
-    for age in AGE_STRATA:
-        for state in pops:
-            pop = pops.loc[age, state]
-            imm_prop = start_props[age] if vacc_sens else imm_prop
-            for imm_status in IMMUNITY_STRATA:
-                immunity_prop = imm_prop if imm_status == 'imm' else 1.0 - imm_prop
-                comp_filter = {'name': 'susceptible', 'agegroup': str(age), 'states': state, 'immunity': imm_status}
-                query = model.query_compartments(comp_filter, as_idx=True)
-                init_pop = init_pop.at[query].set(pop * immunity_prop)
-    return init_pop
+    model.init_population_with_graphobject(Function(get_init_pop, [Parameter(imm_prop_param), model_pops, model, start_props, vacc_sens]))
