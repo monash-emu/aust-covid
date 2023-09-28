@@ -189,7 +189,7 @@ def plot_state_mobility(state_data, jurisdictions, mob_locs):
     return fig
 
 
-def plot_processed_mobility(model_mob, smoothed_model_mob):
+def plot_processed_mobility(model_mob):
     locations = {
         'wa': 'Western Australia',
         'non_wa': 'rest of Australia',
@@ -202,7 +202,7 @@ def plot_processed_mobility(model_mob, smoothed_model_mob):
             trace_name = f'{mob_loc}, {locations[patch]}'
             mob_trace = go.Scatter(x=values.index, y=values, name=trace_name, line=dict(color=COLOURS[l]))
             fig.add_trace(mob_trace, row=1, col=p + 1)
-            values = smoothed_model_mob.loc[:, (patch, mob_loc)]
+            values = model_mob.loc[:, (patch, mob_loc)]
             smoothed_mob_trace = go.Scatter(x=values.index, y=values, name=f'smoothed {trace_name}', line=dict(color=COLOURS[l + 2]))
             fig.add_trace(smoothed_mob_trace, row=1, col=p + 1)
     return fig
