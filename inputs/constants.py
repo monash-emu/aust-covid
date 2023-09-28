@@ -52,6 +52,7 @@ INPUTS_PATH = PROJECT_PATH / 'inputs'
 
 AGE_STRATA = list(range(0, 80, 5))
 STRAIN_STRATA = ['ba1', 'ba2', 'ba5']
+IMMUNITY_STRATA = ['imm', 'nonimm']
 INFECTION_PROCESSES = ['infection', 'early_reinfection', 'late_reinfection']
 
 COLOURS = colorbrewer.Accent

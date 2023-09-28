@@ -19,7 +19,7 @@ from aust_covid.vaccination import add_derived_data_to_vacc, calc_vacc_funcs_fro
 from emutools.tex import StandardTexDoc
 from emutools.parameters import capture_kwargs
 from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
-from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES
+from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES, IMMUNITY_STRATA
 from inputs.constants import SUPPLEMENT_PATH, DATA_PATH
 
 
@@ -113,27 +113,8 @@ def build_model(
                 dest_strata={'immunity': 'imm', 'agegroup': '5'},
             )
         start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
-    
-    # for age in AGE_STRATA:
-    #     imm_prop = start_props[age] if vacc_sens else Parameter('prop_imm')
-    #     aust_model.adjust_population_split('immunity', {'agegroup': str(age)}, {'imm': imm_prop, 'nonimm': 1.0 - imm_prop})
-    pops_dict = model_pops.to_dict()
-
-    def get_init_pop(imm_split):
-        init_pop = jnp.zeros(len(aust_model.compartments), dtype=np.float64)
-        for agegroup in aust_model.stratifications['agegroup'].strata:
-            for state in aust_model.stratifications['states'].strata:
-                for imm_status in aust_model.stratifications['immunity'].strata:
-                    q = aust_model.query_compartments({'name': 'susceptible', 'agegroup': agegroup, 'states': state, 'immunity': imm_status}, as_idx=True)
-                    pop = pops_dict[state][int(agegroup)] * imm_split[imm_status]
-                    init_pop = init_pop.at[q].set(pop)
-        return init_pop
-
-    vacc_sens_val = 0.0
-    prop_immune = vacc_sens_val if vacc_sens else Parameter('imm_prop')
-    imm_split = {'imm': prop_immune, 'nonimm': 1.0 - prop_immune}
-    aust_model.init_population_with_graphobject(Function(get_init_pop, [imm_split]))
-
+    else:
+        start_props = None
 
     # Outputs
     track_incidence(aust_model, tex_doc)
@@ -146,6 +127,9 @@ def build_model(
 
     for comp in compartments:
         aust_model.request_output_for_compartments(comp, [comp])
+
+    # Compartment initialisation
+    aust_model.init_population_with_graphobject(Function(get_init_pop, [Parameter('imm_prop'), model_pops, aust_model, start_props, vacc_sens]))
 
     return aust_model
 
@@ -552,3 +536,17 @@ def adjust_state_pops(
         props = model_pops[state] / model_pops[state].sum()
         props.index = props.index.astype(str)
         model.adjust_population_split('agegroup', {'states': state}, props.to_dict())
+
+
+def get_init_pop(imm_prop, pops, model, start_props, vacc_sens):
+    init_pop = jnp.zeros(len(model.compartments), dtype=np.float64)
+    for age in AGE_STRATA:
+        for state in pops:
+            pop = pops.loc[age, state]
+            imm_prop = start_props[age] if vacc_sens else imm_prop
+            for imm_status in IMMUNITY_STRATA:
+                immunity_prop = imm_prop if imm_status == 'imm' else 1.0 - imm_prop
+                comp_filter = {'name': 'susceptible', 'agegroup': str(age), 'states': state, 'immunity': imm_status}
+                query = model.query_compartments(comp_filter, as_idx=True)
+                init_pop = init_pop.at[query].set(pop * immunity_prop)
+    return init_pop
