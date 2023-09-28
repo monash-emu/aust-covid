@@ -137,8 +137,8 @@ def build_model(
 
     # Outputs
     track_incidence(aust_model, tex_doc)
-    # track_notifications(aust_model, tex_doc)
-    # track_deaths(aust_model, tex_doc)
+    track_notifications(aust_model, tex_doc)
+    track_deaths(aust_model, tex_doc)
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
     track_strain_prop(aust_model, infectious_compartments, tex_doc)
     track_immune_prop(aust_model)
