@@ -1,15 +1,15 @@
 from typing import Dict, List
-from datetime import timedelta
+from datetime import datetime, timedelta
+from copy import deepcopy
 import pandas as pd
 from jax import numpy as jnp
 import numpy as np
-from datetime import datetime
 import scipy
 from scipy.optimize import minimize
 
 from summer2.parameters import Function, Data, Time
 
-from inputs.constants import VACC_AVERAGE_WINDOW, VACC_IMMUNE_DURATION, IMMUNITY_LAG
+from inputs.constants import VACC_AVERAGE_WINDOW, IMMUNITY_LAG
 
 
 def calc_rates_for_interval(
@@ -156,7 +156,9 @@ def add_derived_data_to_vacc(
     df['inc adult booster smooth'] = df['incremental adult booster'].rolling(VACC_AVERAGE_WINDOW).mean()
     df['inc prop primary full'] = df['inc primary full smooth'] / df['National - Population 5-11']
     df['inc prop adult booster'] = df['inc adult booster smooth'] / df['National - Population 16 and over']
-    return df
+    lagged_df = deepcopy(df)
+    lagged_df.index = lagged_df.index + timedelta(days=IMMUNITY_LAG)
+    return df, lagged_df
 
 
 def piecewise_constant(x, breakpoints, values):

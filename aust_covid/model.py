@@ -89,7 +89,7 @@ def build_model(
     # Start fully susceptible for the two age groups without modelled programs or at starting roll-out values otherwise
     if vacc_sens:
         vacc_df = get_base_vacc_data()
-        ext_vacc_df = add_derived_data_to_vacc(vacc_df)
+        _, ext_vacc_df = add_derived_data_to_vacc(vacc_df)
 
         primary_rates = ext_vacc_df['inc prop primary full'].dropna()
         boost_rates = ext_vacc_df['inc prop adult booster'].dropna()
@@ -117,7 +117,7 @@ def build_model(
         
             aust_model.add_transition_flow(
                 'waning',
-                0.02,
+                0.01,
                 source=comp.name,
                 dest=comp.name,
                 source_strata={'immunity': 'imm'},

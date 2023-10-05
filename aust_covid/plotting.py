@@ -322,15 +322,18 @@ def plot_program_coverage(
 
 def plot_immune_props(
     model: CompartmentalModel,
-    ext_vacc_df: pd.Series,
+    vacc_df: pd.DataFrame,
+    lag_vacc_df: pd.DataFrame,
 ) -> go.Figure:
     epoch = model.get_epoch()
     age_breaks = ['5', '15']
     fig = make_subplots(1, 2, subplot_titles=[f'{k} age group' for k in age_breaks])
     for i_plot, age in enumerate(age_breaks):
         fig.add_traces(model.get_derived_outputs_df()[[f'prop_{age}_imm', f'prop_{age}_nonimm']].plot.area().data, 1, i_plot + 1)
-    fig.add_trace(go.Scatter(x=ext_vacc_df.index, y=ext_vacc_df['primary full'] / ext_vacc_df['National - Population 5-11'], line={'color': 'black', 'dash': 'dash'}), row=1, col=1)
-    fig.add_trace(go.Scatter(x=ext_vacc_df.index, y=ext_vacc_df['adult booster'] / ext_vacc_df['National - Population 16 and over'], line={'color': 'black', 'dash': 'dash'}), row=1, col=2)
+    fig.add_trace(go.Scatter(x=vacc_df.index, y=vacc_df['primary full'] / vacc_df['National - Population 5-11'], line={'color': 'black', 'dash': 'dash'}, name='coverage'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=lag_vacc_df.index, y=lag_vacc_df['primary full'] / lag_vacc_df['National - Population 5-11'], line={'color': 'black', 'dash': 'dot'}, name='lagged coverage'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=vacc_df.index, y=vacc_df['adult booster'] / vacc_df['National - Population 16 and over'], line={'color': 'black', 'dash': 'dash'}, name='coverage'), row=1, col=2)
+    fig.add_trace(go.Scatter(x=lag_vacc_df.index, y=lag_vacc_df['adult booster'] / lag_vacc_df['National - Population 16 and over'], line={'color': 'black', 'dash': 'dot'}, name='lagged coverage'), row=1, col=2)
     fig.update_xaxes(range=epoch.index_to_dti([model.times[0], model.times[-1]]))
     fig.update_yaxes(range=[0.0, 1.0])
     return fig
