@@ -156,10 +156,10 @@ def add_derived_data_to_vacc(
     df['incremental primary full'] = df['primary full smooth'].diff()
     df['prop incremental adult booster'] = df['incremental adult booster'] / df['National - Population 16 and over']
     df['prop incremental primary full'] = df['incremental primary full'] / df['National - Population 5-11']
-    df['boosted in preceding'] = df['incremental adult booster'].rolling(VACC_IMMUNE_DURATION).sum()
-    df['primary full in preceding'] = df['incremental primary full'].rolling(VACC_IMMUNE_DURATION).sum()
-    df['prop boosted in preceding'] = df['boosted in preceding'] / df['National - Population 16 and over']
-    df['prop primary full in preceding'] = df['primary full in preceding'] / df['National - Population 5-11']
+    # df['boosted in preceding'] = df['incremental adult booster'].rolling(VACC_IMMUNE_DURATION).sum()
+    # df['primary full in preceding'] = df['incremental primary full'].rolling(VACC_IMMUNE_DURATION).sum()
+    # df['prop boosted in preceding'] = df['boosted in preceding'] / df['National - Population 16 and over']
+    # df['prop primary full in preceding'] = df['primary full in preceding'] / df['National - Population 5-11']
     return df
 
 

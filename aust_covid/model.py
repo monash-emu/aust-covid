@@ -90,10 +90,17 @@ def build_model(
     if vacc_sens:
         vacc_df = get_base_vacc_data()
         ext_vacc_df = add_derived_data_to_vacc(vacc_df)
-        boost_data = get_model_vacc_vals_from_data(ext_vacc_df, 'prop boosted in preceding')
-        primary_data = get_model_vacc_vals_from_data(ext_vacc_df, 'prop primary full in preceding')
-        boost_func = calc_vacc_funcs_from_props(boost_data, aust_model.get_epoch())
-        primary_func = calc_vacc_funcs_from_props(primary_data, aust_model.get_epoch())
+        # boost_data = get_model_vacc_vals_from_data(ext_vacc_df, 'prop boosted in preceding')
+        # primary_data = get_model_vacc_vals_from_data(ext_vacc_df, 'prop primary full in preceding')
+        # boost_func = calc_vacc_funcs_from_props(boost_data, aust_model.get_epoch())
+        # primary_func = calc_vacc_funcs_from_props(primary_data, aust_model.get_epoch())
+
+        epoch = aust_model.get_epoch()
+        boost_rates = ext_vacc_df['prop incremental adult booster'].dropna()
+        primary_rates = ext_vacc_df['prop incremental primary full'].dropna()
+        boost_func = linear_interp(epoch.dti_to_index(boost_rates.index), boost_rates)
+        primary_func = linear_interp(epoch.dti_to_index(primary_rates.index), primary_rates)
+
         for comp in aust_model._original_compartment_names:
             for age_strat in AGE_STRATA[3:]:
                 aust_model.add_transition_flow(
@@ -112,9 +119,9 @@ def build_model(
                 source_strata={'immunity': 'nonimm', 'agegroup': '5'},
                 dest_strata={'immunity': 'imm', 'agegroup': '5'},
             )
-        start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
-    else:
-        start_props = None
+        # start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
+    # else:
+    start_props = None
 
     # Outputs
     track_incidence(aust_model, tex_doc)
@@ -552,7 +559,7 @@ def initialise_comps(
         for age in AGE_STRATA:
             for state in model_pops:
                 pop = model_pops.loc[age, state]
-                imm_prop = start_props[age] if vacc_sens else imm_prop
+                # imm_prop = start_props[age] if vacc_sens else imm_prop
                 for imm_status in IMMUNITY_STRATA:
                     immunity_prop = imm_prop if imm_status == 'imm' else 1.0 - imm_prop
                     comp_filter = {'name': start_comp, 'agegroup': str(age), 'states': state, 'immunity': imm_status}

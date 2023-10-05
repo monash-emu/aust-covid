@@ -346,9 +346,9 @@ def plot_immune_props(
     fig = make_subplots(1, 2, subplot_titles=[f'{k} age group' for k in ext_df_keys])
     for i_plot, age in enumerate(['5', '15']):
         fig.add_traces(model.get_derived_outputs_df()[[f'prop_{age}_imm', f'prop_{age}_nonimm']].plot.area().data, 1, i_plot + 1)
-        lagged_data = get_model_vacc_vals_from_data(ext_vacc_df, ext_df_keys[age])
-        fig.add_trace(go.Scatter(x=lagged_data.index, y=lagged_data, name=f'data {age}', line={'color': 'black', 'dash': 'dash'}), 1, i_plot + 1)
-        fig.add_trace(go.Scatter(x=ext_vacc_df[ext_df_keys[age]].index, y=ext_vacc_df[ext_df_keys[age]], name=f'lagged data {age}', line={'color': 'black', 'dash': 'dot'}), 1, i_plot + 1)
+        # lagged_data = get_model_vacc_vals_from_data(ext_vacc_df, ext_df_keys[age])
+        # fig.add_trace(go.Scatter(x=lagged_data.index, y=lagged_data, name=f'data {age}', line={'color': 'black', 'dash': 'dash'}), 1, i_plot + 1)
+        # fig.add_trace(go.Scatter(x=ext_vacc_df[ext_df_keys[age]].index, y=ext_vacc_df[ext_df_keys[age]], name=f'lagged data {age}', line={'color': 'black', 'dash': 'dot'}), 1, i_plot + 1)
     fig.update_xaxes(range=epoch.index_to_dti([model.times[0], model.times[-1]]))
     fig.update_yaxes(range=[0.0, 1.0])
     return fig
