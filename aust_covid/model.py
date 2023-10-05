@@ -1,4 +1,3 @@
-from typing import Dict
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -36,7 +35,7 @@ def build_model(
     mobility_sens: bool=False,
     vacc_sens: bool=False,
 ):
-    
+
     # Model construction
     n_infectious_comps = N_LATENT_COMPARTMENTS
     latent_compartments = [f'latent_{i}' for i in range(N_LATENT_COMPARTMENTS)]
@@ -44,6 +43,7 @@ def build_model(
     compartments = ['susceptible', 'recovered', 'waned'] + infectious_compartments + latent_compartments
 
     aust_model = build_base_model(compartments, infectious_compartments, tex_doc)
+    epoch = aust_model.get_epoch()
     model_pops = load_pop_data(tex_doc)
     set_starting_conditions(aust_model, model_pops, tex_doc)
     add_infection(aust_model, latent_compartments, tex_doc)
@@ -60,7 +60,7 @@ def build_model(
     if mobility_sens:
         state_props = model_pops.sum() / model_pops.sum().sum()
         model_mob = get_processed_mobility_data(tex_doc)
-        interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
+        interp_funcs = get_interp_funcs_from_mobility(model_mob, epoch)
         wa_reopen_func = get_wa_infection_scaling(aust_model)
         wa_prop_func = wa_reopen_func * state_props['wa']
         wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['wa'])
@@ -90,18 +90,21 @@ def build_model(
     if vacc_sens:
         vacc_df = get_base_vacc_data()
         ext_vacc_df = add_derived_data_to_vacc(vacc_df)
-        # boost_data = get_model_vacc_vals_from_data(ext_vacc_df, 'prop boosted in preceding')
-        # primary_data = get_model_vacc_vals_from_data(ext_vacc_df, 'prop primary full in preceding')
-        # boost_func = calc_vacc_funcs_from_props(boost_data, aust_model.get_epoch())
-        # primary_func = calc_vacc_funcs_from_props(primary_data, aust_model.get_epoch())
 
-        epoch = aust_model.get_epoch()
-        boost_rates = ext_vacc_df['prop incremental adult booster'].dropna()
-        primary_rates = ext_vacc_df['prop incremental primary full'].dropna()
-        boost_func = linear_interp(epoch.dti_to_index(boost_rates.index), boost_rates)
+        primary_rates = ext_vacc_df['inc prop primary full'].dropna()
+        boost_rates = ext_vacc_df['inc prop adult booster'].dropna()
         primary_func = linear_interp(epoch.dti_to_index(primary_rates.index), primary_rates)
+        boost_func = linear_interp(epoch.dti_to_index(boost_rates.index), boost_rates)
 
         for comp in aust_model._original_compartment_names:
+            aust_model.add_transition_flow(
+                'vaccination',
+                primary_func,
+                source=comp.name,
+                dest=comp.name,
+                source_strata={'immunity': 'nonimm', 'agegroup': '5'},
+                dest_strata={'immunity': 'imm', 'agegroup': '5'},
+            )
             for age_strat in AGE_STRATA[3:]:
                 aust_model.add_transition_flow(
                     'vaccination',
@@ -111,17 +114,15 @@ def build_model(
                     source_strata={'immunity': 'nonimm', 'agegroup': str(age_strat)},
                     dest_strata={'immunity': 'imm', 'agegroup': str(age_strat)},
                 )
+        
             aust_model.add_transition_flow(
-                'vaccination',
-                primary_func,
+                'waning',
+                0.02,
                 source=comp.name,
                 dest=comp.name,
-                source_strata={'immunity': 'nonimm', 'agegroup': '5'},
-                dest_strata={'immunity': 'imm', 'agegroup': '5'},
+                source_strata={'immunity': 'imm'},
+                dest_strata={'immunity': 'nonimm'}
             )
-        # start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
-    # else:
-    start_props = None
 
     # Outputs
     track_incidence(aust_model, tex_doc)
@@ -136,7 +137,7 @@ def build_model(
         aust_model.request_output_for_compartments(comp, [comp])
 
     # Compartment initialisation
-    initialise_comps(model_pops, aust_model, start_props, vacc_sens, tex_doc)
+    initialise_comps(model_pops, aust_model, vacc_sens, tex_doc)
 
     return aust_model
 
@@ -529,7 +530,6 @@ def get_spatial_stratification(
 def initialise_comps(
     model_pops: pd.DataFrame, 
     model: CompartmentalModel, 
-    start_props: Dict[int, float], 
     vacc_sens: bool, 
     tex_doc: StandardTexDoc,
 ):
