@@ -559,7 +559,7 @@ def initialise_comps(
         for age in AGE_STRATA:
             for state in model_pops:
                 pop = model_pops.loc[age, state]
-                # imm_prop = start_props[age] if vacc_sens else imm_prop
+                imm_prop = 0.0 if vacc_sens else imm_prop
                 for imm_status in IMMUNITY_STRATA:
                     immunity_prop = imm_prop if imm_status == 'imm' else 1.0 - imm_prop
                     comp_filter = {'name': start_comp, 'agegroup': str(age), 'states': state, 'immunity': imm_status}

@@ -146,20 +146,16 @@ def add_derived_data_to_vacc(
         Augmented vaccination dataframe with additional columns
     """
     masks = get_vacc_data_masks(df)
-    df['adult booster'] = df.loc[:, masks['age 16+, 3+ doses'] + masks['age 16+, 4+ doses']].sum(axis=1)
     df['primary full'] = df[masks['age 5-11, 2+ doses']].sum(axis=1)
+    df['adult booster'] = df.loc[:, masks['age 16+, 3+ doses'] + masks['age 16+, 4+ doses']].sum(axis=1)
     df = df.drop(datetime(2022, 7, 8))
-    df.loc[df['primary full'] < 0.0, 'primary full'] = 0.0
-    df['adult booster smooth'] = df.loc[:, 'adult booster'].rolling(VACC_AVERAGE_WINDOW).mean()
-    df['primary full smooth'] = df.loc[:, 'primary full'].rolling(VACC_AVERAGE_WINDOW).mean()
-    df['incremental adult booster'] = df['adult booster smooth'].diff()
-    df['incremental primary full'] = df['primary full smooth'].diff()
-    df['prop incremental adult booster'] = df['incremental adult booster'] / df['National - Population 16 and over']
-    df['prop incremental primary full'] = df['incremental primary full'] / df['National - Population 5-11']
-    # df['boosted in preceding'] = df['incremental adult booster'].rolling(VACC_IMMUNE_DURATION).sum()
-    # df['primary full in preceding'] = df['incremental primary full'].rolling(VACC_IMMUNE_DURATION).sum()
-    # df['prop boosted in preceding'] = df['boosted in preceding'] / df['National - Population 16 and over']
-    # df['prop primary full in preceding'] = df['primary full in preceding'] / df['National - Population 5-11']
+    df['incremental primary full'] = df['primary full'].diff()
+    df['incremental adult booster'] = df['adult booster'].diff()
+    df.loc[df['incremental primary full'] < 0.0, 'incremental primary full'] = 0.0
+    df['inc primary full smooth'] = df['incremental primary full'].rolling(VACC_AVERAGE_WINDOW).mean()
+    df['inc adult booster smooth'] = df['incremental adult booster'].rolling(VACC_AVERAGE_WINDOW).mean()
+    df['inc prop primary full'] = df['inc primary full smooth'] / df['National - Population 5-11']
+    df['inc prop adult booster'] = df['inc adult booster smooth'] / df['National - Population 16 and over']
     return df
 
 
