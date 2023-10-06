@@ -329,7 +329,7 @@ def plot_immune_props(
     age_breaks = ['5', '15']
     fig = make_subplots(1, 2, subplot_titles=[f'{k} age group' for k in age_breaks])
     for i_plot, age in enumerate(age_breaks):
-        fig.add_traces(model.get_derived_outputs_df()[[f'prop_{age}_imm', f'prop_{age}_nonimm']].plot.area().data, 1, i_plot + 1)
+        fig.add_traces(model.get_derived_outputs_df()[[f'prop_{age}_vacc', f'prop_{age}_unvacc']].plot.area().data, 1, i_plot + 1)
     fig.add_trace(go.Scatter(x=vacc_df.index, y=vacc_df['primary full'] / vacc_df['National - Population 5-11'], line={'color': 'black', 'dash': 'dash'}, name='coverage'), row=1, col=1)
     fig.add_trace(go.Scatter(x=lag_vacc_df.index, y=lag_vacc_df['primary full'] / lag_vacc_df['National - Population 5-11'], line={'color': 'black', 'dash': 'dot'}, name='lagged coverage'), row=1, col=1)
     fig.add_trace(go.Scatter(x=vacc_df.index, y=vacc_df['adult booster'] / vacc_df['National - Population 16 and over'], line={'color': 'black', 'dash': 'dash'}, name='coverage'), row=1, col=2)
