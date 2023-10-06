@@ -115,7 +115,7 @@ def build_model(
         
             aust_model.add_transition_flow(
                 'waning',
-                0.01,
+                1.0 / Parameter('vacc_immune_period'),
                 source=comp.name,
                 dest=comp.name,
                 source_strata={'immunity': 'vacc'},
