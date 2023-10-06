@@ -9,7 +9,7 @@ from scipy.optimize import minimize
 
 from summer2.parameters import Function, Data, Time
 
-from inputs.constants import VACC_AVERAGE_WINDOW, IMMUNITY_LAG
+from inputs.constants import IMMUNITY_LAG
 
 
 def calc_rates_for_interval(
@@ -149,15 +149,16 @@ def add_derived_data_to_vacc(
     df['primary full'] = df[masks['age 5-11, 2+ doses']].sum(axis=1)
     df['adult booster'] = df.loc[:, masks['age 16+, 3+ doses'] + masks['age 16+, 4+ doses']].sum(axis=1)
     df = df.drop(datetime(2022, 7, 8))
-    df['incremental primary full'] = df['primary full'].diff()
-    df['incremental adult booster'] = df['adult booster'].diff()
-    df.loc[df['incremental primary full'] < 0.0, 'incremental primary full'] = 0.0
+    df = df[~df.index.duplicated(keep='first')]
     df['prop primary full'] = df['primary full'] / df['National - Population 5-11']
     df['prop adult booster'] = df['adult booster'] / df['National - Population 16 and over']
     df['prop remaining primary full'] = df['prop primary full'].diff() / (1.0 - df['prop primary full'])
     df['prop remaining adult booster'] = df['prop adult booster'].diff() / (1.0 - df['prop adult booster'])
-    df['smoothed prop remaining primary full'] = df['prop remaining primary full'].rolling(VACC_AVERAGE_WINDOW).mean()
-    df['smoothed prop remaining adult booster'] = df['prop remaining adult booster'].rolling(VACC_AVERAGE_WINDOW).mean()
+    df['duration'] = [0] + [(df.index[i + 1] - df.index[i]).days for i in range(len(df) - 1)]
+    df.loc[df['prop remaining primary full'] < 0.0, 'prop remaining primary full'] = 0.0
+    df['rate primary full'] = df['prop remaining primary full'] / df['duration']
+    df['rate adult booster'] = df['prop remaining adult booster'] / df['duration']
+
     lagged_df = deepcopy(df)
     lagged_df.index = lagged_df.index + timedelta(days=IMMUNITY_LAG)
     return df, lagged_df
