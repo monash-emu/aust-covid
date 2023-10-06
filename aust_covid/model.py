@@ -1,4 +1,3 @@
-from typing import Dict
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -36,7 +35,7 @@ def build_model(
     mobility_sens: bool=False,
     vacc_sens: bool=False,
 ):
-    
+
     # Model construction
     n_infectious_comps = N_LATENT_COMPARTMENTS
     latent_compartments = [f'latent_{i}' for i in range(N_LATENT_COMPARTMENTS)]
@@ -44,6 +43,7 @@ def build_model(
     compartments = ['susceptible', 'recovered', 'waned'] + infectious_compartments + latent_compartments
 
     aust_model = build_base_model(compartments, infectious_compartments, tex_doc)
+    epoch = aust_model.get_epoch()
     model_pops = load_pop_data(tex_doc)
     set_starting_conditions(aust_model, model_pops, tex_doc)
     add_infection(aust_model, latent_compartments, tex_doc)
@@ -60,7 +60,7 @@ def build_model(
     if mobility_sens:
         state_props = model_pops.sum() / model_pops.sum().sum()
         model_mob = get_processed_mobility_data(tex_doc)
-        interp_funcs = get_interp_funcs_from_mobility(model_mob, aust_model.get_epoch())
+        interp_funcs = get_interp_funcs_from_mobility(model_mob, epoch)
         wa_reopen_func = get_wa_infection_scaling(aust_model)
         wa_prop_func = wa_reopen_func * state_props['wa']
         wa_funcs = Function(capture_kwargs, kwargs=interp_funcs['wa'])
@@ -80,41 +80,51 @@ def build_model(
 
     add_reinfection(aust_model, latent_compartments, tex_doc)
 
-    imm_strat = get_imm_stratification(compartments, tex_doc)
-    aust_model.stratify_with(imm_strat)
-
     spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func)
     aust_model.stratify_with(spatial_strat)
 
-    # Start fully susceptible for the two age groups without modelled programs or at starting roll-out values otherwise
     if vacc_sens:
+        imm_strat = get_vacc_imm_strat(compartments, tex_doc)
+        aust_model.stratify_with(imm_strat)
+
         vacc_df = get_base_vacc_data()
-        ext_vacc_df = add_derived_data_to_vacc(vacc_df)
-        boost_data = get_model_vacc_vals_from_data(ext_vacc_df, 'prop boosted in preceding')
-        primary_data = get_model_vacc_vals_from_data(ext_vacc_df, 'prop primary full in preceding')
-        boost_func = calc_vacc_funcs_from_props(boost_data, aust_model.get_epoch())
-        primary_func = calc_vacc_funcs_from_props(primary_data, aust_model.get_epoch())
+        _, ext_vacc_df = add_derived_data_to_vacc(vacc_df)
+        primary_rates = ext_vacc_df['rate primary full'].dropna()
+        boost_rates = ext_vacc_df['rate adult booster'].dropna()
+        primary_func = linear_interp(epoch.dti_to_index(primary_rates.index), primary_rates)
+        boost_func = linear_interp(epoch.dti_to_index(boost_rates.index), boost_rates)
+
         for comp in aust_model._original_compartment_names:
+            aust_model.add_transition_flow(
+                'vaccination',
+                primary_func,
+                source=comp.name,
+                dest=comp.name,
+                source_strata={'immunity': 'unvacc', 'agegroup': '5'},
+                dest_strata={'immunity': 'vacc', 'agegroup': '5'},
+            )
             for age_strat in AGE_STRATA[3:]:
                 aust_model.add_transition_flow(
                     'vaccination',
                     boost_func,
                     source=comp.name,
                     dest=comp.name,
-                    source_strata={'immunity': 'nonimm', 'agegroup': str(age_strat)},
-                    dest_strata={'immunity': 'imm', 'agegroup': str(age_strat)},
+                    source_strata={'immunity': 'unvacc', 'agegroup': str(age_strat)},
+                    dest_strata={'immunity': 'vacc', 'agegroup': str(age_strat)},
                 )
+        
             aust_model.add_transition_flow(
-                'vaccination',
-                primary_func,
+                'waning',
+                1.0 / Parameter('vacc_immune_period'),
                 source=comp.name,
                 dest=comp.name,
-                source_strata={'immunity': 'nonimm', 'agegroup': '5'},
-                dest_strata={'immunity': 'imm', 'agegroup': '5'},
+                source_strata={'immunity': 'vacc'},
+                dest_strata={'immunity': 'waned'}
             )
-        start_props = {age: boost_data[0] for age in AGE_STRATA[3:]} | {age: 0.0 for age in [0, 10]} | {5: primary_data[0]}
+
     else:
-        start_props = None
+        imm_strat = get_default_imm_strat(compartments, tex_doc)
+        aust_model.stratify_with(imm_strat)
 
     # Outputs
     track_incidence(aust_model, tex_doc)
@@ -129,7 +139,7 @@ def build_model(
         aust_model.request_output_for_compartments(comp, [comp])
 
     # Compartment initialisation
-    initialise_comps(model_pops, aust_model, start_props, vacc_sens, tex_doc)
+    initialise_comps(model_pops, aust_model, vacc_sens, tex_doc)
 
     return aust_model
 
@@ -392,7 +402,7 @@ def get_strain_stratification(
     return StrainStratification('strain', STRAIN_STRATA, compartments_to_stratify)
 
 
-def get_imm_stratification(
+def get_default_imm_strat(
     compartments: list, 
     tex_doc: StandardTexDoc,
 ) -> Stratification:
@@ -414,6 +424,18 @@ def get_imm_stratification(
     imm_strat = Stratification('immunity', ['imm', 'nonimm'], compartments)
     for infection_process in INFECTION_PROCESSES:
         heterogeneity = {'imm': Multiply(1.0 - Parameter('imm_infect_protect')), 'nonimm': None}
+        imm_strat.set_flow_adjustments(infection_process, heterogeneity)
+    return imm_strat
+
+
+def get_vacc_imm_strat(
+    compartments: list, 
+    tex_doc: StandardTexDoc,
+) -> Stratification:
+
+    imm_strat = Stratification('immunity', ['unvacc', 'vacc', 'waned'], compartments)
+    for infection_process in INFECTION_PROCESSES:
+        heterogeneity = {'unvacc': None, 'vacc': Multiply(1.0 - Parameter('imm_infect_protect')), 'waned': None}
         imm_strat.set_flow_adjustments(infection_process, heterogeneity)
     return imm_strat
 
@@ -522,7 +544,6 @@ def get_spatial_stratification(
 def initialise_comps(
     model_pops: pd.DataFrame, 
     model: CompartmentalModel, 
-    start_props: Dict[int, float], 
     vacc_sens: bool, 
     tex_doc: StandardTexDoc,
 ):
@@ -538,6 +559,7 @@ def initialise_comps(
     """
     start_comp = 'susceptible'
     imm_prop_param = 'imm_prop'
+    immunity_strata = model.stratifications['immunity'].strata
     description = f'Starting model populations were distributed to the {start_comp} compartment by ' \
         f'age and spatial status ({model_pops.columns[0].upper()}, {model_pops.columns[1]}) ' \
         'according to the age distribution in each of the two simulated regions. ' \
@@ -548,16 +570,26 @@ def initialise_comps(
     tex_doc.add_line(description, 'Initialisation')
 
     def get_init_pop(imm_prop):
+        if vacc_sens:
+            imm_props = {
+                'unvacc': 1.0,
+                'vacc': 0.0,
+                'waned': 0.0,
+            }
+        else:
+            imm_props = {
+                'imm': imm_prop,
+                'nonimm': 1.0 - imm_prop,
+            }
+
         init_pop = jnp.zeros(len(model.compartments), dtype=np.float64)
         for age in AGE_STRATA:
             for state in model_pops:
                 pop = model_pops.loc[age, state]
-                imm_prop = start_props[age] if vacc_sens else imm_prop
-                for imm_status in IMMUNITY_STRATA:
-                    immunity_prop = imm_prop if imm_status == 'imm' else 1.0 - imm_prop
+                for imm_status in immunity_strata:
                     comp_filter = {'name': start_comp, 'agegroup': str(age), 'states': state, 'immunity': imm_status}
                     query = model.query_compartments(comp_filter, as_idx=True)
-                    init_pop = init_pop.at[query].set(pop * immunity_prop)
+                    init_pop = init_pop.at[query].set(pop * imm_props[imm_status])
         return init_pop
 
     model.init_population_with_graphobject(Function(get_init_pop, [Parameter(imm_prop_param)]))

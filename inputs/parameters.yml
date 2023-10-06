@@ -5,6 +5,7 @@ value:
   natural_immunity_period: 60.0
   start_cdr: 0.3
   imm_prop: 0.4
+  vacc_immune_period: 100.0
   imm_infect_protect: 0.4
   ifr_adjuster: 3.0
   ba1_seed_time: 619.0
@@ -43,6 +44,7 @@ descriptions:
   natural_immunity_period: 'Natural immunity period'
   start_cdr: 'Case detection rate'
   imm_prop: 'Proportion with increased immunity'
+  vacc_immune_period: 'Post-vaccination period partial immunity'
   imm_infect_protect: 'Immunity infection protection'
   ifr_adjuster: 'Adjuster applied to all age-specific IFRs'
   ba1_seed_time: 'BA.1 seed start time'
@@ -81,6 +83,7 @@ units:
   natural_immunity_period: 'days'
   start_cdr: ''
   imm_prop: ''
+  vacc_immune_period: 'days'
   imm_infect_protect: ''
   ifr_adjuster: ''
   ba1_seed_time: ''
@@ -119,6 +122,7 @@ evidence:
   natural_immunity_period: 'Although early reinfection with SARS-CoV-2 occurs,\cite{nguyen2022} estimating the duration of natural immunity following infection with SARS-CoV-2 is challenging because reinfection due to the development of immune-escape properties in circulating viruses occurs contemporaneously with waning of immunity. An analysis of non-SARS-CoV-2 human coronaviruses that fitted a transmission model to positive laboratory test results estimated that immunity against infection waned over 45 weeks.\cite{kissler2020} Another analysis of non-SARS-CoV-2 human coronaviruses used antibody dynamics to conclude that reinfection typically occurred 12 months or more following past infection.\cite{edridge2020} However, an analysis of antibody dynamics for a range of human-infecting coronaviruses found that the duration of protection following SARS-CoV-2 infection was less than half of that of several other human-infecting coronaviruses, with reinfections likely occurring from as early as three months post-infection.\cite{townsend2021}Early reinfection with SARS-CoV-2 is known to occur,\cite{nguyen2022} and antibodies against the virus decline significantly in the months following infection.\cite{denhartog2021,crawford2021} However, estimating the duration of natural immunity following infection with SARS-CoV-2 is challenging because reinfection due to the development of immune-escape properties in circulating viruses occurs contemporaneously with waning of immunity. An analysis of non-SARS-CoV-2 human coronaviruses that fitted a transmission model to positive laboratory test results estimated that immunity against infection waned over 45 weeks.\cite{kissler2020} Another analysis of non-SARS-CoV-2 human coronaviruses used antibody dynamics to conclude that reinfection typically occurred 12 months or more following past infection.\cite{edridge2020} However, an analysis of antibody dynamics for a range of human-infecting coronaviruses found that the duration of protection following SARS-CoV-2 infection was less than half of that of several other human-infecting coronaviruses, with reinfections likely occurring from as early as three months post-infection.\cite{townsend2021}'
   start_cdr: 'Calibrated across an uniform/uninformative but plausible range.'
   imm_prop: 'Allowed to vary through full range of possible values (zero to one) based on observation in model development that the sharpness of the BA.1 peak was more difficult to capture in the absence of heterogeneity in susceptibility.'
+  vacc_immune_period: ''
   imm_infect_protect: 'Allowed to vary through full range of possible values (zero to one) based on observation in model development that the sharpness of the BA.1 peak was more difficult to capture in the absence of heterogeneity in susceptibility.'
   ifr_adjuster: 'Adjustment applied to all age-specific base IFR estimates, see \ref{infection_fatality_rates}.'
   ba1_seed_time: 'Calibrated within range that produces model outputs consistent with national sequencing data.'
@@ -157,6 +161,7 @@ abbreviations:
   natural_immunity_period: 'Immune period'
   start_cdr: 'CDR'
   imm_prop: 'Prop immune'
+  vacc_immune_period: 'Vacc immune period'
   imm_infect_protect: 'Immune protection'
   ifr_adjuster: 'IFR adjuster'
   ba1_seed_time: 'BA.1 seed'

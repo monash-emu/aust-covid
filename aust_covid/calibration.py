@@ -11,20 +11,22 @@ from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
 from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data
 
 
-def get_priors() -> list:
+def get_priors(vacc_sens: bool) -> list:
     """
     Get the standard priors used for the analysis.
 
+    Args:
+        Whether to apply vaccination structure to the model
+    
     Returns:
         Final priors
     """
-    return [
+    base_priors = [
         esp.UniformPrior('contact_rate', (0.02, 0.15)),
         esp.GammaPrior.from_mode('latent_period', 2.5, 5.0),
         esp.GammaPrior.from_mode('infectious_period', 3.5, 6.0),
         esp.GammaPrior.from_mode('natural_immunity_period', 180.0, 1000.0),
         esp.UniformPrior('start_cdr', (0.1, 0.6)),
-        esp.UniformPrior('imm_prop', (0.0, 1.0)),
         esp.UniformPrior('imm_infect_protect', (0.0, 1.0)),
         esp.TruncNormalPrior('ifr_adjuster', 1.0, 2.0, (0.2, np.inf)),
         esp.UniformPrior('ba1_seed_time', (580.0, 625.0)), 
@@ -37,6 +39,13 @@ def get_priors() -> list:
         esp.GammaPrior.from_mean('notifs_mean', 4.17, 7.0),
         esp.GammaPrior.from_mean('deaths_mean', 15.93, 18.79),
     ]
+
+    if vacc_sens:
+        specific_prior = esp.GammaPrior.from_mode('vacc_immune_period', 30.0, 180.0)
+    else:
+        specific_prior = esp.UniformPrior('imm_prop', (0.0, 1.0))
+
+    return base_priors + [specific_prior]
 
 
 def truncation_ceiling(modelled, obs, parameters, time_weights):

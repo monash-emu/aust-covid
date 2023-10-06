@@ -1,15 +1,15 @@
 from typing import Dict, List
-from datetime import timedelta
+from datetime import datetime, timedelta
+from copy import deepcopy
 import pandas as pd
 from jax import numpy as jnp
 import numpy as np
-from datetime import datetime
 import scipy
 from scipy.optimize import minimize
 
 from summer2.parameters import Function, Data, Time
 
-from inputs.constants import VACC_AVERAGE_WINDOW, VACC_IMMUNE_DURATION, IMMUNITY_LAG
+from inputs.constants import IMMUNITY_LAG
 
 
 def calc_rates_for_interval(
@@ -146,19 +146,22 @@ def add_derived_data_to_vacc(
         Augmented vaccination dataframe with additional columns
     """
     masks = get_vacc_data_masks(df)
-    df['adult booster'] = df.loc[:, masks['age 16+, 3+ doses'] + masks['age 16+, 4+ doses']].sum(axis=1)
     df['primary full'] = df[masks['age 5-11, 2+ doses']].sum(axis=1)
+    df['adult booster'] = df.loc[:, masks['age 16+, 3+ doses'] + masks['age 16+, 4+ doses']].sum(axis=1)
     df = df.drop(datetime(2022, 7, 8))
-    df.loc[df['primary full'] < 0.0, 'primary full'] = 0.0
-    df['adult booster smooth'] = df.loc[:, 'adult booster'].rolling(VACC_AVERAGE_WINDOW).mean()
-    df['primary full smooth'] = df.loc[:, 'primary full'].rolling(VACC_AVERAGE_WINDOW).mean()
-    df['incremental adult booster'] = df['adult booster smooth'].diff()
-    df['incremental primary full'] = df['primary full smooth'].diff()
-    df['boosted in preceding'] = df['incremental adult booster'].rolling(VACC_IMMUNE_DURATION).sum()
-    df['primary full in preceding'] = df['incremental primary full'].rolling(VACC_IMMUNE_DURATION).sum()
-    df['prop boosted in preceding'] = df['boosted in preceding'] / df['National - Population 16 and over']
-    df['prop primary full in preceding'] = df['primary full in preceding'] / df['National - Population 5-11']
-    return df
+    df = df[~df.index.duplicated(keep='first')]
+    df['prop primary full'] = df['primary full'] / df['National - Population 5-11']
+    df['prop adult booster'] = df['adult booster'] / df['National - Population 16 and over']
+    df['prop remaining primary full'] = df['prop primary full'].diff() / (1.0 - df['prop primary full'])
+    df['prop remaining adult booster'] = df['prop adult booster'].diff() / (1.0 - df['prop adult booster'])
+    df['duration'] = [0] + [(df.index[i + 1] - df.index[i]).days for i in range(len(df) - 1)]
+    df.loc[df['prop remaining primary full'] < 0.0, 'prop remaining primary full'] = 0.0
+    df['rate primary full'] = df['prop remaining primary full'] / df['duration']
+    df['rate adult booster'] = df['prop remaining adult booster'] / df['duration']
+
+    lagged_df = deepcopy(df)
+    lagged_df.index = lagged_df.index + timedelta(days=IMMUNITY_LAG)
+    return df, lagged_df
 
 
 def piecewise_constant(x, breakpoints, values):
