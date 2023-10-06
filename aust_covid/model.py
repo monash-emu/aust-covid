@@ -89,8 +89,8 @@ def build_model(
 
         vacc_df = get_base_vacc_data()
         _, ext_vacc_df = add_derived_data_to_vacc(vacc_df)
-        primary_rates = ext_vacc_df['inc prop primary full'].dropna()
-        boost_rates = ext_vacc_df['inc prop adult booster'].dropna()
+        primary_rates = ext_vacc_df['smoothed prop remaining primary full'].dropna()
+        boost_rates = ext_vacc_df['smoothed prop remaining adult booster'].dropna()
         primary_func = linear_interp(epoch.dti_to_index(primary_rates.index), primary_rates)
         boost_func = linear_interp(epoch.dti_to_index(boost_rates.index), boost_rates)
 
@@ -434,9 +434,9 @@ def get_vacc_imm_strat(
 ) -> Stratification:
 
     imm_strat = Stratification('immunity', ['unvacc', 'vacc', 'waned'], compartments)
-    # for infection_process in INFECTION_PROCESSES:
-    #     heterogeneity = {'unvacc': None, 'vacc': Multiply(1.0 - Parameter('imm_infect_protect')), 'waned': None}
-    #     imm_strat.set_flow_adjustments(infection_process, heterogeneity)
+    for infection_process in INFECTION_PROCESSES:
+        heterogeneity = {'unvacc': None, 'vacc': Multiply(1.0 - Parameter('imm_infect_protect')), 'waned': None}
+        imm_strat.set_flow_adjustments(infection_process, heterogeneity)
     return imm_strat
 
 

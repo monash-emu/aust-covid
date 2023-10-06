@@ -152,10 +152,12 @@ def add_derived_data_to_vacc(
     df['incremental primary full'] = df['primary full'].diff()
     df['incremental adult booster'] = df['adult booster'].diff()
     df.loc[df['incremental primary full'] < 0.0, 'incremental primary full'] = 0.0
-    df['inc primary full smooth'] = df['incremental primary full'].rolling(VACC_AVERAGE_WINDOW).mean()
-    df['inc adult booster smooth'] = df['incremental adult booster'].rolling(VACC_AVERAGE_WINDOW).mean()
-    df['inc prop primary full'] = df['inc primary full smooth'] / df['National - Population 5-11']
-    df['inc prop adult booster'] = df['inc adult booster smooth'] / df['National - Population 16 and over']
+    df['prop primary full'] = df['primary full'] / df['National - Population 5-11']
+    df['prop adult booster'] = df['adult booster'] / df['National - Population 16 and over']
+    df['prop remaining primary full'] = df['prop primary full'].diff() / (1.0 - df['prop primary full'])
+    df['prop remaining adult booster'] = df['prop adult booster'].diff() / (1.0 - df['prop adult booster'])
+    df['smoothed prop remaining primary full'] = df['prop remaining primary full'].rolling(VACC_AVERAGE_WINDOW).mean()
+    df['smoothed prop remaining adult booster'] = df['prop remaining adult booster'].rolling(VACC_AVERAGE_WINDOW).mean()
     lagged_df = deepcopy(df)
     lagged_df.index = lagged_df.index + timedelta(days=IMMUNITY_LAG)
     return df, lagged_df

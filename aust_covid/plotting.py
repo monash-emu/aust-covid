@@ -329,11 +329,17 @@ def plot_immune_props(
     age_breaks = ['5', '15']
     fig = make_subplots(1, 2, subplot_titles=[f'{k} age group' for k in age_breaks])
     for i_plot, age in enumerate(age_breaks):
-        fig.add_traces(model.get_derived_outputs_df()[[f'prop_{age}_waned', f'prop_{age}_vacc', f'prop_{age}_unvacc']].plot.area().data, 1, i_plot + 1)
-    fig.add_trace(go.Scatter(x=vacc_df.index, y=vacc_df['primary full'] / vacc_df['National - Population 5-11'], line={'color': 'black', 'dash': 'dash'}, name='coverage'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=lag_vacc_df.index, y=lag_vacc_df['primary full'] / lag_vacc_df['National - Population 5-11'], line={'color': 'black', 'dash': 'dot'}, name='lagged coverage'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=vacc_df.index, y=vacc_df['adult booster'] / vacc_df['National - Population 16 and over'], line={'color': 'black', 'dash': 'dash'}, name='coverage'), row=1, col=2)
-    fig.add_trace(go.Scatter(x=lag_vacc_df.index, y=lag_vacc_df['adult booster'] / lag_vacc_df['National - Population 16 and over'], line={'color': 'black', 'dash': 'dot'}, name='lagged coverage'), row=1, col=2)
+        cols = [f'prop_{age}_{imm}' for imm in model.stratifications['immunity'].strata][::-1]
+        fig.add_traces(model.get_derived_outputs_df()[cols].plot.area().data, 1, i_plot + 1)
+    dfs = {'raw': vacc_df, 'lagged': lag_vacc_df}
+    for data_type in dfs:
+        for i, pop in enumerate(['primary full', 'adult booster']):
+            pop_str = 'National - Population 5-11' if pop == 'primary full' else 'National - Population 16 and over'
+            line_type = 'dash' if data_type == 'raw' else 'dot'
+            line_style = {'color': 'black', 'dash': line_type}
+            x_vals = dfs[data_type].index
+            y_vals = dfs[data_type][pop] / dfs[data_type][pop_str]
+            fig.add_trace(go.Scatter(x=x_vals, y=y_vals, line=line_style, name='coverage'), row=1, col=i + 1)
     fig.update_xaxes(range=epoch.index_to_dti([model.times[0], model.times[-1]]))
     fig.update_yaxes(range=[0.0, 1.0])
     return fig
