@@ -27,17 +27,13 @@ def get_target_from_name(
     return next((t.data for t in targets if t.name == name))
 
 
-def get_priors(vacc_sens: bool) -> list:
-    """
-    Get the standard priors used for the analysis.
+def get_all_priors() -> list:
+    """Get all priors used in any of the analysis types.
 
-    Args:
-        Whether to apply vaccination structure to the model
-    
     Returns:
-        Final priors
+        All the priors used under any analyses
     """
-    base_priors = [
+    return [
         esp.UniformPrior('contact_rate', (0.02, 0.15)),
         esp.GammaPrior.from_mode('latent_period', 2.5, 5.0),
         esp.GammaPrior.from_mode('infectious_period', 3.5, 6.0),
@@ -54,14 +50,35 @@ def get_priors(vacc_sens: bool) -> list:
         esp.UniformPrior('wa_reopen_period', (30.0, 75.0)),
         esp.GammaPrior.from_mean('notifs_mean', 4.17, 7.0),
         esp.GammaPrior.from_mean('deaths_mean', 15.93, 18.79),
+        esp.GammaPrior.from_mode('vacc_immune_period', 30.0, 180.0),
+        esp.UniformPrior('imm_prop', (0.0, 1.0)),
     ]
 
-    if vacc_sens:
-        specific_prior = esp.GammaPrior.from_mode('vacc_immune_period', 30.0, 180.0)
-    else:
-        specific_prior = esp.UniformPrior('imm_prop', (0.0, 1.0))
 
-    return base_priors + [specific_prior]
+def get_priors(vacc_sens: bool, tex_doc: TexDoc) -> list:
+    """Get the priors used for the analysis.
+
+    Args:
+        Whether to apply vaccination structure to the model
+    
+    Returns:
+        Final priors applicable to the analysis
+    """
+    default_omit_prior = 'vacc_immune_period'
+    vacc_omit_prior = 'imm_prop' 
+    def_omit_str = default_omit_prior.replace('_', '\_')
+    vacc_omit_str = vacc_omit_prior.replace('_', '\_')
+    description = 'The priors used in any of the four analysis presented ' \
+        'are described in this section. In the case of the two alternative analyses ' \
+        f'incorporating time-varying (vaccine-induced) immunity, the {vacc_omit_str} parameter ' \
+        'is not included in the priors implemented; whereas in the case of the ' \
+        f'two analyses not involving time-varying immunity, the {def_omit_str} parameter ' \
+        'is omitted. '
+    tex_doc.add_line(description, 'Priors')
+
+    all_priors = get_all_priors()
+    leave_out_prior = vacc_omit_prior if vacc_sens else default_omit_prior
+    return [p for p in all_priors if p.name != leave_out_prior]
 
 
 def truncation_ceiling(modelled, obs, parameters, time_weights):
@@ -81,7 +98,7 @@ def get_targets(tex_doc: TexDoc) -> list:
         Final targets
     """
     description = 'Calibration targets were constructed as described throughout the following subsections, ' \
-        'and summarised in Figure \\ref{targets}. '
+        'and summarised in the figure. '
     tex_doc.add_line(description, 'Targets')
 
     case_targets = load_calibration_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
