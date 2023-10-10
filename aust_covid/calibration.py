@@ -66,6 +66,10 @@ def get_targets(tex_doc: TexDoc) -> list:
     Returns:
         Final targets
     """
+    description = 'Calibration targets were constructed as described throughout the following subsections, ' \
+        'and summarised in Figure \\ref{targets}. '
+    tex_doc.add_line(description, 'Targets')
+
     case_targets = load_calibration_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     death_targets = load_who_data(tex_doc)[TARGETS_START_DATE:].rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     serosurvey_targets = load_serosurvey_data(tex_doc)
@@ -83,7 +87,7 @@ def get_targets(tex_doc: TexDoc) -> list:
     seropos_ceiling = 0.04
     ceiling_date = datetime(2021, 12, 1)
     description = 'The proportion of the population seropositive was compared against ' \
-        'the modelled proportion of the population ever infected using a binomial distribution. \n' \
+        'the modelled proportion of the population ever infected using a binomial distribution. \n\n' \
         'We added a further recovered proportion target to avoid accepting runs with higher likelihood values ' \
         'in which the acceptable fit to data was a result of an implausibly high initial epidemic wave ' \
         'that occurred prior to the availability of target data (i.e. in late 2021 during the model run-in period). ' \
