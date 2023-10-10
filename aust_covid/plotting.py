@@ -9,11 +9,14 @@ import arviz as az
 
 from summer2 import CompartmentalModel
 
+from aust_covid.inputs import load_national_data, load_owid_data, load_calibration_targets, load_who_data, load_serosurvey_data
+from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE
+from emutools.tex import DummyTexDoc
+from aust_covid.calibration import get_target_from_name
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
-from aust_covid.vaccination import get_model_vacc_vals_from_data
 from emutools.calibration import get_negbinom_target_widths
-from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, SUPPLEMENT_PATH, CHANGE_STR, COLOURS
+from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, CHANGE_STR, COLOURS
 
 pd.options.plotting.backend = 'plotly'
 
@@ -342,4 +345,34 @@ def plot_immune_props(
             fig.add_trace(go.Scatter(x=x_vals, y=y_vals, line=line_style, name='coverage'), row=1, col=i + 1)
     fig.update_xaxes(range=epoch.index_to_dti([model.times[0], model.times[-1]]))
     fig.update_yaxes(range=[0.0, 1.0])
+    return fig
+
+
+def plot_targets(targets):
+    dummy_doc = DummyTexDoc()
+    subplot_specs = [
+        [{'colspan': 2}, None], 
+        [{}, {}]
+    ]
+    fig = make_subplots(rows=2, cols=2, specs=subplot_specs)
+    combined_data = load_calibration_targets(dummy_doc)
+    fig.add_trace(go.Scatter(x=combined_data.index, y=combined_data, name='combined cases'), row=1, col=1)
+    national_data = load_national_data(dummy_doc)
+    fig.add_trace(go.Scatter(x=national_data.index, y=national_data, name='national cases'), row=1, col=1)
+    owid_data = load_owid_data(dummy_doc)
+    fig.add_trace(go.Scatter(x=owid_data.index, y=owid_data, name='owid cases'), row=1, col=1)
+    case_targets = get_target_from_name(targets, 'notifications_ma')
+    fig.add_trace(go.Scatter(x=case_targets.index, y=case_targets, name='final case target (smoothed)'), row=1, col=1)
+    death_data = load_who_data(dummy_doc)
+    fig.add_trace(go.Scatter(x=death_data.index, y=death_data, name='who deaths'), row=2, col=1)
+    death_targets = get_target_from_name(targets, 'deaths_ma')
+    fig.add_trace(go.Scatter(x=death_targets.index, y=death_targets, name='death target (smoothed)'), row=2, col=1)
+    serosurvey_data = load_serosurvey_data(dummy_doc)
+    fig.add_trace(go.Scatter(x=serosurvey_data.index, y=serosurvey_data, name='serosurvey data'), row=2, col=2)
+    serosurvey_targets = get_target_from_name(targets, 'adult_seropos_prop')
+    fig.add_trace(go.Scatter(x=serosurvey_targets.index, y=serosurvey_targets, name='serosurvey target'), row=2, col=2)
+    serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')
+    fig.add_trace(go.Scatter(x=serosurvey_ceiling.index, y=serosurvey_ceiling, name='seroprevalence ceiling'), row=2, col=2)
+    fig.update_layout(height=600)
+    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig

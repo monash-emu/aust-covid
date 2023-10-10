@@ -11,6 +11,22 @@ from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
 from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data
 
 
+def get_target_from_name(
+    targets: list, 
+    name: str,
+) -> pd.Series:
+    """Get the data for a specific target from a set of targets from its name.
+
+    Args:
+        targets: All the targets
+        name: The name of the desired target
+
+    Returns:
+        Single target to identify
+    """
+    return next((t.data for t in targets if t.name == name))
+
+
 def get_priors(vacc_sens: bool) -> list:
     """
     Get the standard priors used for the analysis.
@@ -49,9 +65,7 @@ def get_priors(vacc_sens: bool) -> list:
 
 
 def truncation_ceiling(modelled, obs, parameters, time_weights):
-    """
-    Very large negative number to add to likelihood if modelled values 
-    above a threshold considered implausible.
+    """See description in get_targets below, standard arguments required.
     """
     return jnp.where(modelled > obs, -1e11, 0.0)
 
