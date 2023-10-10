@@ -278,6 +278,7 @@ class StandardTexDoc(ConcreteTexDoc):
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
         self.add_line('\\begin{document}', 'preamble')
+        self.add_line('\date{}', 'preamble')
         self.add_line('\maketitle', 'preamble')
         
         self.add_line('\\printbibliography', 'endings')

@@ -6,7 +6,7 @@ from jax import numpy as jnp
 import estival.priors as esp
 import estival.targets as est
 
-from emutools.tex import StandardTexDoc
+from emutools.tex import TexDoc, get_tex_formatted_date
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
 from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data
 
@@ -56,7 +56,7 @@ def truncation_ceiling(modelled, obs, parameters, time_weights):
     return jnp.where(modelled > obs, -1e11, 0.0)
 
 
-def get_targets(tex_doc: StandardTexDoc) -> list:
+def get_targets(tex_doc: TexDoc) -> list:
     """
     Get the standard targets used for the analysis.
 
@@ -66,16 +66,35 @@ def get_targets(tex_doc: StandardTexDoc) -> list:
     Returns:
         Final targets
     """
-    description = f'The composite daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
-    tex_doc.add_line(description, 'Targets', 'Notifications')
-
     case_targets = load_calibration_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     death_targets = load_who_data(tex_doc)[TARGETS_START_DATE:].rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     serosurvey_targets = load_serosurvey_data(tex_doc)
+
+    description = f'The composite daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
+        'The notifications value for each date of the analysis were compared against the modelled estimate ' \
+        'from a given parameter set using a negative binomial distribution. The dispersion parameter ' \
+        'of this negative binomial distribution was calibrated from an uninformative prior distribution ' \
+        'along with the epidemiological parameters through the calibration algorithm. '
+    tex_doc.add_line(description, 'Targets', 'Notifications')
+    description = f'The WHO data were also smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
+        'As for case notifications, the comparison distribution used to obtain the likelihood of a given parameter set ' \
+        'was negative binomial with calibrated dispersion parameter. '
+    tex_doc.add_line(description, 'Targets', 'Deaths')
+    seropos_ceiling = 0.04
+    ceiling_date = datetime(2021, 12, 1)
+    description = 'The proportion of the population seropositive was compared against ' \
+        'the modelled proportion of the population ever infected using a binomial distribution. \n' \
+        'We added a further recovered proportion target to avoid accepting runs with higher likelihood values ' \
+        'in which the acceptable fit to data was a result of an implausibly high initial epidemic wave ' \
+        'that occurred prior to the availability of target data (i.e. in late 2021 during the model run-in period). ' \
+        'This was achieved by adding a large negative number to the likelihood estimate for any runs with a ' \
+        f'proportion ever infected greater than {int(seropos_ceiling * 100)}\% on {get_tex_formatted_date(ceiling_date)}. '
+    tex_doc.add_line(description, 'Targets', 'Seroprevalence')
+
     targets = [
         est.NegativeBinomialTarget('notifications_ma', case_targets, dispersion_param=esp.UniformPrior('notifications_ma_dispersion', (10.0, 140.0))),
         est.NegativeBinomialTarget('deaths_ma', death_targets, dispersion_param=esp.UniformPrior('deaths_ma_dispersion', (60.0, 200.0))),
         est.BinomialTarget('adult_seropos_prop', serosurvey_targets, pd.Series([20] * 4, index=serosurvey_targets.index)),
     ]
-    targets.append(est.CustomTarget('seropos_ceiling', pd.Series([0.04], index=[datetime(2021, 12, 1)]), truncation_ceiling, model_key='adult_seropos_prop'))
+    targets.append(est.CustomTarget('seropos_ceiling', pd.Series([seropos_ceiling], index=[ceiling_date]), truncation_ceiling, model_key='adult_seropos_prop'))
     return targets

@@ -56,7 +56,7 @@ def load_calibration_targets(tex_doc: TexDoc) -> tuple:
 
     interval = (TARGETS_START_DATE < owid_data.index) & (owid_data.index < NATIONAL_DATA_START_DATE)
     composite_aust_data = pd.concat([owid_data[interval], national_data])
-    return composite_aust_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
+    return composite_aust_data
 
 
 def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
@@ -71,8 +71,7 @@ def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
     """
     description = 'The daily time series of deaths for Australia was obtained from the ' \
         "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
-        f'{{Coronavirus (COVID-19) Dashboard}} downloaded on {get_tex_formatted_date(datetime(2023, 7, 18))}. ' \
-        f'These daily deaths data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
+        f'{{Coronavirus (COVID-19) Dashboard}} downloaded on {get_tex_formatted_date(datetime(2023, 7, 18))}. '
     tex_doc.add_line(description, 'Targets', subsection='Deaths')
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
@@ -95,12 +94,12 @@ def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
         Serosurvey targets
     """
     description = 'We obtained estimates of the seroprevalence of antibodies to ' \
-        'nucleocapsid antigen from Australia blood donors from Kirby Institute serosurveillance reports. ' \
+        'nucleocapsid antigen from Australian blood donors from Kirby Institute serosurveillance reports. ' \
         'Data are available from \href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf}' \
         '{the round 4 serosurvey}, with ' \
         '\href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf}' \
-        '{information on assay sensitivity also available}.' \
-        f'We lagged these empiric estimates by {IMMUNITY_LAG} days to account for the delay between infection and seroconversion. '
+        '{information on assay sensitivity also reported}. ' \
+        f'We lagged these empiric estimates by {int(IMMUNITY_LAG)} days to account for the delay between infection and seroconversion. '
     tex_doc.add_line(description, 'Targets', subsection='Seroprevalence')
 
     data = pd.Series(
