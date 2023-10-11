@@ -55,7 +55,7 @@ def get_all_priors() -> list:
     ]
 
 
-def get_priors(vacc_sens: bool, tex_doc: TexDoc) -> list:
+def get_priors(vacc_sens: bool, abbreviations, tex_doc: TexDoc) -> list:
     """Get the priors used for the analysis.
 
     Args:
@@ -64,15 +64,14 @@ def get_priors(vacc_sens: bool, tex_doc: TexDoc) -> list:
     Returns:
         Final priors applicable to the analysis
     """
-    default_omit_prior = 'vacc_immune_period'
-    vacc_omit_prior = 'imm_prop' 
-    def_omit_str = default_omit_prior.replace('_', '\_')
-    vacc_omit_str = vacc_omit_prior.replace('_', '\_')
+    default_omit_prior = abbreviations['vacc_immune_period']
+    vacc_omit_prior = abbreviations['imm_prop']
     description = 'The priors used in any of the four analysis presented ' \
-        'are described in this section. In the case of the two alternative analyses ' \
-        f'incorporating time-varying (vaccine-induced) immunity, the {vacc_omit_str} parameter ' \
+        'are described in this section, and displayed in Figure \\ref{prior_distributions}. ' \
+        'In the case of the two alternative analyses ' \
+        f'incorporating time-varying (vaccine-induced) immunity, the ``{vacc_omit_prior}" parameter ' \
         'is not included in the priors implemented; whereas in the case of the ' \
-        f'two analyses not involving time-varying immunity, the {def_omit_str} parameter ' \
+        f'two analyses not involving time-varying immunity, the ``{default_omit_prior}" parameter ' \
         'is omitted. '
     tex_doc.add_line(description, 'Priors')
 
@@ -98,7 +97,7 @@ def get_targets(tex_doc: TexDoc) -> list:
         Final targets
     """
     description = 'Calibration targets were constructed as described throughout the following subsections, ' \
-        'and summarised in the figure. '
+        'and summarised in Figure \\ref{target_fig}. '
     tex_doc.add_line(description, 'Targets')
 
     case_targets = load_calibration_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()

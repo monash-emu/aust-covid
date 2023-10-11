@@ -202,7 +202,8 @@ class ConcreteTexDoc:
         """
         self.add_line('\\begin{figure}', section, subsection)
         self.add_line(f'\\caption{{{caption}}}', section, subsection)
-        self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}}}', section, subsection)
+        self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}.jpg}}', section, subsection)
+        self.add_line(f'\\label{{{filename}}}', section, subsection)
         self.add_line('\\end{figure}', section, subsection)
 
     def include_table(

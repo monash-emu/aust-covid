@@ -120,4 +120,4 @@ def add_image_to_doc(
         fig.write_image(SUPPLEMENT_PATH / full_filename)
     else:
         raise TypeError('Figure type not supported')
-    tex_doc.include_figure(caption, full_filename, section)
+    tex_doc.include_figure(caption, filename, section)
