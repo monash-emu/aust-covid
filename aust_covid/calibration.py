@@ -55,7 +55,7 @@ def get_all_priors() -> list:
     ]
 
 
-def get_priors(vacc_sens: bool, abbreviations, tex_doc: TexDoc) -> list:
+def get_priors(vacc_sens: bool, abbreviations: pd.Series, tex_doc: TexDoc) -> list:
     """Get the priors used for the analysis.
 
     Args:
@@ -64,14 +64,16 @@ def get_priors(vacc_sens: bool, abbreviations, tex_doc: TexDoc) -> list:
     Returns:
         Final priors applicable to the analysis
     """
-    default_omit_prior = abbreviations['vacc_immune_period']
-    vacc_omit_prior = abbreviations['imm_prop']
+    default_omit_prior = 'vacc_immune_period'
+    default_omit_str = abbreviations[default_omit_prior]
+    vacc_omit_prior = 'imm_prop'
+    vacc_omit_str = abbreviations[vacc_omit_prior]
     description = 'The priors used in any of the four analysis presented ' \
         'are described in this section, and displayed in Figure \\ref{prior_distributions}. ' \
         'In the case of the two alternative analyses ' \
-        f'incorporating time-varying (vaccine-induced) immunity, the ``{vacc_omit_prior}" parameter ' \
+        f'incorporating time-varying (vaccine-induced) immunity, the ``{vacc_omit_str}" parameter ' \
         'is not included in the priors implemented; whereas in the case of the ' \
-        f'two analyses not involving time-varying immunity, the ``{default_omit_prior}" parameter ' \
+        f'two analyses not involving time-varying immunity, the ``{default_omit_str}" parameter ' \
         'is omitted. '
     tex_doc.add_line(description, 'Priors')
 
@@ -108,7 +110,9 @@ def get_targets(tex_doc: TexDoc) -> list:
         'The notifications value for each date of the analysis were compared against the modelled estimate ' \
         'from a given parameter set using a negative binomial distribution. The dispersion parameter ' \
         'of this negative binomial distribution was calibrated from an uninformative prior distribution ' \
-        'along with the epidemiological parameters through the calibration algorithm. '
+        'along with the epidemiological parameters through the calibration algorithm. ' \
+        'The effect of the dispersion parameter on the comparison between modelled and empiric values ' \
+        'is illustrated in Figure \\ref{dispersion_examples}.'
     tex_doc.add_line(description, 'Targets', 'Notifications')
     description = f'The WHO data were also smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
         'As for case notifications, the comparison distribution used to obtain the likelihood of a given parameter set ' \
