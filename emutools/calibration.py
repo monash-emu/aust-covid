@@ -275,7 +275,6 @@ def plot_priors(
     Returns:
         Multi-panel figure with one panel per prior
     """
-    n_cols = 5
     n_rows = int(np.ceil(len(priors) / n_cols))
     titles = [titles[p.name] for p in priors]
     fig = make_subplots(rows=n_rows, cols=n_cols, subplot_titles=titles)
