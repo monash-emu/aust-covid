@@ -3,6 +3,7 @@ import numpy as np
 from copy import copy
 from datetime import datetime, timedelta
 from plotly import graph_objects as go
+from aust_covid.utils import add_image_to_doc
 
 from emutools.tex import get_tex_formatted_date, TexDoc, StandardTexDoc
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
@@ -319,18 +320,9 @@ def get_ifrs(
     fig.add_trace(go.Scatter(x=final_values.index, y=final_values, name='Combined and interpolated'))
     fig.add_trace(go.Scatter(x=model_breakpoint_values.index, y=model_breakpoint_values, name='Values by model breakpoints'))
     fig.update_yaxes(type='log')
-    ifr_fig_name = 'ifr_calculation.jpg'
-    fig.write_image(SUPPLEMENT_PATH / ifr_fig_name)
-    tex_doc.include_figure(
-        'Illustration of the calculation of the base age-specific infection-fatality rates applied in the model. ',
-        ifr_fig_name,
-        'Parameters', 
-        'Infection Fatality Rates',
-    )
-
-    if show_figs:
-        fig.show()
-
+    ifr_fig_name = 'ifr_calculation'
+    caption = 'Illustration of the calculation of the base age-specific infection-fatality rates applied in the model. '
+    add_image_to_doc(fig, ifr_fig_name, caption, tex_doc, 'Parameters')
     model_breakpoint_values.index = model_breakpoint_values.index.map(lambda i: f'ifr_{int(i)}')
     return model_breakpoint_values.to_dict()
 
