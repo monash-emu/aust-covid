@@ -273,7 +273,6 @@ class StandardTexDoc(ConcreteTexDoc):
         for package in standard_packages:
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')
 
-        self.add_line('\\graphicspath{ {./images/} }', 'preamble')
         self.add_line(r'\usepackage[a4paper, total={15cm, 20cm}]{geometry}', 'preamble')
         self.add_line(r'\usepackage[labelfont=bf,it]{caption}', 'preamble')
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
