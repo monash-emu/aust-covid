@@ -11,7 +11,7 @@ from summer2.functions.time import get_linear_interpolation_function as linear_i
 from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply
 from summer2.parameters import Parameter, Function, Time
 
-from aust_covid.utils import triangle_wave_func
+from aust_covid.utils import triangle_wave_func, add_image_to_doc
 from aust_covid.inputs import load_pop_data, load_uk_pop_data, get_base_vacc_data
 from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number, track_immune_prop
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
@@ -281,13 +281,8 @@ def plot_mixing_matrices(
         matrix_fig.add_trace(go.Heatmap(x=strata, y=strata, z=matrices[loc], coloraxis = 'coloraxis'), cur_pos[0], cur_pos[1])
     matrix_fig.update_layout(width=matrix_figsize, height=matrix_figsize * 1.15)
 
-    matrix_fig.write_image(SUPPLEMENT_PATH / filename)
-    tex_doc.include_figure(
-        f'Daily contact rates by age group (row), contact age group (column) and location (panel) ' \
-        f'for {filename.replace("_", " ").replace(".jpg", "")}. ', 
-        filename,
-        'Mixing', 
-    )
+    caption = f'Daily contact rates by age group (row), contact age group (column) and location (panel). '
+    add_image_to_doc(matrix_fig, 'input_population', caption, tex_doc, 'Mixing')
     return matrix_fig
 
 
@@ -295,7 +290,6 @@ def adapt_gb_matrices_to_aust(
     unadjusted_matrices: dict, 
     pop_data: pd.DataFrame,
     tex_doc: StandardTexDoc,
-    show_figs: bool=False,
 ) -> tuple:
     description = 'Social contact matrices for Great Britain ' \
         'were adjusted to account for the differences in the age distribution betweem the ' \
@@ -316,26 +310,15 @@ def adapt_gb_matrices_to_aust(
         color='variable', 
         labels={'value': 'population', 'age_group': ''},
     )
-    input_pop_filename = 'input_population.jpg'
-    input_pop_fig.write_image(SUPPLEMENT_PATH / input_pop_filename)
-    tex_doc.include_figure(
-        'Australian population sizes implemented in the model obtained from Australia Bureau of Statistics.', 
-        input_pop_filename,
-        'Population',
-    )
+    caption = 'Australian population sizes implemented in the model obtained from Australia Bureau of Statistics.'
+    add_image_to_doc(input_pop_fig, 'input_population', caption, tex_doc, 'Mixing')
 
     # UK population
     raw_uk_data = load_uk_pop_data(tex_doc)
-
     uk_pop_fig = px.bar(raw_uk_data)
     uk_pop_fig.update_layout(showlegend=False)
-    uk_pop_filename = 'uk_population.jpg'
-    uk_pop_fig.write_image(SUPPLEMENT_PATH / uk_pop_filename)
-    tex_doc.include_figure(
-        'United Kingdom population sizes used in matrix weighting.', 
-        uk_pop_filename,
-        'Mixing', 
-    )
+    caption = 'United Kingdom population sizes used in matrix weighting.'
+    add_image_to_doc(input_pop_fig, 'uk_population', '', tex_doc, caption)
 
     # Weighting calculations
     aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
@@ -355,13 +338,10 @@ def adapt_gb_matrices_to_aust(
         adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
     
     # Plot matrices
-    raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA, 'raw_matrices.jpg', tex_doc)
-    adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA, 'adjusted_matrices.jpg', tex_doc)
-    if show_figs:
-        input_pop_fig.show()
-        uk_pop_fig.show()
-        raw_matrix_fig.show()
-        adj_matrix_fig.show()
+    raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA, 'raw_matrices', tex_doc)
+    adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA, 'adjusted_matrices', tex_doc)
+    add_image_to_doc(raw_matrix_fig, 'raw_matrices', '', tex_doc, 'Raw mixing matrices')
+    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', '', tex_doc, 'Adjusted mixing matrices')
 
     return adjusted_matrices
 
@@ -560,11 +540,12 @@ def initialise_comps(
     start_comp = 'susceptible'
     imm_prop_param = 'imm_prop'
     immunity_strata = model.stratifications['immunity'].strata
+    imm_prop_str = imm_prop_param.replace('_', '\_')
     description = f'Starting model populations were distributed to the {start_comp} compartment by ' \
         f'age and spatial status ({model_pops.columns[0].upper()}, {model_pops.columns[1]}) ' \
         'according to the age distribution in each of the two simulated regions. ' \
         'These populations were then split by immunity status. ' \
-        f'In the base case analysis, the proportion was set according to the {imm_prop_param} parameter. ' \
+        f'In the base case analysis, the proportion was set according to the {imm_prop_str} parameter. ' \
         'For the vaccination analysis, the starting immune population was set according to the ' \
         'first value for time-varying proportion recently boosted/vaccinated. '
     tex_doc.add_line(description, 'Initialisation')

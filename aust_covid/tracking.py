@@ -9,7 +9,7 @@ from summer2.functions.derived import get_rolling_reduction
 from summer2.parameters import Parameter, DerivedOutput, Function
 
 from inputs.constants import TARGETS_AVERAGE_WINDOW, SUPPLEMENT_PATH
-from aust_covid.utils import convolve_probability, build_gamma_dens_interval_func
+from aust_covid.utils import convolve_probability, build_gamma_dens_interval_func, add_image_to_doc
 from aust_covid.inputs import load_household_impacts_data
 from emutools.tex import get_tex_formatted_date, StandardTexDoc
 from inputs.constants import INFECTION_PROCESSES
@@ -70,11 +70,7 @@ def track_incidence(
     model.request_function_output('incidence', sum([DerivedOutput(f'incidenceXagegroup_{age}') for age in age_strata]))
 
 
-def track_notifications(
-    model: CompartmentalModel,
-    tex_doc: StandardTexDoc,
-    show_figs: bool=False,
-) -> tuple:
+def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> tuple:
     description = 'The extent of community testing following symptomatic infection is likely to have declined ' \
         'over the course of 2022. To understand these trends, we first considered data from the \href' \
         '{https://www.abs.gov.au/statistics/people/people-and-communities/household-impacts-covid-19-survey/latest-release}' \
@@ -112,29 +108,13 @@ def track_notifications(
     model.request_function_output('notifications_ma', Function(get_rolling_reduction(jnp.mean, TARGETS_AVERAGE_WINDOW), [DerivedOutput('notifications')]))
 
     survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
-    survey_fig_name = 'survey.jpg'
-    survey_fig.write_image(SUPPLEMENT_PATH / survey_fig_name)
-    tex_doc.include_figure(
-        'Raw survey values from Household Impacts of COVID-19 surveys. ', 
-        survey_fig_name,
-        'Outputs', 
-        subsection='Notifications',
-    )
+    caption = 'Raw survey values from Household Impacts of COVID-19 surveys.'
+    add_image_to_doc(survey_fig, 'survey_results', caption, tex_doc, 'Outputs')
     
     ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
     ratio_fig.update_layout(showlegend=False)
-    ratio_fig_name = 'ratio.jpg'
-    ratio_fig.write_image(SUPPLEMENT_PATH / ratio_fig_name)
-    tex_doc.include_figure(
-        'Ratio of proportion of households testing to proportion reporting symptoms.', 
-        ratio_fig_name,
-        'Outputs', 
-        subsection='Notifications',
-    )
-    
-    if show_figs:
-        survey_fig.show()
-        ratio_fig.show()
+    caption = 'Ratio of proportion of households testing to proportion reporting symptoms.'
+    add_image_to_doc(survey_fig, 'survey_ratio', caption, tex_doc, 'Outputs')
 
 
 def track_deaths(
