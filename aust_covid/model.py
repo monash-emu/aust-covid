@@ -318,7 +318,7 @@ def adapt_gb_matrices_to_aust(
     uk_pop_fig = px.bar(raw_uk_data)
     uk_pop_fig.update_layout(showlegend=False)
     caption = 'United Kingdom population sizes used in matrix weighting.'
-    add_image_to_doc(input_pop_fig, 'uk_population', '', tex_doc, caption)
+    add_image_to_doc(input_pop_fig, 'uk_population', caption, tex_doc, 'Mixing')
 
     # Weighting calculations
     aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
@@ -340,8 +340,8 @@ def adapt_gb_matrices_to_aust(
     # Plot matrices
     raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA, 'raw_matrices', tex_doc)
     adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA, 'adjusted_matrices', tex_doc)
-    add_image_to_doc(raw_matrix_fig, 'raw_matrices', '', tex_doc, 'Raw mixing matrices')
-    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', '', tex_doc, 'Adjusted mixing matrices')
+    add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'Raw mixing matrices', tex_doc, 'Mixing')
+    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', 'Adjusted mixing matrices', tex_doc, 'Mixing')
 
     return adjusted_matrices
 
