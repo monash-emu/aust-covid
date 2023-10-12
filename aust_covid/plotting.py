@@ -42,7 +42,7 @@ def plot_single_run_outputs(model, targets):
     fig['layout']['yaxis6'].update(type='log', range=[-2.0, 2.0])
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     fig.update_layout(height=600, width=1200)
-    fig.show()
+    return fig
 
 
 def plot_subvariant_props(
