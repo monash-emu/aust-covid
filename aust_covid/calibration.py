@@ -50,7 +50,7 @@ def get_all_priors() -> list:
         esp.UniformPrior('wa_reopen_period', (30.0, 75.0)),
         esp.GammaPrior.from_mean('notifs_mean', 4.17, 7.0),
         esp.GammaPrior.from_mean('deaths_mean', 15.93, 18.79),
-        esp.GammaPrior.from_mode('vacc_immune_period', 30.0, 180.0),
+        esp.GammaPrior.from_mode('vacc_immune_period', 60.0, 180.0),
         esp.UniformPrior('imm_prop', (0.0, 1.0)),
     ]
 
