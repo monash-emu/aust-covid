@@ -270,8 +270,6 @@ def add_waning(
 def plot_mixing_matrices(
     matrices: dict, 
     strata: list, 
-    filename: str,
-    tex_doc: StandardTexDoc,
 ) -> tuple:
     matrix_figsize = 800
     matrix_fig = make_subplots(rows=2, cols=2, subplot_titles=MATRIX_LOCATIONS)
@@ -281,8 +279,6 @@ def plot_mixing_matrices(
         matrix_fig.add_trace(go.Heatmap(x=strata, y=strata, z=matrices[loc], coloraxis = 'coloraxis'), cur_pos[0], cur_pos[1])
     matrix_fig.update_layout(width=matrix_figsize, height=matrix_figsize * 1.15)
 
-    caption = f'Daily contact rates by age group (row), contact age group (column) and location (panel). '
-    add_image_to_doc(matrix_fig, 'input_population', caption, tex_doc, 'Mixing')
     return matrix_fig
 
 
@@ -338,10 +334,11 @@ def adapt_gb_matrices_to_aust(
         adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
     
     # Plot matrices
-    raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA, 'raw_matrices', tex_doc)
-    adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA, 'adjusted_matrices', tex_doc)
-    add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'Raw mixing matrices', tex_doc, 'Mixing')
-    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', 'Adjusted mixing matrices', tex_doc, 'Mixing')
+    caption_end = ' daily contact rates by age group (row), contact age group (column) and location (panel). '
+    raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA)
+    adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA)
+    add_image_to_doc(raw_matrix_fig, 'raw_matrices', f'Raw{caption_end}', tex_doc, 'Mixing')
+    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', f'Adjusted{caption_end}', tex_doc, 'Mixing')
 
     return adjusted_matrices
 

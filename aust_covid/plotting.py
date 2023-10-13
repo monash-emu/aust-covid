@@ -250,54 +250,7 @@ def plot_full_vacc(
         trace_name = age.replace('- Number of people fully vaccinated', '').replace('Age group - ', '')
         data = df[age].dropna()
         fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}))
-    return fig
-
-
-def plot_program_coverage(
-    program_masks: List[str], 
-    df: pd.DataFrame,
-) -> go.Figure:
-    """
-    Plot vaccination coverage by program across four panels to represent the main programs.
-
-    Args:
-        program_masks: Strings identifying the needed columns
-        df: The vaccination dataframe
-
-    Returns:
-        The plotly figure object
-    """
-    fig = make_subplots(rows=2, cols=2, subplot_titles=list(program_masks.keys()))
-    for m, mask in enumerate(program_masks):
-        col = m % 2 + 1
-        row = int(np.floor(m / 2)) + 1
-        fig.add_traces(px.line(df[program_masks[mask]]).data, rows=row, cols=col)
-    fig.update_layout(height=600, showlegend=False, title='Coverage by program')
-    return fig
-
-
-def plot_full_vacc(
-    full_vacc_masks: List[str], 
-    df: pd.DataFrame,
-) -> go.Figure:
-    """
-    Plot full (2) dose vaccination coverage by age group over time.
-
-    Args:
-        full_vacc_masks: Strings identifying the needed columns
-        df: The vaccination dataframe
-
-    Returns:
-        The plotly figure object
-    """
-    fig = go.Figure()
-    for a, age in enumerate(full_vacc_masks):
-        prop = int(np.round(a / len(full_vacc_masks) * 250.0))
-        colour = f'rgb({prop},{250 - prop},250)'
-        trace_name = age.replace('- Number of people fully vaccinated', '').replace('Age group - ', '')
-        data = df[age].dropna()
-        fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}))
-    return fig
+    return fig.update_layout(height=600)
 
 
 def plot_program_coverage(
