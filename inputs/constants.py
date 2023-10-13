@@ -65,3 +65,4 @@ RUN_IDS = {
     'vacc': '2023-10-13T1557-vacc-d20k-t10k-b5k',
     'both': '2023-10-13T1558-both-d20k-t10k-b5k',
 }
+PRIMARY_ANALYSIS = 'mob'
