@@ -114,7 +114,7 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
     ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
     ratio_fig.update_layout(showlegend=False)
     caption = 'Ratio of proportion of households testing to proportion reporting symptoms.'
-    add_image_to_doc(survey_fig, 'survey_ratio', caption, tex_doc, 'Outputs')
+    add_image_to_doc(ratio_fig, 'survey_ratio', caption, tex_doc, 'Outputs')
 
 
 def track_deaths(
