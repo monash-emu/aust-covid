@@ -57,3 +57,10 @@ INFECTION_PROCESSES = ['infection', 'early_reinfection', 'late_reinfection']
 
 COLOURS = colorbrewer.Accent
 CHANGE_STR = '_percent_change_from_baseline'
+
+RUN_IDS = {
+    'none': '2023-10-04T1338-none-d20k-t10k-b5k',
+    'mob': '2023-10-04T1339-mob-d20k-t10k-b5k',
+    'vacc': '2023-10-04T1340-vacc-d20k-t10k-b5k',
+    'both': '2023-10-04T1340-both-d20k-t10k-b5k',
+}
