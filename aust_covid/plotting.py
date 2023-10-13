@@ -272,7 +272,7 @@ def plot_program_coverage(
         col = m % 2 + 1
         row = int(np.floor(m / 2)) + 1
         fig.add_traces(px.line(df[program_masks[mask]]).data, rows=row, cols=col)
-    fig.update_layout(height=600, showlegend=False, title='Coverage by program')
+    fig.update_layout(height=600, showlegend=False)
     return fig
 
 
