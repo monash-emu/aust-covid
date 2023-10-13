@@ -66,3 +66,5 @@ RUN_IDS = {
     'both': '2023-10-13T1558-both-d20k-t10k-b5k',
 }
 PRIMARY_ANALYSIS = 'mob'
+
+BURN_IN = 5000
