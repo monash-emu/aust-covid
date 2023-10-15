@@ -7,12 +7,15 @@ from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
 import matplotlib as mpl
+import seaborn as sns
+from matplotlib import pyplot as plt
+
 from scipy import stats
 
 from summer2 import CompartmentalModel
 import estival.priors as esp
 
-from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE
+from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_PATH
 from emutools.plotting import get_row_col_for_subplots
 
 
@@ -406,4 +409,56 @@ def plot_output_ranges_by_analysis(quantile_outputs, targets, output, analyses, 
             fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_layout(height=700, title=output)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
+    return fig
+
+
+def get_like_components(
+    components: List[str]
+) -> List[pd.DataFrame]:
+    """Get dictionary containing one dataframe 
+    for each requested contribution to the likelihood,
+    with columns for each analysis type and integer index.
+    
+    Args:
+        User requested likelihood components
+    """
+    like_outputs = {}
+    for comp in components:
+        like_outputs[comp] = pd.DataFrame(columns=list(RUN_IDS.keys()))
+        for analysis, run_id in RUN_IDS.items():
+            working_data = pd.read_hdf(RUNS_PATH / run_id / 'output/results.hdf', 'likelihood')[comp]
+            like_outputs[comp][analysis] = working_data
+    return like_outputs
+
+
+def plot_like_components_by_analysis(like_outputs, components, plot_type, burn_in, clips={}):
+    """Use seaborn plotting functions to show likelihood components from various runs.
+
+    Args:
+        like_outputs: Output from get_like_components above
+        components: 
+        plot_type: _description_
+        burn_in: _description_
+        clips: _description_. Defaults to {}.
+
+    Returns:
+        _description_
+    """
+    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 7))
+    axes = axes.reshape(-1)
+    plotter = getattr(sns, plot_type)
+    legend_plot_types = ['kdeplot', 'histplot']
+    for m, comp in enumerate(components):
+        clip = (clips[comp], 0.0) if clips else None
+        kwargs = {'common_norm': False, 'clip': clip, 'shade': True} if plot_type == 'kdeplot' else {}        
+        ax = axes[m]
+        plotter(like_outputs[comp].loc[:, burn_in:, :], ax=ax, **kwargs)
+        subtitle = comp.replace('log', '').replace('ll_', '').replace('_ma', '').replace('_', ' ')
+        ax.set_title(subtitle)
+        if m == 0 and plot_type in legend_plot_types:
+            sns.move_legend(ax, loc='upper left')
+        elif plot_type in legend_plot_types:
+            ax.legend_.set_visible(False)
+    fig.suptitle('Log posterior and components')
+    fig.tight_layout()
     return fig
