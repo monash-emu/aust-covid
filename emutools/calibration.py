@@ -15,7 +15,7 @@ from scipy import stats
 from summer2 import CompartmentalModel
 import estival.priors as esp
 
-from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_PATH
+from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_PATH, BURN_IN
 from emutools.plotting import get_row_col_for_subplots
 
 
@@ -431,28 +431,26 @@ def get_like_components(
     return like_outputs
 
 
-def plot_like_components_by_analysis(like_outputs, components, plot_type, burn_in, clips={}):
+def plot_like_components_by_analysis(like_outputs, plot_type, clips={}) -> plt.figure:
     """Use seaborn plotting functions to show likelihood components from various runs.
 
     Args:
         like_outputs: Output from get_like_components above
-        components: 
-        plot_type: _description_
-        burn_in: _description_
-        clips: _description_. Defaults to {}.
+        plot_type: Type of seaborn plot
+        clips: Lower clips for the components' x-axis range
 
     Returns:
-        _description_
+        The analysis comparison figure
     """
-    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 7))
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 7))
     axes = axes.reshape(-1)
     plotter = getattr(sns, plot_type)
     legend_plot_types = ['kdeplot', 'histplot']
-    for m, comp in enumerate(components):
+    for m, comp in enumerate(like_outputs.keys()):
         clip = (clips[comp], 0.0) if clips else None
         kwargs = {'common_norm': False, 'clip': clip, 'shade': True} if plot_type == 'kdeplot' else {}        
         ax = axes[m]
-        plotter(like_outputs[comp].loc[:, burn_in:, :], ax=ax, **kwargs)
+        plotter(like_outputs[comp].loc[:, BURN_IN:, :], ax=ax, **kwargs)
         subtitle = comp.replace('log', '').replace('ll_', '').replace('_ma', '').replace('_', ' ')
         ax.set_title(subtitle)
         if m == 0 and plot_type in legend_plot_types:
