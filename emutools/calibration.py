@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Dict
 import arviz as az
 from arviz.labels import MapLabeller
 import plotly.graph_objects as go
@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib as mpl
 import seaborn as sns
 from matplotlib import pyplot as plt
+pd.options.plotting.backend = 'plotly'
 
 from scipy import stats
 
@@ -431,7 +432,11 @@ def get_like_components(
     return like_outputs
 
 
-def plot_like_components_by_analysis(like_outputs, plot_type, clips={}) -> plt.figure:
+def plot_like_components_by_analysis(
+    like_outputs: Dict[str, pd.DataFrame], 
+    plot_type: str, 
+    clips: Dict[str, float]={}
+) -> plt.figure:
     """Use seaborn plotting functions to show likelihood components from various runs.
 
     Args:
