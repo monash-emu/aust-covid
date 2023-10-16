@@ -153,7 +153,7 @@ def build_base_model(
         f'representing the following states: {", ".join(compartments).replace("_", "")}. ' \
         f"Each of the infectious compartments contribute equally to the force of infection. \n"
     time_desc =  f'A simulation is run from {ANALYSIS_START_DATE.strftime("%d %B %Y")} to {ANALYSIS_END_DATE.strftime("%d %B %Y")}. '
-    tex_doc.add_line(description, 'Model Structure')
+    tex_doc.add_line(description, 'Model structure')
     tex_doc.add_line(time_desc, 'Population')
 
     return CompartmentalModel(
@@ -192,7 +192,7 @@ def add_infection(
         f'compartment to the {destination.replace("_", "")} compartment ' \
         '(being the first latent compartment), ' \
         'under the frequency-dependent transmission assumption. '
-    tex_doc.add_line(description, 'Model Structure')
+    tex_doc.add_line(description, 'Model structure')
 
     model.add_infection_frequency_flow(process, Parameter('contact_rate'), origin, destination)
 
@@ -216,7 +216,7 @@ def add_latent_transition(
         'and our intuition around this quantity. The serial interval \cite{anderheiden2022} and generation time \cite{ito2022} appear to ' \
         'well represented by a gamma distribution, with multiple past modelling studies choosing ' \
         'a shape parameter of four or five having been previously used to fit this distribution \cite{davies2020b,davies2020c}. '
-    tex_doc.add_line(description, 'Model Structure')
+    tex_doc.add_line(description, 'Model structure')
 
     rate = 1.0 / Parameter(parameter_name) * N_LATENT_COMPARTMENTS
     for i_comp in range(N_LATENT_COMPARTMENTS - 1):
@@ -239,7 +239,7 @@ def add_infectious_transition(
         'As for the latent compartments, ' \
         f'each transition rate is multiplied by {n_inf_comps}. ' \
         'As persons exit the final infectious compartment, they enter the recovered compartment.\n'    
-    tex_doc.add_line(description, 'Model Structure')
+    tex_doc.add_line(description, 'Model structure')
 
     rate = 1.0 / Parameter(parameter_name) * n_inf_comps
     for i_comp in range(n_inf_comps - 1):
@@ -262,7 +262,7 @@ def add_waning(
         f'As these persons lose their infection-induced immunity, they transition from the ' \
         f'{origin.replace("_", "")} compartment to the {destination.replace("_", "")} compartment '\
         f'at a rate equal to the reciprocal of the {parameter_name.replace("_", " ")} parameter. '
-    tex_doc.add_line(description, 'Model Structure')
+    tex_doc.add_line(description, 'Model structure')
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
