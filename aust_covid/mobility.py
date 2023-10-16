@@ -122,11 +122,6 @@ def get_processed_mobility_data(
         if sum(MOBILITY_MAP[location].values()) != 1.0:
             raise ValueError(f'Mobility mapping does not sum to one for {location}')
 
-    mob_map_table = pd.DataFrame(MOBILITY_MAP)
-    mob_map_table.index = mob_map_table.index.str.replace('_', ' ')
-    mob_map_table.columns = mob_map_table.columns.str.replace('_', ' ')
-    tex_doc.include_table(mob_map_table, section='Mobility extension', subsection='Data processing')
-
     processed_mob = map_mobility_locations(wa_relmob, non_wa_relmob, tex_doc)
 
     description = f'Next, we took the {MOBILITY_AVERAGE_WINDOW} moving average to smooth the ' \

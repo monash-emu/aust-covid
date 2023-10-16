@@ -5,26 +5,28 @@ from emutools.tex import TexDoc
 def add_intro_blurb_to_tex(tex_doc: TexDoc):
     description = 'The following document describes the methods used in our analyses ' \
         'of the 2022 SARS-CoV-2 epidemic in Australia. ' \
-        f'We constructed {len(RUN_IDS)} alternative transmission dynamic models ' \
-        'based around similar core features. ' \
+        f'We constructed {len(RUN_IDS)} alternative dynamic models ' \
+        'based around the same core features. ' \
         f"These were termed `{', '.join(RUN_IDS.keys())}' and were all based on the features " \
-        'described in the following sections. ' \
+        'described in Sections \\ref{base_compartmental_structure}, \\ref{population}, ' \
+        '\\ref{stratification}, \\ref{reinfection}, \\ref{mixing}. ' \
         'Two of the models incorporated additional structure to capture time-varying ' \
         'mobility, while two incorporated additional structure for time-varying ' \
         'vaccination effects, such that these additional features are applied factorially ' \
-        'to the core model structure. ' \
+        'to the core model structure.\n\n' \
         'Each of the four alternative modelling approaches were then calibrated to the ' \
         'same target data for the 2022 Australian COVID-19 epidemic. ' \
         'The calibration algorithms were also harmonised to the greatest extent possible, ' \
         'although the two analysis approaches that included structure for vaccination ' \
-        'required one different parameter to be substituted for the parameters used ' \
+        'required a different parameter to be substituted for the parameters used ' \
         'in the analyses not incorporating this structure. ' \
         'These four approaches were then compared with regards to their fit to ' \
         'the target data, with the analysis that included structure for mobility ' \
         'but not for vaccination found to achieve the highest likelihood. ' \
-        f"The `{PRIMARY_ANALYSIS}' analysis was therefore selected as the main or primary analysis " \
-        '(as described in Section \\ref{analysis_comparison}))' \
-        'and was used for the further analyses, including parameter inference (e.g. Section \\ref{calibration_results}). '
+        f"As a result of this comparison, the `{PRIMARY_ANALYSIS}' analysiswas  selected as " \
+        'the primary analysis (see Section \\ref{analysis_comparison})). ' \
+        'This approach was used for the further analyses, ' \
+        'including parameter inference (e.g. Section \\ref{calibration_results}). '
     tex_doc.add_line(description, 'Approach to analyses')
 
 
