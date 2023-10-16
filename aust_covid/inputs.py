@@ -7,7 +7,7 @@ from aust_covid.utils import add_image_to_doc
 
 from emutools.tex import get_tex_formatted_date, TexDoc, StandardTexDoc
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
-from inputs.constants import DATA_PATH, SUPPLEMENT_PATH, NATIONAL_DATA_START_DATE
+from inputs.constants import DATA_PATH, NATIONAL_DATA_START_DATE
 
 CHANGE_STR = '_percent_change_from_baseline'
 
@@ -341,7 +341,7 @@ def get_raw_state_mobility(tex_doc: StandardTexDoc) -> pd.DataFrame:
         'were used to scale transmission rates. ' \
         'Raw estimates of Australian population mobility were obtained from Google, ' \
         'with 2021 and 2022 data concatenated together. '
-    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
+    tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
 
     raw_data_2021 = pd.read_csv(DATA_PATH / '2021_AU_Region_Mobility_Report.csv', index_col=8)
     raw_data_2022 = pd.read_csv(DATA_PATH / '2022_AU_Region_Mobility_Report.csv', index_col=8)
