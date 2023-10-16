@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Dict
 import pandas as pd
 import numpy as np
 from plotly.subplots import make_subplots
@@ -16,7 +16,8 @@ from aust_covid.calibration import get_target_from_name
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
 from emutools.calibration import get_negbinom_target_widths
-from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, CHANGE_STR, COLOURS
+from emutools.plotting import get_row_col_for_subplots
+from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, CHANGE_STR, COLOURS, RUN_IDS
 
 pd.options.plotting.backend = 'plotly'
 
@@ -327,5 +328,24 @@ def plot_targets(targets):
     serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')
     fig.add_trace(go.Scatter(x=serosurvey_ceiling.index, y=serosurvey_ceiling, name='seroprevalence ceiling'), row=2, col=2)
     fig.update_layout(height=600)
+    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
+    return fig
+
+
+def plot_multi_spaghetti(
+    spaghettis: Dict[str, pd.DataFrame], 
+    output: str, 
+    targets: list,
+):
+    target = next(i for i in targets if i.name == output)
+    n_cols = 2
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True)
+    for i, analysis in enumerate(RUN_IDS.keys()):
+        row, col = get_row_col_for_subplots(i, n_cols)
+        spaghetti = spaghettis[analysis][output]
+        spaghetti.columns = [f'{str(chain)}, {str(draw)}' for chain, draw in spaghetti.columns]    
+        fig.add_traces(spaghetti.plot().data, rows=row, cols=col)
+        fig.add_trace(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker={'color': 'black', 'size': 12}), row=row, col=col)
+    fig.update_layout(height=1000, title={'text': output})
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig
