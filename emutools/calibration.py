@@ -462,6 +462,5 @@ def plot_like_components_by_analysis(
             sns.move_legend(ax, loc='upper left')
         elif plot_type in legend_plot_types:
             ax.legend_.set_visible(False)
-    fig.suptitle('Log posterior and components')
     fig.tight_layout()
     return fig
