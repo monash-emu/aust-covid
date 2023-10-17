@@ -35,7 +35,7 @@ def get_non_wa_mob_averages(
         'These population values were then used as weights to calculate weighted national averages ' \
         "for population mobility by each Google `location' " \
         f'(being {", ".join([i.replace("_percent_change_from_baseline", "").replace("_", " ") for i in mob_locs])}). '
-    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
+    tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
     non_wa_data = state_data.copy().loc[state_data['sub_region_1'] != 'Western Australia']
 
     # Add state population totals to dataframe
@@ -86,7 +86,7 @@ def map_mobility_locations(
     """
     description = 'Next, we used a mapping dictionary to map from the reported ' \
         "`locations' to the contact locations of the model's mixing matrix. "
-    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
+    tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
 
     patch_data = {
         'wa': wa_relmob,
@@ -114,7 +114,7 @@ def get_processed_mobility_data(
 
     description = 'Values were then converted from the reported percentage ' \
         'change from baseline to the proportional change relative to baseline. '
-    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
+    tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
     non_wa_relmob = get_relative_mobility(state_averages)
     wa_relmob = get_relative_mobility(wa_data)
 
@@ -122,22 +122,17 @@ def get_processed_mobility_data(
         if sum(MOBILITY_MAP[location].values()) != 1.0:
             raise ValueError(f'Mobility mapping does not sum to one for {location}')
 
-    mob_map_table = pd.DataFrame(MOBILITY_MAP)
-    mob_map_table.index = mob_map_table.index.str.replace('_', ' ')
-    mob_map_table.columns = mob_map_table.columns.str.replace('_', ' ')
-    tex_doc.include_table(mob_map_table, section='Mobility', subsection='Data processing')
-
     processed_mob = map_mobility_locations(wa_relmob, non_wa_relmob, tex_doc)
 
     description = f'Next, we took the {MOBILITY_AVERAGE_WINDOW} moving average to smooth the ' \
         'often abrupt shifts in mobility, including with weekend and public holidays. '
-    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
+    tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
     smoothed_mob = processed_mob.rolling(MOBILITY_AVERAGE_WINDOW).mean().dropna()
 
     description = 'Last, we squared the relative variations in mobility to account for ' \
         'the effect of reductions in visits to specific locations for both the infector ' \
         'and the infectee of the modelled social contacts. '
-    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
+    tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
     squared_mob = smoothed_mob ** 2.0
 
     return squared_mob

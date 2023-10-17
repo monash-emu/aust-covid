@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Dict
 import arviz as az
 from arviz.labels import MapLabeller
 import plotly.graph_objects as go
@@ -7,12 +7,17 @@ from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
 import matplotlib as mpl
+import seaborn as sns
+from matplotlib import pyplot as plt
+pd.options.plotting.backend = 'plotly'
+
 from scipy import stats
 
 from summer2 import CompartmentalModel
 import estival.priors as esp
 
-from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE
+from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_PATH, BURN_IN
+from emutools.plotting import get_row_col_for_subplots
 
 
 def round_sigfig(
@@ -108,7 +113,7 @@ def get_prior_dist_support(
 
 def plot_param_progression(
     idata: az.InferenceData, 
-    param_info: pd.DataFrame, 
+    descriptions: pd.Series, 
     request_vars: Union[None, List[str]]=None,
 ) -> mpl.figure.Figure:
     """
@@ -116,14 +121,14 @@ def plot_param_progression(
     
     Args:
         idata: Formatted outputs from calibration
-        param_info: Collated information on the parameter values (excluding calibration/priors-related)
+        descriptions: Short parameter names
         request_vars: The parameter names to plot
     
     Returns:
         Formatted figure object created from arviz plotting command
     """
-    mpl.rcParams['axes.titlesize'] = 25
-    labeller = MapLabeller(var_name_map=param_info['descriptions'])
+    # mpl.rcParams['axes.titlesize'] = 25
+    labeller = MapLabeller(var_name_map=descriptions)
     trace_plot = az.plot_trace(idata, figsize=(16, 21), compact=False, legend=False, labeller=labeller, var_names=request_vars)
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
@@ -275,7 +280,6 @@ def plot_priors(
     Returns:
         Multi-panel figure with one panel per prior
     """
-    n_cols = 5
     n_rows = int(np.ceil(len(priors) / n_cols))
     titles = [titles[p.name] for p in priors]
     fig = make_subplots(rows=n_rows, cols=n_cols, subplot_titles=titles)
@@ -358,4 +362,105 @@ def plot_param_hover_spaghetti(
         lines = px.line(working_data, y='values', hover_data=working_data.columns)
         fig.add_traces(lines.data)
     fig.update_layout(showlegend=False, height=600)
+    return fig
+
+
+def plot_output_ranges(quantile_outputs, targets, outputs, analysis, quantiles, max_alpha=0.7):
+    n_cols = 2
+    target_names = [t.name for t in targets]
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=[o.replace('_ma', '').replace('_', ' ') for o in outputs])
+    analysis_data = quantile_outputs[analysis]
+    for i, output in enumerate(outputs):
+        row, col = get_row_col_for_subplots(i, n_cols)
+        data = analysis_data[output]
+        for q, quant in enumerate(quantiles):
+            alpha = min((q, len(quantiles) - q)) / np.floor(len(quantiles) / 2) * max_alpha
+            fill_colour = f'rgba(0,30,180,{str(alpha)})'
+            fig.add_traces(go.Scatter(x=data.index, y=data[quant], fill='tonexty', fillcolor=fill_colour, line={'width': 0}, name=quant), rows=row, cols=col)
+        fig.add_traces(go.Scatter(x=data.index, y=data[0.5], line={'color': 'black'}, name='median'), rows=row, cols=col)
+        if output in target_names:
+            target = next((t for t in targets if t.name == output))
+            marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
+            fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
+    fig.update_layout(height=700)
+    fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
+    return fig
+
+
+def plot_output_ranges_by_analysis(quantile_outputs, targets, output, analyses, quantiles, max_alpha=0.7):
+    """
+    Plot the credible intervals with subplots for each analysis type,
+    for a single output of interest.
+    """
+    n_cols = 2
+    target_names = [t.name for t in targets]
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(analyses))
+    for a, analysis in enumerate(analyses):
+        row, col = get_row_col_for_subplots(a, n_cols)
+        analysis_data = quantile_outputs[analysis]
+        data = analysis_data[output]
+        for q, quant in enumerate(quantiles):
+            alpha = min((q, len(quantiles) - q)) / np.floor(len(quantiles) / 2) * max_alpha
+            fill_colour = f'rgba(0,30,180,{str(alpha)})'
+            fig.add_traces(go.Scatter(x=data.index, y=data[quant], fill='tonexty', fillcolor=fill_colour, line={'width': 0}, name=quant), rows=row, cols=col)
+        fig.add_traces(go.Scatter(x=data.index, y=data[0.5], line={'color': 'black'}, name='median'), rows=row, cols=col)
+        if output in target_names:
+            target = next((t for t in targets if t.name == output))
+            marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
+            fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
+    fig.update_layout(height=700, title=output)
+    fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
+    return fig
+
+
+def get_like_components(
+    components: List[str]
+) -> List[pd.DataFrame]:
+    """Get dictionary containing one dataframe 
+    for each requested contribution to the likelihood,
+    with columns for each analysis type and integer index.
+    
+    Args:
+        User requested likelihood components
+    """
+    like_outputs = {}
+    for comp in components:
+        like_outputs[comp] = pd.DataFrame(columns=list(RUN_IDS.keys()))
+        for analysis, run_id in RUN_IDS.items():
+            working_data = pd.read_hdf(RUNS_PATH / run_id / 'output/results.hdf', 'likelihood')[comp]
+            like_outputs[comp][analysis] = working_data
+    return like_outputs
+
+
+def plot_like_components_by_analysis(
+    like_outputs: Dict[str, pd.DataFrame], 
+    plot_type: str, 
+    clips: Dict[str, float]={}
+) -> plt.figure:
+    """Use seaborn plotting functions to show likelihood components from various runs.
+
+    Args:
+        like_outputs: Output from get_like_components above
+        plot_type: Type of seaborn plot
+        clips: Lower clips for the components' x-axis range
+
+    Returns:
+        The analysis comparison figure
+    """
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 7))
+    axes = axes.reshape(-1)
+    plotter = getattr(sns, plot_type)
+    legend_plot_types = ['kdeplot', 'histplot']
+    for m, comp in enumerate(like_outputs.keys()):
+        clip = (clips[comp], 0.0) if clips else None
+        kwargs = {'common_norm': False, 'clip': clip, 'shade': True} if plot_type == 'kdeplot' else {}        
+        ax = axes[m]
+        plotter(like_outputs[comp].loc[:, BURN_IN:, :], ax=ax, **kwargs)
+        subtitle = comp.replace('log', '').replace('ll_', '').replace('_ma', '').replace('_', ' ')
+        ax.set_title(subtitle)
+        if m == 0 and plot_type in legend_plot_types:
+            sns.move_legend(ax, loc='upper left')
+        elif plot_type in legend_plot_types:
+            ax.legend_.set_visible(False)
+    fig.tight_layout()
     return fig

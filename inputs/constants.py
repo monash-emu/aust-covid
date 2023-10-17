@@ -6,7 +6,7 @@ REFERENCE_DATE = datetime(2019, 12, 31)
 ANALYSIS_START_DATE = datetime(2021, 7, 1)
 ANALYSIS_END_DATE = datetime(2022, 10, 1)
 TARGETS_START_DATE = datetime(2021, 12, 15)
-PLOT_START_DATE = datetime(2021, 12, 1)
+PLOT_START_DATE = datetime(2021, 11, 30)
 WA_REOPEN_DATE = datetime(2022, 3, 3)
 WHO_CHANGE_WEEKLY_REPORT_DATE = datetime(2022, 9, 16)
 NATIONAL_DATA_START_DATE = datetime(2022, 1, 1)
@@ -49,6 +49,7 @@ PROJECT_PATH = Path(__file__).parent.parent.resolve()
 DATA_PATH = PROJECT_PATH / 'data'
 SUPPLEMENT_PATH = PROJECT_PATH / 'supplement'
 INPUTS_PATH = PROJECT_PATH / 'inputs'
+RUNS_PATH = PROJECT_PATH / 'runs'
 
 AGE_STRATA = list(range(0, 80, 5))
 STRAIN_STRATA = ['ba1', 'ba2', 'ba5']
@@ -57,3 +58,13 @@ INFECTION_PROCESSES = ['infection', 'early_reinfection', 'late_reinfection']
 
 COLOURS = colorbrewer.Accent
 CHANGE_STR = '_percent_change_from_baseline'
+
+RUN_IDS = {
+    'none': '2023-10-14T1058-none-d20k-t10k-b5k',
+    'mob': '2023-10-14T1059-mob-d20k-t10k-b5k',
+    'vacc': '2023-10-14T1101-vacc-d20k-t10k-b5k',
+    'both': '2023-10-14T1608-both-d20k-t10k-b5k'
+}
+PRIMARY_ANALYSIS = 'mob'
+
+BURN_IN = 5000

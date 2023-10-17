@@ -202,7 +202,8 @@ class ConcreteTexDoc:
         """
         self.add_line('\\begin{figure}', section, subsection)
         self.add_line(f'\\caption{{{caption}}}', section, subsection)
-        self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}}}', section, subsection)
+        self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}.jpg}}', section, subsection)
+        self.add_line(f'\\label{{{filename}}}', section, subsection)
         self.add_line('\\end{figure}', section, subsection)
 
     def include_table(
@@ -272,12 +273,12 @@ class StandardTexDoc(ConcreteTexDoc):
         for package in standard_packages:
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')
 
-        self.add_line('\\graphicspath{ {./images/} }', 'preamble')
         self.add_line(r'\usepackage[a4paper, total={15cm, 20cm}]{geometry}', 'preamble')
         self.add_line(r'\usepackage[labelfont=bf,it]{caption}', 'preamble')
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
         self.add_line('\\begin{document}', 'preamble')
+        self.add_line('\date{}', 'preamble')
         self.add_line('\maketitle', 'preamble')
         
         self.add_line('\\printbibliography', 'endings')

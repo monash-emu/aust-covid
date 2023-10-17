@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Dict
 import pandas as pd
 import numpy as np
 from plotly.subplots import make_subplots
@@ -9,11 +9,15 @@ import arviz as az
 
 from summer2 import CompartmentalModel
 
+from aust_covid.inputs import load_national_data, load_owid_data, load_calibration_targets, load_who_data, load_serosurvey_data
+from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE
+from emutools.tex import DummyTexDoc
+from aust_covid.calibration import get_target_from_name
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
-from aust_covid.vaccination import get_model_vacc_vals_from_data
 from emutools.calibration import get_negbinom_target_widths
-from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, SUPPLEMENT_PATH, CHANGE_STR, COLOURS
+from emutools.plotting import get_row_col_for_subplots
+from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, CHANGE_STR, COLOURS, RUN_IDS
 
 pd.options.plotting.backend = 'plotly'
 
@@ -39,7 +43,7 @@ def plot_single_run_outputs(model, targets):
     fig['layout']['yaxis6'].update(type='log', range=[-2.0, 2.0])
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     fig.update_layout(height=600, width=1200)
-    fig.show()
+    return fig
 
 
 def plot_subvariant_props(
@@ -247,7 +251,7 @@ def plot_full_vacc(
         trace_name = age.replace('- Number of people fully vaccinated', '').replace('Age group - ', '')
         data = df[age].dropna()
         fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}))
-    return fig
+    return fig.update_layout(height=600)
 
 
 def plot_program_coverage(
@@ -269,54 +273,7 @@ def plot_program_coverage(
         col = m % 2 + 1
         row = int(np.floor(m / 2)) + 1
         fig.add_traces(px.line(df[program_masks[mask]]).data, rows=row, cols=col)
-    fig.update_layout(height=600, showlegend=False, title='Coverage by program')
-    return fig
-
-
-def plot_full_vacc(
-    full_vacc_masks: List[str], 
-    df: pd.DataFrame,
-) -> go.Figure:
-    """
-    Plot full (2) dose vaccination coverage by age group over time.
-
-    Args:
-        full_vacc_masks: Strings identifying the needed columns
-        df: The vaccination dataframe
-
-    Returns:
-        The plotly figure object
-    """
-    fig = go.Figure()
-    for a, age in enumerate(full_vacc_masks):
-        prop = int(np.round(a / len(full_vacc_masks) * 250.0))
-        colour = f'rgb({prop},{250 - prop},250)'
-        trace_name = age.replace('- Number of people fully vaccinated', '').replace('Age group - ', '')
-        data = df[age].dropna()
-        fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}))
-    return fig
-
-
-def plot_program_coverage(
-    program_masks: List[str], 
-    df: pd.DataFrame,
-) -> go.Figure:
-    """
-    Plot vaccination coverage by program across four panels to represent the main programs.
-
-    Args:
-        program_masks: Strings identifying the needed columns
-        df: The vaccination dataframe
-
-    Returns:
-        The plotly figure object
-    """
-    fig = make_subplots(rows=2, cols=2, subplot_titles=list(program_masks.keys()))
-    for m, mask in enumerate(program_masks):
-        col = m % 2 + 1
-        row = int(np.floor(m / 2)) + 1
-        fig.add_traces(px.line(df[program_masks[mask]]).data, rows=row, cols=col)
-    fig.update_layout(height=600, showlegend=False, title='Coverage by program')
+    fig.update_layout(height=600, showlegend=False)
     return fig
 
 
@@ -342,4 +299,53 @@ def plot_immune_props(
             fig.add_trace(go.Scatter(x=x_vals, y=y_vals, line=line_style, name='coverage'), row=1, col=i + 1)
     fig.update_xaxes(range=epoch.index_to_dti([model.times[0], model.times[-1]]))
     fig.update_yaxes(range=[0.0, 1.0])
+    return fig
+
+
+def plot_targets(targets):
+    dummy_doc = DummyTexDoc()
+    subplot_specs = [
+        [{'colspan': 2}, None], 
+        [{}, {}]
+    ]
+    fig = make_subplots(rows=2, cols=2, specs=subplot_specs)
+    combined_data = load_calibration_targets(dummy_doc)
+    fig.add_trace(go.Scatter(x=combined_data.index, y=combined_data, name='combined cases'), row=1, col=1)
+    national_data = load_national_data(dummy_doc)
+    fig.add_trace(go.Scatter(x=national_data.index, y=national_data, name='national cases'), row=1, col=1)
+    owid_data = load_owid_data(dummy_doc)
+    fig.add_trace(go.Scatter(x=owid_data.index, y=owid_data, name='owid cases'), row=1, col=1)
+    case_targets = get_target_from_name(targets, 'notifications_ma')
+    fig.add_trace(go.Scatter(x=case_targets.index, y=case_targets, name='final case target (smoothed)'), row=1, col=1)
+    death_data = load_who_data(dummy_doc)
+    fig.add_trace(go.Scatter(x=death_data.index, y=death_data, name='who deaths'), row=2, col=1)
+    death_targets = get_target_from_name(targets, 'deaths_ma')
+    fig.add_trace(go.Scatter(x=death_targets.index, y=death_targets, name='death target (smoothed)'), row=2, col=1)
+    serosurvey_data = load_serosurvey_data(dummy_doc)
+    fig.add_trace(go.Scatter(x=serosurvey_data.index, y=serosurvey_data, name='serosurvey data'), row=2, col=2)
+    serosurvey_targets = get_target_from_name(targets, 'adult_seropos_prop')
+    fig.add_trace(go.Scatter(x=serosurvey_targets.index, y=serosurvey_targets, name='serosurvey target'), row=2, col=2)
+    serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')
+    fig.add_trace(go.Scatter(x=serosurvey_ceiling.index, y=serosurvey_ceiling, name='seroprevalence ceiling'), row=2, col=2)
+    fig.update_layout(height=600)
+    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
+    return fig
+
+
+def plot_multi_spaghetti(
+    spaghettis: Dict[str, pd.DataFrame], 
+    output: str, 
+    targets: list,
+):
+    target = next(i for i in targets if i.name == output)
+    n_cols = 2
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True)
+    for i, analysis in enumerate(RUN_IDS.keys()):
+        row, col = get_row_col_for_subplots(i, n_cols)
+        spaghetti = spaghettis[analysis][output]
+        spaghetti.columns = [f'{str(chain)}, {str(draw)}' for chain, draw in spaghetti.columns]    
+        fig.add_traces(spaghetti.plot().data, rows=row, cols=col)
+        fig.add_trace(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker={'color': 'black', 'size': 12}), row=row, col=col)
+    fig.update_layout(height=1000, title={'text': output})
+    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig

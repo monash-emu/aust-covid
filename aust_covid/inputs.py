@@ -3,10 +3,11 @@ import numpy as np
 from copy import copy
 from datetime import datetime, timedelta
 from plotly import graph_objects as go
+from aust_covid.utils import add_image_to_doc
 
 from emutools.tex import get_tex_formatted_date, TexDoc, StandardTexDoc
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
-from inputs.constants import DATA_PATH, SUPPLEMENT_PATH, NATIONAL_DATA_START_DATE
+from inputs.constants import DATA_PATH, NATIONAL_DATA_START_DATE
 
 CHANGE_STR = '_percent_change_from_baseline'
 
@@ -56,7 +57,7 @@ def load_calibration_targets(tex_doc: TexDoc) -> tuple:
 
     interval = (TARGETS_START_DATE < owid_data.index) & (owid_data.index < NATIONAL_DATA_START_DATE)
     composite_aust_data = pd.concat([owid_data[interval], national_data])
-    return composite_aust_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
+    return composite_aust_data
 
 
 def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
@@ -71,8 +72,7 @@ def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
     """
     description = 'The daily time series of deaths for Australia was obtained from the ' \
         "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
-        f'{{Coronavirus (COVID-19) Dashboard}} downloaded on {get_tex_formatted_date(datetime(2023, 7, 18))}. ' \
-        f'These daily deaths data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
+        f'{{Coronavirus (COVID-19) Dashboard}} downloaded on {get_tex_formatted_date(datetime(2023, 7, 18))}. '
     tex_doc.add_line(description, 'Targets', subsection='Deaths')
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
@@ -95,12 +95,12 @@ def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
         Serosurvey targets
     """
     description = 'We obtained estimates of the seroprevalence of antibodies to ' \
-        'nucleocapsid antigen from Australia blood donors from Kirby Institute serosurveillance reports. ' \
+        'nucleocapsid antigen from Australian blood donors from Kirby Institute serosurveillance reports. ' \
         'Data are available from \href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf}' \
         '{the round 4 serosurvey}, with ' \
         '\href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf}' \
-        '{information on assay sensitivity also available}.' \
-        f'We lagged these empiric estimates by {IMMUNITY_LAG} days to account for the delay between infection and seroconversion. '
+        '{information on assay sensitivity also reported}. ' \
+        f'We lagged these empiric estimates by {int(IMMUNITY_LAG)} days to account for the delay between infection and seroconversion. '
     tex_doc.add_line(description, 'Targets', subsection='Seroprevalence')
 
     data = pd.Series(
@@ -320,18 +320,9 @@ def get_ifrs(
     fig.add_trace(go.Scatter(x=final_values.index, y=final_values, name='Combined and interpolated'))
     fig.add_trace(go.Scatter(x=model_breakpoint_values.index, y=model_breakpoint_values, name='Values by model breakpoints'))
     fig.update_yaxes(type='log')
-    ifr_fig_name = 'ifr_calculation.jpg'
-    fig.write_image(SUPPLEMENT_PATH / ifr_fig_name)
-    tex_doc.include_figure(
-        'Illustration of the calculation of the base age-specific infection-fatality rates applied in the model. ',
-        ifr_fig_name,
-        'Parameters', 
-        'Infection Fatality Rates',
-    )
-
-    if show_figs:
-        fig.show()
-
+    ifr_fig_name = 'ifr_calculation'
+    caption = 'Illustration of the calculation of the base age-specific infection-fatality rates applied in the model. '
+    add_image_to_doc(fig, ifr_fig_name, caption, tex_doc, 'Parameters')
     model_breakpoint_values.index = model_breakpoint_values.index.map(lambda i: f'ifr_{int(i)}')
     return model_breakpoint_values.to_dict()
 
@@ -350,7 +341,7 @@ def get_raw_state_mobility(tex_doc: StandardTexDoc) -> pd.DataFrame:
         'were used to scale transmission rates. ' \
         'Raw estimates of Australian population mobility were obtained from Google, ' \
         'with 2021 and 2022 data concatenated together. '
-    tex_doc.add_line(description, section='Mobility', subsection='Data processing')
+    tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
 
     raw_data_2021 = pd.read_csv(DATA_PATH / '2021_AU_Region_Mobility_Report.csv', index_col=8)
     raw_data_2022 = pd.read_csv(DATA_PATH / '2022_AU_Region_Mobility_Report.csv', index_col=8)

@@ -1,27 +1,42 @@
+from typing import Dict
 from datetime import datetime
 import numpy as np
 import pandas as pd
 from jax import numpy as jnp
+from plotly.subplots import make_subplots
 
 import estival.priors as esp
 import estival.targets as est
 
-from emutools.tex import StandardTexDoc
-from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
+from emutools.tex import TexDoc, get_tex_formatted_date
+from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, RUN_IDS, RUNS_PATH
 from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data
+from emutools.plotting import get_row_col_for_subplots
 
 
-def get_priors(vacc_sens: bool) -> list:
-    """
-    Get the standard priors used for the analysis.
+def get_target_from_name(
+    targets: list, 
+    name: str,
+) -> pd.Series:
+    """Get the data for a specific target from a set of targets from its name.
 
     Args:
-        Whether to apply vaccination structure to the model
-    
+        targets: All the targets
+        name: The name of the desired target
+
     Returns:
-        Final priors
+        Single target to identify
     """
-    base_priors = [
+    return next((t.data for t in targets if t.name == name))
+
+
+def get_all_priors() -> list:
+    """Get all priors used in any of the analysis types.
+
+    Returns:
+        All the priors used under any analyses
+    """
+    return [
         esp.UniformPrior('contact_rate', (0.02, 0.15)),
         esp.GammaPrior.from_mode('latent_period', 2.5, 5.0),
         esp.GammaPrior.from_mode('infectious_period', 3.5, 6.0),
@@ -38,25 +53,45 @@ def get_priors(vacc_sens: bool) -> list:
         esp.UniformPrior('wa_reopen_period', (30.0, 75.0)),
         esp.GammaPrior.from_mean('notifs_mean', 4.17, 7.0),
         esp.GammaPrior.from_mean('deaths_mean', 15.93, 18.79),
+        esp.GammaPrior.from_mode('vacc_immune_period', 60.0, 180.0),
+        esp.UniformPrior('imm_prop', (0.0, 1.0)),
     ]
 
-    if vacc_sens:
-        specific_prior = esp.GammaPrior.from_mode('vacc_immune_period', 30.0, 180.0)
-    else:
-        specific_prior = esp.UniformPrior('imm_prop', (0.0, 1.0))
 
-    return base_priors + [specific_prior]
+def get_priors(vacc_sens: bool, abbreviations: pd.Series, tex_doc: TexDoc) -> list:
+    """Get the priors used for the analysis.
+
+    Args:
+        Whether to apply vaccination structure to the model
+    
+    Returns:
+        Final priors applicable to the analysis
+    """
+    default_omit_prior = 'vacc_immune_period'
+    default_omit_str = abbreviations[default_omit_prior]
+    vacc_omit_prior = 'imm_prop'
+    vacc_omit_str = abbreviations[vacc_omit_prior]
+    description = 'The priors used in any of the four analysis presented ' \
+        'are described in this section, and displayed in Figure \\ref{prior_distributions}. ' \
+        'In the case of the two alternative analyses ' \
+        f'incorporating time-varying (vaccine-induced) immunity, the ``{vacc_omit_str}" parameter ' \
+        'is not included in the priors implemented; whereas in the case of the ' \
+        f'two analyses not involving time-varying immunity, the ``{default_omit_str}" parameter ' \
+        'is omitted. '
+    tex_doc.add_line(description, 'Priors')
+
+    all_priors = get_all_priors()
+    leave_out_prior = vacc_omit_prior if vacc_sens else default_omit_prior
+    return [p for p in all_priors if p.name != leave_out_prior]
 
 
 def truncation_ceiling(modelled, obs, parameters, time_weights):
-    """
-    Very large negative number to add to likelihood if modelled values 
-    above a threshold considered implausible.
+    """See description in get_targets below, standard arguments required.
     """
     return jnp.where(modelled > obs, -1e11, 0.0)
 
 
-def get_targets(tex_doc: StandardTexDoc) -> list:
+def get_targets(tex_doc: TexDoc) -> list:
     """
     Get the standard targets used for the analysis.
 
@@ -66,16 +101,77 @@ def get_targets(tex_doc: StandardTexDoc) -> list:
     Returns:
         Final targets
     """
-    description = f'The composite daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. '
-    tex_doc.add_line(description, 'Targets', 'Notifications')
+    description = 'Calibration targets were constructed as described throughout the following subsections, ' \
+        'and summarised in Figure \\ref{target_fig}. '
+    tex_doc.add_line(description, 'Targets')
 
     case_targets = load_calibration_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     death_targets = load_who_data(tex_doc)[TARGETS_START_DATE:].rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     serosurvey_targets = load_serosurvey_data(tex_doc)
+
+    description = f'The composite daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
+        'The notifications value for each date of the analysis were compared against the modelled estimate ' \
+        'from a given parameter set using a negative binomial distribution. The dispersion parameter ' \
+        'of this negative binomial distribution was calibrated from an uninformative prior distribution ' \
+        'along with the epidemiological parameters through the calibration algorithm. ' \
+        'The effect of the dispersion parameter on the comparison between modelled and empiric values ' \
+        'is illustrated in Figure \\ref{dispersion_examples}.'
+    tex_doc.add_line(description, 'Targets', 'Notifications')
+    description = f'The WHO data were also smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
+        'As for case notifications, the comparison distribution used to obtain the likelihood of a given parameter set ' \
+        'was negative binomial with calibrated dispersion parameter. '
+    tex_doc.add_line(description, 'Targets', 'Deaths')
+    seropos_ceiling = 0.04
+    ceiling_date = datetime(2021, 12, 1)
+    description = 'The proportion of the population seropositive was compared against ' \
+        'the modelled proportion of the population ever infected using a binomial distribution. \n\n' \
+        'We added a further recovered proportion target to avoid accepting runs with higher likelihood values ' \
+        'in which the acceptable fit to data was a result of an implausibly high initial epidemic wave ' \
+        'that occurred prior to the availability of target data (i.e. in late 2021 during the model run-in period). ' \
+        'This was achieved by adding a large negative number to the likelihood estimate for any runs with a ' \
+        f'proportion ever infected greater than {int(seropos_ceiling * 100)}\% on {get_tex_formatted_date(ceiling_date)}. '
+    tex_doc.add_line(description, 'Targets', 'Seroprevalence')
+
     targets = [
         est.NegativeBinomialTarget('notifications_ma', case_targets, dispersion_param=esp.UniformPrior('notifications_ma_dispersion', (10.0, 140.0))),
         est.NegativeBinomialTarget('deaths_ma', death_targets, dispersion_param=esp.UniformPrior('deaths_ma_dispersion', (60.0, 200.0))),
         est.BinomialTarget('adult_seropos_prop', serosurvey_targets, pd.Series([20] * 4, index=serosurvey_targets.index)),
     ]
-    targets.append(est.CustomTarget('seropos_ceiling', pd.Series([0.04], index=[datetime(2021, 12, 1)]), truncation_ceiling, model_key='adult_seropos_prop'))
+    targets.append(est.CustomTarget('seropos_ceiling', pd.Series([seropos_ceiling], index=[ceiling_date]), truncation_ceiling, model_key='adult_seropos_prop'))
     return targets
+
+
+def get_outcome_df_by_chain() -> Dict[str, pd.DataFrame]:
+    """Compile dictionary of dataframes for each analysis type,
+    each with column multi-index for likelihood component
+    and chain number.
+
+    Returns:
+        Compiled data structure
+    """
+    like_dfs = {}
+    for analysis, run_id in RUN_IDS.items():
+        like_df = pd.read_hdf(RUNS_PATH / run_id / 'output/results.hdf', 'likelihood')
+        like_df['chain'] = like_df.index.get_level_values(0)
+        like_df['index'] = like_df.index.get_level_values(1)
+        like_dfs[analysis] = like_df.pivot(index='index', columns=['chain'])
+    return like_dfs
+
+
+def plot_indicator_progression(like_dfs, measure):
+    """Plot posterior or one of its components by run for each analysis.
+
+    Args:
+        like_dfs: The output of get_outcome_df_by_chain above
+        measure: The metric (posterior component) to make the comparison on
+
+    Returns:
+        _description_
+    """
+    n_cols = 2
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True)
+    for i, analysis in enumerate(RUN_IDS.keys()):
+        row, col = get_row_col_for_subplots(i, n_cols)
+        fig.add_traces(like_dfs[analysis][measure].plot().data, rows=row, cols=col)
+    fig.update_layout(height=1000, title={'text': measure})
+    return fig
