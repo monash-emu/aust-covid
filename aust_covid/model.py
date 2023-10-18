@@ -316,14 +316,14 @@ def adapt_gb_matrices_to_aust(
         labels={'value': 'population', 'age_group': ''},
     )
     caption = 'Australian population sizes implemented in the model obtained from Australia Bureau of Statistics.'
-    add_image_to_doc(input_pop_fig, 'input_population', caption, tex_doc, 'Mixing')
+    add_image_to_doc(input_pop_fig, 'input_population', 'jpg', caption, tex_doc, 'Mixing')
 
     # UK population
     raw_uk_data = load_uk_pop_data(tex_doc)
     uk_pop_fig = px.bar(raw_uk_data)
     uk_pop_fig.update_layout(showlegend=False)
     caption = 'United Kingdom population sizes used in matrix weighting.'
-    add_image_to_doc(input_pop_fig, 'uk_population', caption, tex_doc, 'Mixing')
+    add_image_to_doc(input_pop_fig, 'uk_population', 'jpg', caption, tex_doc, 'Mixing')
 
     # Weighting calculations
     aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
@@ -347,7 +347,7 @@ def adapt_gb_matrices_to_aust(
     raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA)
     adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA)
     add_image_to_doc(raw_matrix_fig, 'raw_matrices', f'Raw{caption_end}', tex_doc, 'Mixing')
-    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', f'Adjusted{caption_end}', tex_doc, 'Mixing')
+    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', 'jpg', f'Adjusted{caption_end}', tex_doc, 'Mixing')
 
     return adjusted_matrices
 

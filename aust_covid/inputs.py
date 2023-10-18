@@ -322,7 +322,7 @@ def get_ifrs(
     fig.update_yaxes(type='log')
     ifr_fig_name = 'ifr_calculation'
     caption = 'Illustration of the calculation of the base age-specific infection-fatality rates applied in the model. '
-    add_image_to_doc(fig, ifr_fig_name, caption, tex_doc, 'Parameters')
+    add_image_to_doc(fig, ifr_fig_name, 'jpg', caption, tex_doc, 'Parameters')
     model_breakpoint_values.index = model_breakpoint_values.index.map(lambda i: f'ifr_{int(i)}')
     return model_breakpoint_values.to_dict()
 

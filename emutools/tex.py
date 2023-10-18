@@ -188,6 +188,7 @@ class ConcreteTexDoc:
         self, 
         caption: str, 
         filename: str, 
+        filetype: str,
         section: str, 
         subsection: str='',
     ):
@@ -200,9 +201,16 @@ class ConcreteTexDoc:
             section: The heading of the section for the figure to go into
             subsection: The heading of the subsection for the figure to go into
         """
+        if filetype == 'jpg':
+            command = 'includegraphics'
+        elif filetype == 'svg':
+            command = 'includesvg'
+        else:
+            raise ValueError('File type for figure not supported yet')
         self.add_line('\\begin{figure}', section, subsection)
         self.add_line(f'\\caption{{{caption}}}', section, subsection)
-        self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}.jpg}}', section, subsection)
+        command_str = f'\\{command}[width=\\textwidth]{{{filename}.{filetype}}}'
+        self.add_line(command_str, section, subsection)
         self.add_line(f'\\label{{{filename}}}', section, subsection)
         self.add_line('\\end{figure}', section, subsection)
 
@@ -269,6 +277,7 @@ class StandardTexDoc(ConcreteTexDoc):
             'longtable',
             'booktabs',
             'array',
+            'svg',
         ]
         for package in standard_packages:
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')
