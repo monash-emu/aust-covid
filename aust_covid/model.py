@@ -346,7 +346,7 @@ def adapt_gb_matrices_to_aust(
     caption_end = ' daily contact rates by age group (row), contact age group (column) and location (panel). '
     raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA)
     adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA)
-    add_image_to_doc(raw_matrix_fig, 'raw_matrices', f'Raw{caption_end}', tex_doc, 'Mixing')
+    add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'jpg', f'Raw{caption_end}', tex_doc, 'Mixing')
     add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', 'jpg', f'Adjusted{caption_end}', tex_doc, 'Mixing')
 
     return adjusted_matrices

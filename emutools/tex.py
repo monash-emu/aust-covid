@@ -209,8 +209,10 @@ class ConcreteTexDoc:
             raise ValueError('File type for figure not supported yet')
         self.add_line('\\begin{figure}', section, subsection)
         self.add_line(f'\\caption{{{caption}}}', section, subsection)
-        command_str = f'\\{command}[width=\\textwidth]{{{filename}.{filetype}}}'
+        self.add_line('\\begin{adjustbox}{center, max width=\paperwidth}', section, subsection)
+        command_str = f'\\{command}[width=\\paperwidth]{{{filename}.{filetype}}}'
         self.add_line(command_str, section, subsection)
+        self.add_line('\\end{adjustbox}', section, subsection)
         self.add_line(f'\\label{{{filename}}}', section, subsection)
         self.add_line('\\end{figure}', section, subsection)
 
@@ -278,9 +280,11 @@ class StandardTexDoc(ConcreteTexDoc):
             'booktabs',
             'array',
             'svg',
+            'adjustbox',
         ]
         for package in standard_packages:
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')
+        self.add_line('\DeclareUnicodeCharacter{2212}{-}', 'preamble')  # SVG compilation often crashes without this
 
         self.add_line(r'\usepackage[a4paper, total={15cm, 20cm}]{geometry}', 'preamble')
         self.add_line(r'\usepackage[labelfont=bf,it]{caption}', 'preamble')

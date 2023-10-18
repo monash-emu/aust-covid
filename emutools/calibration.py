@@ -382,7 +382,7 @@ def plot_output_ranges(quantile_outputs, targets, outputs, analysis, quantiles, 
             target = next((t for t in targets if t.name == output))
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
-    fig.update_layout(height=700)
+    fig.update_layout(height=700, showlegend=False)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
     return fig
 
@@ -408,7 +408,7 @@ def plot_output_ranges_by_analysis(quantile_outputs, targets, output, analyses, 
             target = next((t for t in targets if t.name == output))
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
-    fig.update_layout(height=700, title=output)
+    fig.update_layout(height=700, showlegend=False)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
     return fig
 
