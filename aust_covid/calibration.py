@@ -3,6 +3,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 from jax import numpy as jnp
+from plotly import graph_objects as go
 from plotly.subplots import make_subplots
 
 import estival.priors as esp
@@ -14,10 +15,7 @@ from aust_covid.inputs import load_calibration_targets, load_who_data, load_sero
 from emutools.plotting import get_row_col_for_subplots
 
 
-def get_target_from_name(
-    targets: list, 
-    name: str,
-) -> pd.Series:
+def get_target_from_name(targets: list, name: str) -> pd.Series:
     """Get the data for a specific target from a set of targets from its name.
 
     Args:
@@ -139,39 +137,3 @@ def get_targets(tex_doc: TexDoc) -> list:
     ]
     targets.append(est.CustomTarget('seropos_ceiling', pd.Series([seropos_ceiling], index=[ceiling_date]), truncation_ceiling, model_key='adult_seropos_prop'))
     return targets
-
-
-def get_outcome_df_by_chain() -> Dict[str, pd.DataFrame]:
-    """Compile dictionary of dataframes for each analysis type,
-    each with column multi-index for likelihood component
-    and chain number.
-
-    Returns:
-        Compiled data structure
-    """
-    like_dfs = {}
-    for analysis, run_id in RUN_IDS.items():
-        like_df = pd.read_hdf(RUNS_PATH / run_id / 'output/results.hdf', 'likelihood')
-        like_df['chain'] = like_df.index.get_level_values(0)
-        like_df['index'] = like_df.index.get_level_values(1)
-        like_dfs[analysis] = like_df.pivot(index='index', columns=['chain'])
-    return like_dfs
-
-
-def plot_indicator_progression(like_dfs, measure):
-    """Plot posterior or one of its components by run for each analysis.
-
-    Args:
-        like_dfs: The output of get_outcome_df_by_chain above
-        measure: The metric (posterior component) to make the comparison on
-
-    Returns:
-        _description_
-    """
-    n_cols = 2
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True)
-    for i, analysis in enumerate(RUN_IDS.keys()):
-        row, col = get_row_col_for_subplots(i, n_cols)
-        fig.add_traces(like_dfs[analysis][measure].plot().data, rows=row, cols=col)
-    fig.update_layout(height=1000, title={'text': measure})
-    return fig
