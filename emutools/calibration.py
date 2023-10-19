@@ -365,7 +365,28 @@ def plot_param_hover_spaghetti(
     return fig
 
 
-def plot_output_ranges(quantile_outputs, targets, outputs, analysis, quantiles, max_alpha=0.7):
+def plot_output_ranges(
+    quantile_outputs: Dict[str, pd.DataFrame], 
+    targets: list, 
+    outputs: List[str], 
+    analysis: str, 
+    quantiles: List[float], 
+    max_alpha: float=0.7
+) -> go.Figure:
+    """Plot the credible intervals with subplots for each output,
+    for a single run of interest.
+
+    Args:
+        quantile_outputs: Dataframes containing derived outputs of interest for each analysis type
+        targets: Calibration targets
+        output: User-requested output of interest
+        analysis: The key for the analysis type
+        quantiles: User-requested quantiles for the patches to be plotted over
+        max_alpha: Maximum alpha value to use in patches
+
+    Returns:
+        The interactive figure
+    """
     n_cols = 2
     target_names = [t.name for t in targets]
     fig = make_subplots(rows=2, cols=n_cols, subplot_titles=[o.replace('_ma', '').replace('_', ' ') for o in outputs])
@@ -387,15 +408,30 @@ def plot_output_ranges(quantile_outputs, targets, outputs, analysis, quantiles, 
     return fig
 
 
-def plot_output_ranges_by_analysis(quantile_outputs, targets, output, analyses, quantiles, max_alpha=0.7):
-    """
-    Plot the credible intervals with subplots for each analysis type,
+def plot_output_ranges_by_analysis(
+    quantile_outputs: Dict[str, pd.DataFrame], 
+    targets: list, 
+    output: str, 
+    quantiles: List[float], 
+    max_alpha: float=0.7
+) -> go.Figure:
+    """Plot the credible intervals with subplots for each analysis type,
     for a single output of interest.
+
+    Args:
+        quantile_outputs: Dataframes containing derived outputs of interest for each analysis type
+        targets: Calibration targets
+        output: User-requested output of interest
+        quantiles: User-requested quantiles for the patches to be plotted over
+        max_alpha: Maximum alpha value to use in patches
+
+    Returns:
+        The interactive figure
     """
     n_cols = 2
     target_names = [t.name for t in targets]
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(analyses))
-    for a, analysis in enumerate(analyses):
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True)
+    for a, analysis in enumerate(RUN_IDS):
         row, col = get_row_col_for_subplots(a, n_cols)
         analysis_data = quantile_outputs[analysis]
         data = analysis_data[output]

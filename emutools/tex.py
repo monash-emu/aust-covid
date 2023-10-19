@@ -214,7 +214,7 @@ class ConcreteTexDoc:
         self.add_line(command_str, section, subsection)
         self.add_line('\\end{adjustbox}', section, subsection)
         self.add_line(f'\\label{{{filename}}}', section, subsection)
-        self.add_line('\\end{figure}', section, subsection)
+        self.add_line('\\end{figure}\n', section, subsection)
 
     def include_table(
         self, 
