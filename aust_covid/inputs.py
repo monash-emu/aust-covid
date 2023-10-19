@@ -128,8 +128,7 @@ def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
 
 
 def load_raw_pop_data(sheet_name: str) -> pd.DataFrame:
-    """
-    Load Australian population data from original spreadsheet.
+    """Load Australian population data from original spreadsheet.
 
     Args:
         sheet_name: Spreadsheet filenam
@@ -140,13 +139,11 @@ def load_raw_pop_data(sheet_name: str) -> pd.DataFrame:
     skip_rows = list(range(0, 4)) + list(range(5, 227)) + list(range(328, 332))
     for group in range(16):
         skip_rows += list(range(228 + group * 6, 233 + group * 6))
-    raw_data = pd.read_excel(DATA_PATH / sheet_name, sheet_name='Table_7', skiprows=skip_rows, index_col=[0])
-    return raw_data
+    return pd.read_excel(DATA_PATH / sheet_name, sheet_name='Table_7', skiprows=skip_rows, index_col=[0])
 
 
 def load_pop_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
-    """
-    See 'description' object text.
+    """See 'description' object text.
 
     Args:
         tex_doc: Documentation object
@@ -156,21 +153,20 @@ def load_pop_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
     """
     sheet_name = '31010do002_202206.xlsx'
     sheet = sheet_name.replace('_', '\_')
-    description = f'For estimates of the Australian population, the spreadsheet was downloaded ' \
+    description = f'For estimates of the Australian population, the data were downloaded ' \
         f'from the Australian Bureau of Statistics website on {get_tex_formatted_date(datetime(2023, 3, 1))} \cite{{abs2022}} ' \
         f"(sheet {sheet}). Minor jurisdictions other than Australia's eight major state and territories " \
         '(i.e. Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory) are excluded from these data. ' \
         'These much smaller jurisdictions likely contribute little to overall COVID-19 epidemiology ' \
-        'and are also unlikely to mix homogeneously with the larger states/territories. '
+        'and are also unlikely to mix homogeneously with the larger states/territories. ' \
+        'The populations of states other than Western Australia (WA) were summed to obtain the population ' \
+        'of the other states, and the population estimates for the age groups from 75 to 79 and up ' \
+        'were summed to obtain the 75 and above estimates. '
     tex_doc.add_line(description, 'Population')
 
     raw_data = load_raw_pop_data(sheet_name)
-    spatial_pops = pd.DataFrame(
-        {
-            'wa': raw_data['Western Australia'], 
-            'other': raw_data[[col for col in raw_data.columns if col not in ['Western Australia', 'Australia']]].sum(axis=1),
-        }
-    )
+    other_cols = [col for col in raw_data.columns if col not in ['Western Australia', 'Australia']]
+    spatial_pops = pd.DataFrame({'wa': raw_data['Western Australia'], 'other': raw_data[other_cols].sum(axis=1)})
     model_pop_data = pd.concat([spatial_pops.loc[:'70-74'], pd.DataFrame([spatial_pops.loc['75-79':].sum()])])
     model_pop_data.index = AGE_STRATA
     return model_pop_data
