@@ -38,5 +38,8 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
         'that of the other three approaches, with the inclusion of the mobility structure ' \
         "appearing to improve the calibration algorithm's fit to targets (See Figure \\ref{like_comparison}). " \
         f"For this reason, the `{PRIMARY_ANALYSIS}' was considered as the primary analysis " \
-        'throughout the remaining sections. '
+        'throughout the remaining sections. ' \
+        'Figures \\ref{case_ranges}, \\ref{death_ranges} and \\ref{seropos_ranges} illustrate ' \
+        'the fit of each candidate model to the target data for ' \
+        'the notification, death and seropositive proportion respectively. '
     tex_doc.add_line(description, 'Analysis comparison')
