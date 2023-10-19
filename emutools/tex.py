@@ -221,6 +221,7 @@ class ConcreteTexDoc:
         self, 
         table: pd.DataFrame, 
         name: str,
+        title: str,
         section: str, 
         subsection: str='', 
         col_splits=None, 
@@ -250,7 +251,7 @@ class ConcreteTexDoc:
         col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
         table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
         table_text = table_text.replace('{tabular}', '{longtable}') if longtable else table_text
-        table_text = table_text.replace('\\bottomrule', f'\\bottomrule\n\label{{{name}}}')
+        table_text = table_text.replace('\\bottomrule', f'\\bottomrule\n\caption{{\\textbf{{{title}}}}}\n\label{{{name}}}')
         self.add_line('\\begin{center}', section, subsection=subsection)
         self.add_line(table_text, section, subsection=subsection)
         self.add_line('\end{center}', section, subsection=subsection)
