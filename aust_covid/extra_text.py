@@ -43,3 +43,9 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
         'the fit of each candidate model to the target data for ' \
         'the notification, death and seropositive proportion respectively. '
     tex_doc.add_line(description, 'Analysis comparison')
+
+
+def add_calibration_blurb_to_tex(tex_doc: TexDoc):
+    description = 'The metrics of the performance of our calibration algorithm are presented in ' \
+        'Table \\ref{calibration_metrics}. '
+    tex_doc.add_line(description, 'Calibration')

@@ -219,6 +219,7 @@ class ConcreteTexDoc:
     def include_table(
         self, 
         table: pd.DataFrame, 
+        name: str,
         section: str, 
         subsection: str='', 
         col_splits=None, 
@@ -230,6 +231,7 @@ class ConcreteTexDoc:
 
         Args:
             table: The table to be written
+            name: Short name of table for label
             section: The heading of the section for the figure to go into
             subsection: The heading of the subsection for the figure to go into
             widths: Optional user request for columns widths if not evenly distributed
@@ -245,11 +247,9 @@ class ConcreteTexDoc:
             splits = col_splits
         col_widths = [w * table_width for w in splits]
         col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
-        table_text = table.style.to_latex(
-            column_format=col_format_str,
-            hrules=True,
-        )
+        table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
         table_text = table_text.replace('{tabular}', '{longtable}') if longtable else table_text
+        table_text = table_text.replace('\\bottomrule', f'\\bottomrule\n\label{{{name}}}')
         self.add_line('\\begin{center}', section, subsection=subsection)
         self.add_line(table_text, section, subsection=subsection)
         self.add_line('\end{center}', section, subsection=subsection)
