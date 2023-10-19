@@ -40,7 +40,7 @@ class TexDoc(ABC):
         pass
 
     @abstractmethod
-    def include_figure(self, caption: str, filename: str, section: str, subsection: str=''):
+    def include_figure(self, title: str, filename: str, filetype: str, section: str, subsection: str='', caption: str=''):
         pass
 
     @abstractmethod
@@ -69,7 +69,7 @@ class DummyTexDoc(TexDoc):
     def emit_doc(self, section_order: list=[]) -> str:
         pass
 
-    def include_figure(self, caption: str, filename: str, filetype: str, section: str, subsection: str=''):
+    def include_figure(self, title: str, filename: str, filetype: str, section: str, subsection: str='', caption: str=''):
         pass
 
     def include_table(self, table: pd.DataFrame, section: str, subsection: str='', col_splits=None, table_width=14.0, longtable=False):
@@ -186,11 +186,12 @@ class ConcreteTexDoc:
 
     def include_figure(
         self, 
-        caption: str, 
+        title: str, 
         filename: str, 
         filetype: str,
         section: str, 
         subsection: str='',
+        caption: str='',
     ):
         """
         Add a figure with standard formatting to the document.
@@ -208,7 +209,7 @@ class ConcreteTexDoc:
         else:
             raise ValueError('File type for figure not supported yet')
         self.add_line('\\begin{figure}', section, subsection)
-        self.add_line(f'\\caption{{{caption}}}', section, subsection)
+        self.add_line(f'\\caption{{\\textbf{{{title}}} {caption}}}', section, subsection)
         self.add_line('\\begin{adjustbox}{center, max width=\paperwidth}', section, subsection)
         command_str = f'\\{command}[width=\\paperwidth]{{{filename}.{filetype}}}'
         self.add_line(command_str, section, subsection)
