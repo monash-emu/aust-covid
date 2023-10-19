@@ -54,3 +54,10 @@ def add_calibration_blurb_to_tex(tex_doc: TexDoc):
         'Overall posterior densitites (pooled over calibration chains) compared against prior distributions are ' \
         'presented in Figures \\ref{comp_fig_1} and \\ref{comp_fig_2}. '
     tex_doc.add_line(description, 'Calibration', subsection='Parameter inference')
+
+
+def add_dispersion_blurb_to_tex(tex_doc: TexDoc):
+    description = 'Figure \\ref{dispersion_examples} provides an illustration of the effect of specific values of the calibrated dispersion ' \
+        'parameter used in the calibration algorithm to adjust the calculation of the contribution ' \
+        'to the likelihood from the notifications and deaths time series. '
+    tex_doc.add_line(description, 'Targets')

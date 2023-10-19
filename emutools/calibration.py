@@ -489,7 +489,7 @@ def plot_like_components_by_analysis(
     legend_plot_types = ['kdeplot', 'histplot']
     for m, comp in enumerate(like_outputs.keys()):
         clip = (clips[comp], 0.0) if clips else None
-        kwargs = {'common_norm': False, 'clip': clip, 'shade': True} if plot_type == 'kdeplot' else {}        
+        kwargs = {'common_norm': False, 'clip': clip, 'fill': True} if plot_type == 'kdeplot' else {}        
         ax = axes[m]
         plotter(like_outputs[comp].loc[:, BURN_IN:, :], ax=ax, **kwargs)
         subtitle = comp.replace('log', '').replace('ll_', '').replace('_ma', '').replace('_', ' ')
