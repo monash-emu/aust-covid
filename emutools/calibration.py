@@ -127,10 +127,10 @@ def plot_param_progression(
     Returns:
         Formatted figure object created from arviz plotting command
     """
-    # mpl.rcParams['axes.titlesize'] = 25
     labeller = MapLabeller(var_name_map=descriptions)
     trace_plot = az.plot_trace(idata, figsize=(16, 21), compact=False, legend=False, labeller=labeller, var_names=request_vars)
     trace_fig = trace_plot[0, 0].figure
+    trace_fig.set_figheight(15)
     trace_fig.tight_layout()
     return trace_fig
 

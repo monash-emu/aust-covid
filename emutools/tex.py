@@ -69,7 +69,7 @@ class DummyTexDoc(TexDoc):
     def emit_doc(self, section_order: list=[]) -> str:
         pass
 
-    def include_figure(self, caption: str, filename: str, section: str, subsection: str=''):
+    def include_figure(self, caption: str, filename: str, filetype: str, section: str, subsection: str=''):
         pass
 
     def include_table(self, table: pd.DataFrame, section: str, subsection: str='', col_splits=None, table_width=14.0, longtable=False):
