@@ -11,7 +11,7 @@ import estival.targets as est
 
 from emutools.tex import TexDoc, get_tex_formatted_date
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, RUN_IDS, RUNS_PATH
-from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data
+from aust_covid.inputs import load_case_targets, load_who_death_data, load_serosurvey_data
 from emutools.plotting import get_row_col_for_subplots
 
 
@@ -103,8 +103,8 @@ def get_targets(tex_doc: TexDoc) -> list:
         'and summarised in Figure \\ref{target_fig}. '
     tex_doc.add_line(description, 'Targets')
 
-    case_targets = load_calibration_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
-    death_targets = load_who_data(tex_doc)[TARGETS_START_DATE:].rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
+    case_targets = load_case_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
+    death_targets = load_who_death_data(tex_doc)[TARGETS_START_DATE:].rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     serosurvey_targets = load_serosurvey_data(tex_doc)
 
     description = f'The composite daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \

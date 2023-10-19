@@ -12,7 +12,7 @@ from inputs.constants import DATA_PATH, NATIONAL_DATA_START_DATE
 CHANGE_STR = '_percent_change_from_baseline'
 
 
-def load_national_data(tex_doc: StandardTexDoc) -> pd.Series:
+def load_national_case_data(tex_doc: StandardTexDoc) -> pd.Series:
     """
     See 'description' object text.
 
@@ -22,10 +22,7 @@ def load_national_data(tex_doc: StandardTexDoc) -> pd.Series:
     Returns:
         Case targets
     """
-
-    description = 'The final calibration target for cases was constructed as the OWID data for 2021 ' \
-        'concatenated with the Australian Government data for 2022. '
-    description = 'Official COVID-19 data for Australian through 2022 were obtained from ' \
+    description = 'Official COVID-19 data for Australian notifications through 2022 were obtained from ' \
         '\href{https://www.health.gov.au/health-alerts/covid-19/weekly-reporting}{The Department of Health} ' \
         f'on the {get_tex_formatted_date(datetime(2023, 5, 2))}. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
@@ -36,9 +33,17 @@ def load_national_data(tex_doc: StandardTexDoc) -> pd.Series:
     return national_data['cases']
 
 
-def load_owid_data(tex_doc: TexDoc) -> pd.Series:
+def load_owid_case_data(tex_doc: TexDoc) -> pd.Series:
+    """See 'description object text.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        Full OWID time series for cases for Australia
+    """
     description = 'Data that extended back to 2021 were obtained from ' \
-        '\href{https://github.com/owid/covid-19-data/tree/master/public/data#license}{Our World in Data (OWID)} on ' \
+        '\href{https://github.com/owid/covid-19-data/tree/master/public/data#license}{OWID} on ' \
         f'the {get_tex_formatted_date(datetime(2023, 6, 16))}. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
@@ -47,20 +52,29 @@ def load_owid_data(tex_doc: TexDoc) -> pd.Series:
     return owid_data
 
 
-def load_calibration_targets(tex_doc: TexDoc) -> tuple:
-    description = 'The final calibration target for cases was constructed as the OWID data for 2021 ' \
+def load_case_targets(tex_doc: TexDoc) -> tuple:
+    """See 'description' object text.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        Full case targets
+    """
+    description = 'Because domestic data were not available for 2021, ' \
+        'and the initial upslope of the epidemic occurred in the last months of this year, ' \
+        'the calibration target for cases was constructed ' \
+        "from the `Our World in Data' (OWID) data for 2021 " \
         'concatenated with the Australian Government data for 2022. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
-    national_data = load_national_data(tex_doc)
-    owid_data = load_owid_data(tex_doc)
-
+    national_data = load_national_case_data(tex_doc)
+    owid_data = load_owid_case_data(tex_doc)
     interval = (TARGETS_START_DATE < owid_data.index) & (owid_data.index < NATIONAL_DATA_START_DATE)
-    composite_aust_data = pd.concat([owid_data[interval], national_data])
-    return composite_aust_data
+    return pd.concat([owid_data[interval], national_data])
 
 
-def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
+def load_who_death_data(tex_doc: StandardTexDoc) -> pd.Series:
     """
     See 'description' object text.
 
@@ -72,16 +86,14 @@ def load_who_data(tex_doc: StandardTexDoc) -> pd.Series:
     """
     description = 'The daily time series of deaths for Australia was obtained from the ' \
         "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
-        f'{{Coronavirus (COVID-19) Dashboard}} downloaded on {get_tex_formatted_date(datetime(2023, 7, 18))}. '
+        f'{{Coronavirus (COVID-19) Dashboard}}, downloaded on {get_tex_formatted_date(datetime(2023, 7, 18))}. '
     tex_doc.add_line(description, 'Targets', subsection='Deaths')
 
     raw_data = pd.read_csv(DATA_PATH / 'WHO-COVID-19-global-data.csv', index_col=0)
-    processed_data = raw_data[raw_data['Country'] == 'Australia']
-    processed_data.index = pd.to_datetime(processed_data.index)
-    processed_data = processed_data.loc[:WHO_CHANGE_WEEKLY_REPORT_DATE, :]
-    death_data = processed_data['New_deaths']
-    death_data = death_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
-    return death_data
+    aust_data = raw_data[raw_data['Country'] == 'Australia']
+    aust_data.index = pd.to_datetime(aust_data.index)
+    aust_death_data = aust_data.loc[:WHO_CHANGE_WEEKLY_REPORT_DATE, :]['New_deaths']
+    return aust_death_data.rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
 
 
 def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:

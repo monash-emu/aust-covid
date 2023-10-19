@@ -9,7 +9,7 @@ import arviz as az
 
 from summer2 import CompartmentalModel
 
-from aust_covid.inputs import load_national_data, load_owid_data, load_calibration_targets, load_who_data, load_serosurvey_data
+from aust_covid.inputs import load_national_case_data, load_owid_case_data, load_case_targets, load_who_death_data, load_serosurvey_data
 from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE
 from emutools.tex import DummyTexDoc
 from aust_covid.calibration import get_target_from_name
@@ -310,15 +310,15 @@ def plot_targets(targets):
         [{}, {}]
     ]
     fig = make_subplots(rows=2, cols=2, specs=subplot_specs)
-    combined_data = load_calibration_targets(dummy_doc)
+    combined_data = load_case_targets(dummy_doc)
     fig.add_trace(go.Scatter(x=combined_data.index, y=combined_data, name='combined cases'), row=1, col=1)
-    national_data = load_national_data(dummy_doc)
+    national_data = load_national_case_data(dummy_doc)
     fig.add_trace(go.Scatter(x=national_data.index, y=national_data, name='national cases'), row=1, col=1)
-    owid_data = load_owid_data(dummy_doc)
+    owid_data = load_owid_case_data(dummy_doc)
     fig.add_trace(go.Scatter(x=owid_data.index, y=owid_data, name='owid cases'), row=1, col=1)
     case_targets = get_target_from_name(targets, 'notifications_ma')
     fig.add_trace(go.Scatter(x=case_targets.index, y=case_targets, name='final case target (smoothed)'), row=1, col=1)
-    death_data = load_who_data(dummy_doc)
+    death_data = load_who_death_data(dummy_doc)
     fig.add_trace(go.Scatter(x=death_data.index, y=death_data, name='who deaths'), row=2, col=1)
     death_targets = get_target_from_name(targets, 'deaths_ma')
     fig.add_trace(go.Scatter(x=death_targets.index, y=death_targets, name='death target (smoothed)'), row=2, col=1)
