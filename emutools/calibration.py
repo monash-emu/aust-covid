@@ -471,7 +471,9 @@ def get_like_components(
 def plot_like_components_by_analysis(
     like_outputs: Dict[str, pd.DataFrame], 
     plot_type: str, 
-    clips: Dict[str, float]={}
+    clips: Dict[str, float]={},
+    alpha: float=0.2,
+    linewidth: float=1.0,
 ) -> plt.figure:
     """Use seaborn plotting functions to show likelihood components from various runs.
 
@@ -489,7 +491,7 @@ def plot_like_components_by_analysis(
     legend_plot_types = ['kdeplot', 'histplot']
     for m, comp in enumerate(like_outputs.keys()):
         clip = (clips[comp], 0.0) if clips else None
-        kwargs = {'common_norm': False, 'clip': clip, 'fill': True} if plot_type == 'kdeplot' else {}        
+        kwargs = {'common_norm': False, 'clip': clip, 'fill': True, 'alpha': alpha, 'linewidth': linewidth} if plot_type == 'kdeplot' else {}        
         ax = axes[m]
         plotter(like_outputs[comp].loc[:, BURN_IN:, :], ax=ax, **kwargs)
         subtitle = comp.replace('log', '').replace('ll_', '').replace('_ma', '').replace('_', ' ')
