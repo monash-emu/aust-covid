@@ -34,9 +34,10 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
     description = 'We compared our four candidate analyses according to their goodness ' \
         'of fit to the targets data (described under Section \\ref{targets}). ' \
         'The fit of all four of the models to the target data was considered adequate, ' \
-        f"but the likelihood of the `{PRIMARY_ANALYSIS}' was slightly higher than " \
+        f"but the likelihood of the `{PRIMARY_ANALYSIS}' analysis was slightly higher than " \
         'that of the other three approaches, with the inclusion of the mobility structure ' \
-        "appearing to improve the calibration algorithm's fit to targets (See Figure \\ref{like_comparison}). " \
+        "appearing to improve the calibration algorithm's fit to targets " \
+        '(See Figures \\ref{like_comparison} and \\ref{violin_comparison}). ' \
         f"For this reason, the `{PRIMARY_ANALYSIS}' was considered as the primary analysis " \
         'throughout the remaining sections. ' \
         'Figures \\ref{case_ranges}, \\ref{death_ranges} and \\ref{seropos_ranges} illustrate ' \
