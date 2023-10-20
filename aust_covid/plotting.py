@@ -135,7 +135,7 @@ def plot_dispersion_examples(
     all_targets: list,
     output_colours: dict, 
     req_centiles: np.ndarray, 
-    n_samples: int=4, 
+    n_samples: int=3, 
     base_alpha: float=0.2, 
 ) -> go.Figure:
     """
@@ -154,7 +154,7 @@ def plot_dispersion_examples(
         n_samples: Number of samples (rows of panels)
         base_alpha: Minimum alpha/transparency for area plots
     """
-    fig = go.Figure(layout=go.Layout(width=1000, height=1200))
+    fig = go.Figure(layout=go.Layout(width=1000, height=900))
     targets = [t for t in all_targets if hasattr(t, 'dispersion_param')]
     outputs = [t.name for t in targets]
     fig = make_subplots(rows=n_samples, cols=len(outputs), figure=fig, subplot_titles=[' '] * n_samples * len(outputs))
