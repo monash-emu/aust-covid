@@ -120,7 +120,6 @@ def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
             datetime(2022, 2, 26): 0.207,
             datetime(2022, 6, 13): 0.554,
             datetime(2022, 8, 27): 0.782,
-            datetime(2022, 12, 5): 0.850,
         }
     )
     data.index = data.index - timedelta(days=IMMUNITY_LAG)
