@@ -275,7 +275,7 @@ def plot_mixing_matrices(
     strata: list, 
 ) -> tuple:
     matrix_figsize = 800
-    matrix_fig = make_subplots(rows=2, cols=2, subplot_titles=MATRIX_LOCATIONS)
+    matrix_fig = make_subplots(rows=2, cols=2, subplot_titles=[m.replace('_', ' ') for m in MATRIX_LOCATIONS])
     positions = [[1, 1], [1, 2], [2, 1], [2, 2]]
     for i_loc, loc in enumerate(MATRIX_LOCATIONS):
         cur_pos = positions[i_loc]
@@ -316,14 +316,14 @@ def adapt_gb_matrices_to_aust(
         labels={'value': 'population', 'age_group': ''},
     )
     caption = 'Australian population sizes implemented in the model obtained from Australia Bureau of Statistics.'
-    add_image_to_doc(input_pop_fig, 'input_population', 'jpg', caption, tex_doc, 'Mixing')
+    add_image_to_doc(input_pop_fig, 'input_population', 'svg', caption, tex_doc, 'Mixing')
 
     # UK population
     raw_uk_data = load_uk_pop_data(tex_doc)
     uk_pop_fig = px.bar(raw_uk_data)
     uk_pop_fig.update_layout(showlegend=False)
     caption = 'United Kingdom population sizes used in matrix weighting.'
-    add_image_to_doc(input_pop_fig, 'uk_population', 'jpg', caption, tex_doc, 'Mixing')
+    add_image_to_doc(input_pop_fig, 'uk_population', 'svg', caption, tex_doc, 'Mixing')
 
     # Weighting calculations
     aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
@@ -346,8 +346,8 @@ def adapt_gb_matrices_to_aust(
     caption_end = ' daily contact rates by age group (row), contact age group (column) and location (panel). '
     raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA)
     adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA)
-    add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'jpg', f'Raw{caption_end}', tex_doc, 'Mixing')
-    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', 'jpg', f'Adjusted{caption_end}', tex_doc, 'Mixing')
+    add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'svg', f'Raw{caption_end}', tex_doc, 'Mixing')
+    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', 'svg', f'Adjusted{caption_end}', tex_doc, 'Mixing')
 
     return adjusted_matrices
 
