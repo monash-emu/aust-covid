@@ -32,7 +32,7 @@ def plot_single_run_outputs(model, targets):
     x_vals = derived_outputs.index
     fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['notifications_ma'], name='modelled cases'), row=1, col=1)
     fig.add_trace(go.Scatter(x=case_targets.index, y=case_targets, name='reported cases'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['deaths_ma'], name='deaths_ma'), row=1, col=2)
+    fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['deaths_ma'], name='deaths ma'), row=1, col=2)
     fig.add_trace(go.Scatter(x=death_targets.index, y=death_targets, name='reported deaths ma'), row=1, col=2)
     fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['adult_seropos_prop'], name='adult seropos'), row=2, col=1)
     fig.add_trace(go.Scatter(x=serosurvey_targets.index, y=serosurvey_targets, name='seropos estimates'), row=2, col=1)
