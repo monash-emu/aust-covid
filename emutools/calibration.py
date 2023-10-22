@@ -415,7 +415,7 @@ def plot_output_ranges(
         if output in target_names:
             target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
-            fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
+            fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_layout(height=700, showlegend=False)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
     return fig
@@ -456,7 +456,7 @@ def plot_output_ranges_by_analysis(
         if output in target_names:
             target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
-            fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
+            fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_layout(height=700, showlegend=False)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
     return fig
