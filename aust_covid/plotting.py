@@ -12,10 +12,9 @@ from summer2 import CompartmentalModel
 from aust_covid.inputs import load_national_case_data, load_owid_case_data, load_case_targets, load_who_death_data, load_serosurvey_data
 from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE
 from emutools.tex import DummyTexDoc
-from aust_covid.calibration import get_target_from_name
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
-from emutools.calibration import get_negbinom_target_widths
+from emutools.calibration import get_negbinom_target_widths, get_target_from_name
 from emutools.plotting import get_row_col_for_subplots
 from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, CHANGE_STR, COLOURS, RUN_IDS
 
@@ -23,11 +22,18 @@ pd.options.plotting.backend = 'plotly'
 
 
 def plot_single_run_outputs(model, targets):
-    case_targets = next((t.data for t in targets if t.name == 'notifications_ma'))
-    death_targets = next((t.data for t in targets if t.name == 'deaths_ma'))
-    serosurvey_targets = next((t.data for t in targets if t.name == 'adult_seropos_prop'))
-
-    fig = make_subplots(rows=3, cols=2)
+    case_targets = get_target_from_name(targets, 'notifications_ma')
+    death_targets = get_target_from_name(targets, 'deaths_ma')
+    serosurvey_targets = get_target_from_name(targets, 'adult_seropos_prop')
+    panels = [
+        'cases target',
+        'deaths target',
+        'seropositive target',
+        'Reff',
+        'daily deaths by age',
+        'death rates by age',
+    ]
+    fig = make_subplots(rows=3, cols=2, subplot_titles=panels)
     derived_outputs = model.get_derived_outputs_df()
     x_vals = derived_outputs.index
     fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['notifications_ma'], name='modelled cases'), row=1, col=1)

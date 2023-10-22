@@ -3,29 +3,13 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 from jax import numpy as jnp
-from plotly import graph_objects as go
-from plotly.subplots import make_subplots
 
 import estival.priors as esp
 import estival.targets as est
 
 from emutools.tex import TexDoc, get_tex_formatted_date
-from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, RUN_IDS, RUNS_PATH
+from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
 from aust_covid.inputs import load_case_targets, load_who_death_data, load_serosurvey_data
-from emutools.plotting import get_row_col_for_subplots
-
-
-def get_target_from_name(targets: list, name: str) -> pd.Series:
-    """Get the data for a specific target from a set of targets from its name.
-
-    Args:
-        targets: All the targets
-        name: The name of the desired target
-
-    Returns:
-        Single target to identify
-    """
-    return next((t.data for t in targets if t.name == name))
 
 
 def get_all_priors() -> list:

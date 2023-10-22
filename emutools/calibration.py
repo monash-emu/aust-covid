@@ -20,6 +20,19 @@ from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_P
 from emutools.plotting import get_row_col_for_subplots
 
 
+def get_target_from_name(targets: list, name: str) -> pd.Series:
+    """Get the data for a specific target from a set of targets from its name.
+
+    Args:
+        targets: All the targets
+        name: The name of the desired target
+
+    Returns:
+        Single target to identify
+    """
+    return next((t.data for t in targets if t.name == name))
+
+
 def round_sigfig(
     value: float, 
     sig_figs: int
@@ -327,7 +340,7 @@ def plot_spaghetti(
         fig.add_traces(px.line(ind_spagh).data, rows=row, cols=col)
 
         # Targets
-        target = next((t.data for t in targets if t.name == ind), None)
+        target = get_target_from_name(targets, ind)
         if target is not None:
             target = target[(PLOT_START_DATE < target.index) & (target.index < ANALYSIS_END_DATE)]
             target_marker_config = dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey'))
@@ -400,7 +413,7 @@ def plot_output_ranges(
             fig.add_traces(go.Scatter(x=data.index, y=data[quant], fill='tonexty', fillcolor=fill_colour, line={'width': 0}, name=quant), rows=row, cols=col)
         fig.add_traces(go.Scatter(x=data.index, y=data[0.5], line={'color': 'black'}, name='median'), rows=row, cols=col)
         if output in target_names:
-            target = next((t for t in targets if t.name == output))
+            target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_layout(height=700, showlegend=False)
@@ -441,7 +454,7 @@ def plot_output_ranges_by_analysis(
             fig.add_traces(go.Scatter(x=data.index, y=data[quant], fill='tonexty', fillcolor=fill_colour, line={'width': 0}, name=quant), rows=row, cols=col)
         fig.add_traces(go.Scatter(x=data.index, y=data[0.5], line={'color': 'black'}, name='median'), rows=row, cols=col)
         if output in target_names:
-            target = next((t for t in targets if t.name == output))
+            target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_layout(height=700, showlegend=False)
