@@ -254,9 +254,9 @@ class ConcreteTexDoc:
         table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
         table_text = table_text.replace('{tabular}', '{longtable}') if longtable else table_text
         table_text = table_text.replace('\\bottomrule', f'\\bottomrule\n\caption{{\\textbf{{{title}}}}}\n\label{{{name}}}')
-        self.add_line('\\begin{center}', section, subsection=subsection)
+        self.add_line('\\begin{table}\n\\centering', section, subsection=subsection)
         self.add_line(table_text, section, subsection=subsection)
-        self.add_line('\end{center}', section, subsection=subsection)
+        self.add_line('\\end{table}', section, subsection=subsection)
 
     def save_content(self):
         with open(self.path / f'{self.doc_name}.yml', 'w') as file:
