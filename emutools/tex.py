@@ -235,9 +235,10 @@ class ConcreteTexDoc:
         Args:
             table: The table to be written
             name: Short name of table for label
+            title: Title for table
             section: The heading of the section for the figure to go into
             subsection: The heading of the subsection for the figure to go into
-            widths: Optional user request for columns widths if not evenly distributed
+            col_splits: Optional user request for columns widths if not evenly distributed
             table_width: Overall table width if widths not requested
             longtable: Whether to use the longtable module to span pages
         """

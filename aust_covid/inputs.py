@@ -217,10 +217,15 @@ def load_household_impacts_data():
     return data
 
 
-def get_ifrs(
-    tex_doc: StandardTexDoc,
-    show_figs=False,
-) -> dict:
+def get_ifrs(tex_doc: StandardTexDoc) -> dict:
+    """Get infection fatality rates, see 'description' below.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        Values for each IFR parameter by age bracket
+    """
     description = 'Age-specific infection fatality rates (IFRs) were estimated by various groups ' \
         "in unvaccinated populations, including O'Driscoll and colleagues who estimated " \
         'IFRs using data from 45 countries. These IFRs pertained to the risk of death given infection ' \
@@ -323,13 +328,13 @@ def get_ifrs(
     fig.add_trace(go.Scatter(x=erikstrup.index, y=erikstrup, name='Erikstrup'))
     fig.add_trace(go.Scatter(x=upper_adjusted.index, y=upper_adjusted, name="Upper adjusted O'Driscoll"))
     fig.add_trace(go.Scatter(x=lower_adjusted.index, y=lower_adjusted, name="Lower adjusted O'Driscoll"))
-    fig.add_trace(go.Scatter(x=combined.index, y=combined, name="Combined Erikstrup/O'Driscoll"))
+    fig.add_trace(go.Scatter(x=combined.index, y=combined, name="Combined Erikstrup, O'Driscoll"))
     fig.add_trace(go.Scatter(x=final_values.index, y=final_values, name='Combined and interpolated'))
     fig.add_trace(go.Scatter(x=model_breakpoint_values.index, y=model_breakpoint_values, name='Values by model breakpoints'))
-    fig.update_yaxes(type='log')
+    fig.update_yaxes(type='log', tickformat='E')
     ifr_fig_name = 'ifr_calculation'
     caption = 'Illustration of the calculation of the base age-specific infection-fatality rates applied in the model. '
-    add_image_to_doc(fig, ifr_fig_name, 'jpg', caption, tex_doc, 'Parameters')
+    add_image_to_doc(fig, ifr_fig_name, 'svg', caption, tex_doc, 'Parameters')
     model_breakpoint_values.index = model_breakpoint_values.index.map(lambda i: f'ifr_{int(i)}')
     return model_breakpoint_values.to_dict()
 
