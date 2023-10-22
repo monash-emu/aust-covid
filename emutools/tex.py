@@ -19,6 +19,24 @@ def get_tex_formatted_date(date):
     return f'{date_of_month}\\textsuperscript{{{text_super}}}{date.strftime(" of %B %Y")}'
 
 
+def remove_underscore_multiindexcol(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Remove underscores from multi-index columns
+    (particularly because TeX so often crashes with underscores in floats, such as tables).
+
+    Args:
+        df: Dataframe to modify
+
+    Returns:
+        Revised dataframe
+    """
+    for l in range(df.columns.nlevels):
+        new_index = df.columns.levels[l].str.replace('_', ' ')
+        df.columns = df.columns.set_levels(new_index, level=l)
+    return df
+
+
 class TexDoc(ABC):
     def __init__(self):
         pass

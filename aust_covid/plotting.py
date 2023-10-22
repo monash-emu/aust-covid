@@ -211,7 +211,8 @@ def plot_processed_mobility(mobility_types):
         for p, patch in enumerate(set(model_mob.columns.get_level_values(0))):
             for l, mob_loc in enumerate(set(model_mob.columns.get_level_values(1))):
                 values = model_mob.loc[:, (patch, mob_loc)]
-                trace_name = f'{mob_loc}, {locations[patch]}, {mob_type}'
+                patch_name = patch.replace(' ', '_')
+                trace_name = f'{mob_loc}, {locations[patch_name]}, {mob_type}'
                 mob_trace = go.Scatter(x=values.index, y=values, name=trace_name, line=dict(color=COLOURS[l], dash=style[m]))
                 fig.add_trace(mob_trace, row=1, col=p + 1)
     fig.update_layout(height=500)
