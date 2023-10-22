@@ -192,6 +192,7 @@ class ConcreteTexDoc:
         section: str, 
         subsection: str='',
         caption: str='',
+        fig_width: float=0.85,
     ):
         """
         Add a figure with standard formatting to the document.
@@ -211,7 +212,7 @@ class ConcreteTexDoc:
         self.add_line('\\begin{figure}', section, subsection)
         self.add_line(f'\\caption{{\\textbf{{{title}}} {caption}}}', section, subsection)
         self.add_line('\\begin{adjustbox}{center, max width=\paperwidth}', section, subsection)
-        command_str = f'\\{command}[width=\\paperwidth]{{{filename}.{filetype}}}'
+        command_str = f'\\{command}[width={str(round(fig_width, 2))}\\paperwidth]{{{filename}.{filetype}}}'
         self.add_line(command_str, section, subsection)
         self.add_line('\\end{adjustbox}', section, subsection)
         self.add_line(f'\\label{{{filename}}}', section, subsection)
