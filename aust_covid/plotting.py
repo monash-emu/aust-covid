@@ -47,9 +47,8 @@ def plot_single_run_outputs(model, targets):
         fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[f'deathsXagegroup_{agegroup}'], name=f'{agegroup} deaths'), row=3, col=1)
         fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[f'deathsXagegroup_{agegroup}'], name=f'{agegroup} deaths'), row=3, col=2)
     fig['layout']['yaxis6'].update(type='log', range=[-2.0, 2.0])
-    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
-    fig.update_layout(height=600, width=1200)
-    return fig
+    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE), tickangle=45)
+    return fig.update_layout(height=600, width=1200)
 
 
 def plot_subvariant_props(
