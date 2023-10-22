@@ -29,7 +29,7 @@ def plot_single_run_outputs(model, targets):
         'cases target',
         'deaths target',
         'seropositive target',
-        'Reff',
+        'reproduction number',
         'daily deaths by age',
         'death rates by age',
     ]
