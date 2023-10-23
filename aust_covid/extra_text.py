@@ -30,6 +30,17 @@ def add_intro_blurb_to_tex(tex_doc: TexDoc):
     tex_doc.add_line(description, 'Approach to analyses')
 
 
+def add_parameters_blurb_to_tex(tex_doc: TexDoc):
+    description = 'All model parameters, including those used in the calibration algorithm ' \
+        'are presented in Table \\ref{params}. ' \
+        'The approach to estimating the age-specific infection fatality rate for each ' \
+        'modelled age group is described in \\ref{infection_fatality_rates}. ' \
+        'All epidemiologically significant model parameters were included as priors ' \
+        'in our calibration algorithm. Calibration priors are identified in the parameters table ' \
+        'and illustrated in detail in  Section \\ref{priors}. '
+    tex_doc.add_line(description, 'Parameters')
+
+
 def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
     description = 'We compared our four candidate analyses according to their goodness ' \
         'of fit to the targets data (described under Section \\ref{targets}). ' \
