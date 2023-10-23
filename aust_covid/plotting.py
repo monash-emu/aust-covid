@@ -291,7 +291,9 @@ def plot_immune_props(
     fig = make_subplots(1, 2, subplot_titles=[f'{k} age group' for k in age_breaks])
     for i_plot, age in enumerate(age_breaks):
         cols = [f'prop_{age}_{imm}' for imm in model.stratifications['immunity'].strata][::-1]
-        fig.add_traces(model.get_derived_outputs_df()[cols].plot.area().data, 1, i_plot + 1)
+        model_vacc_df = model.get_derived_outputs_df()[cols]
+        model_vacc_df.columns = model_vacc_df.columns.str.replace('_', ' ')
+        fig.add_traces(model_vacc_df.plot.area().data, 1, i_plot + 1)
     dfs = {'raw': vacc_df, 'lagged': lag_vacc_df}
     for data_type in dfs:
         for i, pop in enumerate(['primary full', 'adult booster']):
@@ -303,7 +305,7 @@ def plot_immune_props(
             fig.add_trace(go.Scatter(x=x_vals, y=y_vals, line=line_style, name='coverage'), row=1, col=i + 1)
     fig.update_xaxes(range=epoch.index_to_dti([model.times[0], model.times[-1]]))
     fig.update_yaxes(range=[0.0, 1.0])
-    return fig
+    return fig.update_layout(height=350)
 
 
 def plot_targets(targets, for_plotly: bool=True):
