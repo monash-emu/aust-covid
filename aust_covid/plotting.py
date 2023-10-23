@@ -185,15 +185,15 @@ def plot_dispersion_examples(
 
 
 def plot_state_mobility(state_data, jurisdictions, mob_locs):
-    fig = make_subplots(rows=4, cols=2, subplot_titles=list(jurisdictions))
-    fig.update_layout(height=800)
+    fig = make_subplots(rows=4, cols=2, subplot_titles=list(jurisdictions), vertical_spacing=0.06)
     for j, juris in enumerate(jurisdictions):
         for l, mob_loc in enumerate(mob_locs):
             estimates = state_data[state_data['sub_region_1'] == juris][mob_loc]
             legend_str = mob_loc.replace(CHANGE_STR, "").replace("_", " ")
             trace = go.Scatter(x=estimates.index, y=estimates, name=legend_str, line=dict(color=COLOURS[l]))
             fig.add_trace(trace, row=j % 4 + 1, col=round(j / 7) + 1)
-    return fig
+    fig.update_yaxes(range=(-90, 70))
+    return fig.update_layout(height=800, margin={'t': 40})
 
 
 def plot_processed_mobility(mobility_types):
