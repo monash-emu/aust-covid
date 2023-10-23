@@ -306,16 +306,19 @@ def plot_immune_props(
     return fig
 
 
-def plot_targets(targets):
+def plot_targets(targets, for_plotly: bool=True):
     dummy_doc = DummyTexDoc()
     subplot_specs = [
         [{'colspan': 2}, None], 
-        [{}, {}]
+        [{}, {}],
     ]
     fig = make_subplots(rows=2, cols=2, specs=subplot_specs)
     combined_data = load_case_targets(dummy_doc)
-    fig.add_trace(go.Scatter(x=combined_data.index, y=combined_data, name='combined cases'), row=1, col=1)
     national_data = load_national_case_data(dummy_doc)
+    serosurvey_targets = get_target_from_name(targets, 'adult_seropos_prop')
+    if for_plotly:
+        fig.add_trace(go.Scatter(x=combined_data.index, y=combined_data, name='combined cases'), row=1, col=1)
+        fig.add_trace(go.Scatter(x=serosurvey_targets.index, y=serosurvey_targets, name='serosurvey target'), row=2, col=2)
     fig.add_trace(go.Scatter(x=national_data.index, y=national_data, name='national cases'), row=1, col=1)
     owid_data = load_owid_case_data(dummy_doc)
     fig.add_trace(go.Scatter(x=owid_data.index, y=owid_data, name='owid cases'), row=1, col=1)
@@ -327,8 +330,6 @@ def plot_targets(targets):
     fig.add_trace(go.Scatter(x=death_targets.index, y=death_targets, name='death target (smoothed)'), row=2, col=1)
     serosurvey_data = load_serosurvey_data(dummy_doc)
     fig.add_trace(go.Scatter(x=serosurvey_data.index, y=serosurvey_data, name='serosurvey data'), row=2, col=2)
-    serosurvey_targets = get_target_from_name(targets, 'adult_seropos_prop')
-    fig.add_trace(go.Scatter(x=serosurvey_targets.index, y=serosurvey_targets, name='serosurvey target'), row=2, col=2)
     serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')
     fig.add_trace(go.Scatter(x=serosurvey_ceiling.index, y=serosurvey_ceiling, name='seroprevalence ceiling'), row=2, col=2)
     fig.update_layout(height=600)
