@@ -327,8 +327,8 @@ def plot_spaghetti(
         The spaghetti plot figure object
     """
     rows = int(np.ceil(len(indicators) / n_cols))
-
-    fig = make_subplots(rows=rows, cols=n_cols, subplot_titles=indicators)
+    titles = [i.replace('_', ' ') for i in indicators]
+    fig = make_subplots(rows=rows, cols=n_cols, subplot_titles=titles, horizontal_spacing=0.04, vertical_spacing=0.08)
     for i, ind in enumerate(indicators):
         row = int(np.floor(i / n_cols)) + 1
         col = i % n_cols + 1
@@ -346,7 +346,7 @@ def plot_spaghetti(
             target_marker_config = dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey'))
             lines = go.Scatter(x=target.index, y=target, marker=target_marker_config, name='targets', mode='markers')
             fig.add_trace(lines, row=row, col=col)
-    fig.update_layout(showlegend=False, height=400 * rows)
+    fig.update_layout(height=600, margin={i: 40 for i in ['t', 'b', 'l', 'r']})
     return fig
 
 
