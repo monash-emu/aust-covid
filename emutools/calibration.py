@@ -340,8 +340,8 @@ def plot_spaghetti(
         fig.add_traces(px.line(ind_spagh).data, rows=row, cols=col)
 
         # Targets
-        target = get_target_from_name(targets, ind)
-        if target is not None:
+        if ind != 'reproduction_number':
+            target = get_target_from_name(targets, ind)
             target = target[(PLOT_START_DATE < target.index) & (target.index < ANALYSIS_END_DATE)]
             target_marker_config = dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey'))
             lines = go.Scatter(x=target.index, y=target, marker=target_marker_config, name='targets', mode='markers')
