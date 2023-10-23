@@ -332,6 +332,7 @@ def get_ifrs(tex_doc: StandardTexDoc) -> dict:
     fig.add_trace(go.Scatter(x=final_values.index, y=final_values, name='Combined and interpolated'))
     fig.add_trace(go.Scatter(x=model_breakpoint_values.index, y=model_breakpoint_values, name='Values by model breakpoints'))
     fig.update_yaxes(type='log', tickformat='E')
+    fig.update_layout(margin={'t': 40})
     ifr_fig_name = 'ifr_calculation'
     caption = 'Illustration of the calculation of the base age-specific infection-fatality rates applied in the model. '
     add_image_to_doc(fig, ifr_fig_name, 'svg', caption, tex_doc, 'Parameters')
