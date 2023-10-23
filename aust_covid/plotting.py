@@ -103,7 +103,7 @@ def plot_cdr_examples(samples):
         samples: Case detection values
     """
     hh_impact = load_household_impacts_data()
-    hh_test_ratio = hh_impact['Proportion testing'] / hh_impact['Proportion symptomatic']
+    hh_test_ratio = hh_impact['testing'] / hh_impact['symptomatic']
     cdr_values = pd.DataFrame()
     for start_cdr in samples:
         start_cdr = float(start_cdr)

@@ -304,7 +304,7 @@ def plot_priors(
         row = int(np.floor(p / n_cols)) + 1
         col = p % n_cols + 1
         fig.add_trace(go.Scatter(x=x_values, y=y_values, fill='tozeroy'), row=row, col=col)
-    fig.update_layout(height=1000, showlegend=False)
+    fig.update_layout(height=800, showlegend=False, margin={'t': 40})
     return fig
 
 

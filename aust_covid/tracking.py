@@ -95,7 +95,7 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
     tex_doc.add_line(description, 'Outputs', 'Notifications')
 
     hh_impact = load_household_impacts_data()
-    hh_test_ratio = hh_impact['Proportion testing'] / hh_impact['Proportion symptomatic']
+    hh_test_ratio = hh_impact['testing'] / hh_impact['symptomatic']
 
     exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter('start_cdr'))
     cdr_values = get_cdr_values(exp_param, hh_test_ratio.to_numpy())
@@ -109,12 +109,12 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
 
     survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
     caption = 'Raw survey values from Household Impacts of COVID-19 surveys.'
-    add_image_to_doc(survey_fig, 'survey_results', 'jpg', caption, tex_doc, 'Outputs')
+    add_image_to_doc(survey_fig, 'survey_results', 'svg', caption, tex_doc, 'Outputs')
     
     ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
     ratio_fig.update_layout(showlegend=False)
     caption = 'Ratio of proportion of households testing to proportion reporting symptoms.'
-    add_image_to_doc(ratio_fig, 'survey_ratio', 'jpg', caption, tex_doc, 'Outputs')
+    add_image_to_doc(ratio_fig, 'survey_ratio', 'svg', caption, tex_doc, 'Outputs')
 
 
 def track_deaths(

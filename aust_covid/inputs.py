@@ -207,9 +207,9 @@ def load_household_impacts_data():
     data = pd.read_csv(filename, skiprows=[0] + list(range(5, 12)), index_col=0)
     data.columns = [col.replace(" (%)", "") for col in data.columns]
     index_map = {
-        'A household member has symptoms of cold, flu or COVID-19 (a)': 'Proportion symptomatic',
-        'A household member has had a COVID-19 test (b)': 'Proportion testing',
-        'A household member who tested for COVID-19 was positive (c)(d)': 'Prop diagnosed with COVID-19',
+        'A household member has symptoms of cold, flu or COVID-19 (a)': 'symptomatic',
+        'A household member has had a COVID-19 test (b)': 'testing',
+        'A household member who tested for COVID-19 was positive (c)(d)': 'COVID-19',
     }
     data = data.rename(index=index_map)
     data = data.transpose()
