@@ -334,7 +334,7 @@ def plot_targets(targets, for_plotly: bool=True):
     fig.add_trace(go.Scatter(x=serosurvey_data.index, y=serosurvey_data, name='serosurvey data'), row=2, col=2)
     serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')
     fig.add_trace(go.Scatter(x=serosurvey_ceiling.index, y=serosurvey_ceiling, name='seroprevalence ceiling'), row=2, col=2)
-    fig.update_layout(height=600)
+    fig.update_layout(height=600, margin={'t': 40})
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig
 
