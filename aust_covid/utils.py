@@ -102,6 +102,7 @@ def add_image_to_doc(
     section: str,
     subsection: str='',
     caption: str='',
+    fig_width: float=0.85,
 ):
     """
     Save an figure image to a local directory and include in TeX doc.
@@ -123,4 +124,4 @@ def add_image_to_doc(
         fig.write_image(SUPPLEMENT_PATH / full_filename)
     else:
         raise TypeError('Figure type not supported')
-    tex_doc.include_figure(title, filename, filetype, section, subsection=subsection, caption=caption)
+    tex_doc.include_figure(title, filename, filetype, section, subsection=subsection, caption=caption, fig_width=fig_width)

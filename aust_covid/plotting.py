@@ -344,13 +344,13 @@ def plot_multi_spaghetti(
 ):
     target = next(i for i in targets if i.name == output)
     n_cols = 2
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True)
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True, horizontal_spacing=0.04, vertical_spacing=0.08)
     for i, analysis in enumerate(RUN_IDS.keys()):
         row, col = get_row_col_for_subplots(i, n_cols)
         spaghetti = spaghettis[analysis][output]
         spaghetti.columns = [f'{str(chain)}, {str(draw)}' for chain, draw in spaghetti.columns]    
         fig.add_traces(spaghetti.plot().data, rows=row, cols=col)
         fig.add_trace(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker={'color': 'black', 'size': 12}), row=row, col=col)
-    fig.update_layout(height=1000, title={'text': output})
+    fig.update_layout(height=600, margin={i: 40 for i in ['t', 'b', 'l', 'r']})
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig
