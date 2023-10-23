@@ -121,6 +121,7 @@ def add_image_to_doc(
     if isinstance(fig, MplFig):
         fig.savefig(SUPPLEMENT_PATH / full_filename)
     elif isinstance(fig, PlotlyFig):
+        fig.update_layout(margin={'t': 25})
         fig.write_image(SUPPLEMENT_PATH / full_filename)
     else:
         raise TypeError('Figure type not supported')

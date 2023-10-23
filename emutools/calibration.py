@@ -304,7 +304,7 @@ def plot_priors(
         row = int(np.floor(p / n_cols)) + 1
         col = p % n_cols + 1
         fig.add_trace(go.Scatter(x=x_values, y=y_values, fill='tozeroy'), row=row, col=col)
-    fig.update_layout(height=800, showlegend=False, margin={'t': 40})
+    fig.update_layout(height=800, showlegend=False, margin={'t': 30})
     return fig
 
 
@@ -346,7 +346,7 @@ def plot_spaghetti(
             target_marker_config = dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey'))
             lines = go.Scatter(x=target.index, y=target, marker=target_marker_config, name='targets', mode='markers')
             fig.add_trace(lines, row=row, col=col)
-    fig.update_layout(height=600, margin={i: 40 for i in ['t', 'b', 'l', 'r']})
+    fig.update_layout(height=600, margin={i: 30 for i in ['t', 'b', 'l', 'r']})
     return fig
 
 

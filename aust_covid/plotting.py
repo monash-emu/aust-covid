@@ -193,7 +193,7 @@ def plot_state_mobility(state_data, jurisdictions, mob_locs):
             trace = go.Scatter(x=estimates.index, y=estimates, name=legend_str, line=dict(color=COLOURS[l]))
             fig.add_trace(trace, row=j % 4 + 1, col=round(j / 7) + 1)
     fig.update_yaxes(range=(-90, 70))
-    return fig.update_layout(height=800, margin={'t': 40})
+    return fig.update_layout(height=800, margin={'t': 30})
 
 
 def plot_processed_mobility(mobility_types):
@@ -334,7 +334,7 @@ def plot_targets(targets, for_plotly: bool=True):
     fig.add_trace(go.Scatter(x=serosurvey_data.index, y=serosurvey_data, name='serosurvey data'), row=2, col=2)
     serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')
     fig.add_trace(go.Scatter(x=serosurvey_ceiling.index, y=serosurvey_ceiling, name='seroprevalence ceiling'), row=2, col=2)
-    fig.update_layout(height=600, margin={'t': 40})
+    fig.update_layout(height=600, margin={'t': 30})
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig
 
@@ -353,6 +353,6 @@ def plot_multi_spaghetti(
         spaghetti.columns = [f'{str(chain)}, {str(draw)}' for chain, draw in spaghetti.columns]    
         fig.add_traces(spaghetti.plot().data, rows=row, cols=col)
         fig.add_trace(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker={'color': 'black', 'size': 12}), row=row, col=col)
-    fig.update_layout(height=600, margin={i: 40 for i in ['t', 'b', 'l', 'r']})
+    fig.update_layout(height=600, margin={i: 30 for i in ['t', 'b', 'l', 'r']})
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig
