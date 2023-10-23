@@ -109,8 +109,7 @@ def plot_cdr_examples(samples):
         start_cdr = float(start_cdr)
         exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
         cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
-    fig = cdr_values.plot(markers=True, labels={'value': 'case detection ratio', 'index': ''})
-    return fig
+    return cdr_values.plot(markers=True, labels={'value': 'case detection ratio', 'index': ''}).update_layout(legend_title='starting value')
 
 
 def get_count_up_back_list(
