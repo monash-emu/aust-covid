@@ -313,8 +313,9 @@ def adapt_gb_matrices_to_aust(
         color='variable', 
         labels={'value': 'population', 'age_group': ''},
     ).update_layout(height=400)
-    caption = 'Australian population sizes implemented in the model.'
-    add_image_to_doc(input_pop_fig, 'input_population', 'svg', caption, tex_doc, 'Mixing')
+    title = 'Stacked Australian population sizes implemented in the model.'
+    caption = 'Western Australia (blue bars), aggregate of remaining major jurisdictions of Australia (red bars).'
+    add_image_to_doc(input_pop_fig, 'input_population', 'svg', title, tex_doc, 'Mixing', caption=caption)
 
     # UK population
     raw_uk_data = load_uk_pop_data(tex_doc)

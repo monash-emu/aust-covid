@@ -271,9 +271,10 @@ class ConcreteTexDoc:
         col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
         table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
         table_text = table_text.replace('{tabular}', '{longtable}') if longtable else table_text
-        table_text = table_text.replace('\\bottomrule', f'\\bottomrule\n\caption{{\\textbf{{{title}}}}}\n\label{{{name}}}')
+        table_text = table_text.replace('\\bottomrule', f'\\bottomrule\n\label{{{name}}}')
         table_text = table_text.replace('\\toprule', '\\toprule\n\\centering')
-        self.add_line('' if longtable else '\\begin{table}\n', section, subsection=subsection)
+        self.add_line('' if longtable else '\\begin{table}', section, subsection=subsection)
+        self.add_line(f'\caption{{\\textbf{{{title}}}}}', section, subsection=subsection)
         self.add_line(table_text, section, subsection=subsection)
         self.add_line('' if longtable else '\\end{table}', section, subsection=subsection)
 
