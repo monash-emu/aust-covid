@@ -211,8 +211,7 @@ def plot_processed_mobility(mobility_types):
                 trace_name = f'{mob_loc}, {locations[patch_name]}, {mob_type}'
                 mob_trace = go.Scatter(x=values.index, y=values, name=trace_name, line=dict(color=COLOURS[l], dash=style[m]))
                 fig.add_trace(mob_trace, row=1, col=p + 1)
-    fig.update_layout(height=500)
-    return fig
+    return fig.update_layout(height=500)
 
 
 def plot_example_model_matrices(model, parameters):
@@ -220,8 +219,7 @@ def plot_example_model_matrices(model, parameters):
     matrix_func = model.graph.filter('mixing_matrix').get_callable()
     dates = [datetime(2022, month, 1) for month in range(1, 13)]
     agegroups = model.stratifications['agegroup'].strata
-    fig = make_subplots(cols=4, rows=3, subplot_titles=[i.strftime('%B') for i in dates])
-    fig.update_layout(height=750, width=800)
+    fig = make_subplots(cols=4, rows=3, subplot_titles=[i.strftime('%B') for i in dates], vertical_spacing=0.1)
     for i_date, date in enumerate(dates):
         index = epoch.datetime_to_number(date)
         matrix = matrix_func(model_variables={'time': index}, parameters=parameters)['mixing_matrix']    
@@ -230,7 +228,7 @@ def plot_example_model_matrices(model, parameters):
             row=int(np.floor(i_date /4) + 1), 
             col=i_date % 4 + 1,
         )
-    return fig
+    return fig.update_layout(height=550, width=800)
 
 
 def plot_full_vacc(
@@ -254,7 +252,7 @@ def plot_full_vacc(
         trace_name = age.replace('- Number of people fully vaccinated', '').replace('Age group - ', '')
         data = df[age].dropna()
         fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}))
-    return fig.update_layout(height=600)
+    return fig.update_layout(height=500)
 
 
 def plot_program_coverage(
@@ -271,12 +269,12 @@ def plot_program_coverage(
     Returns:
         The plotly figure object
     """
-    fig = make_subplots(rows=2, cols=2, subplot_titles=list(program_masks.keys()))
+    fig = make_subplots(rows=2, cols=2, subplot_titles=list(program_masks.keys()), vertical_spacing=0.12)
     for m, mask in enumerate(program_masks):
         col = m % 2 + 1
         row = int(np.floor(m / 2)) + 1
         fig.add_traces(px.line(df[program_masks[mask]]).data, rows=row, cols=col)
-    fig.update_layout(height=600, showlegend=False)
+    fig.update_layout(height=550, showlegend=False)
     return fig
 
 
@@ -287,12 +285,12 @@ def plot_immune_props(
 ) -> go.Figure:
     epoch = model.get_epoch()
     age_breaks = ['5', '15']
-    fig = make_subplots(1, 2, subplot_titles=[f'{k} age group' for k in age_breaks])
+    fig = make_subplots(2, 1, subplot_titles=[f'{k} age group' for k in age_breaks], vertical_spacing=0.08)
     for i_plot, age in enumerate(age_breaks):
         cols = [f'prop_{age}_{imm}' for imm in model.stratifications['immunity'].strata][::-1]
         model_vacc_df = model.get_derived_outputs_df()[cols]
         model_vacc_df.columns = model_vacc_df.columns.str.replace('_', ' ')
-        fig.add_traces(model_vacc_df.plot.area().data, 1, i_plot + 1)
+        fig.add_traces(model_vacc_df.plot.area().data, i_plot + 1, 1)
     dfs = {'raw': vacc_df, 'lagged': lag_vacc_df}
     for data_type in dfs:
         for i, pop in enumerate(['primary full', 'adult booster']):
@@ -301,10 +299,10 @@ def plot_immune_props(
             line_style = {'color': 'black', 'dash': line_type}
             x_vals = dfs[data_type].index
             y_vals = dfs[data_type][pop] / dfs[data_type][pop_str]
-            fig.add_trace(go.Scatter(x=x_vals, y=y_vals, line=line_style, name='coverage'), row=1, col=i + 1)
+            fig.add_trace(go.Scatter(x=x_vals, y=y_vals, line=line_style, name='coverage'), row=i + 1, col=1)
     fig.update_xaxes(range=epoch.index_to_dti([model.times[0], model.times[-1]]))
     fig.update_yaxes(range=[0.0, 1.0])
-    return fig.update_layout(height=350)
+    return fig.update_layout(height=600)
 
 
 def plot_targets(targets, for_plotly: bool=True):
@@ -333,9 +331,8 @@ def plot_targets(targets, for_plotly: bool=True):
     fig.add_trace(go.Scatter(x=serosurvey_data.index, y=serosurvey_data, name='serosurvey data'), row=2, col=2)
     serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')
     fig.add_trace(go.Scatter(x=serosurvey_ceiling.index, y=serosurvey_ceiling, name='seroprevalence ceiling'), row=2, col=2)
-    fig.update_layout(height=600)
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
-    return fig
+    return fig.update_layout(height=600)
 
 
 def plot_multi_spaghetti(
@@ -352,6 +349,5 @@ def plot_multi_spaghetti(
         spaghetti.columns = [f'{str(chain)}, {str(draw)}' for chain, draw in spaghetti.columns]    
         fig.add_traces(spaghetti.plot().data, rows=row, cols=col)
         fig.add_trace(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker={'color': 'black', 'size': 12}), row=row, col=col)
-    fig.update_layout(height=600, margin={i: 30 for i in ['t', 'b', 'l', 'r']})
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
-    return fig
+    return fig.update_layout(height=600, margin={i: 30 for i in ['t', 'b', 'l', 'r']})

@@ -443,7 +443,7 @@ def plot_output_ranges_by_analysis(
     """
     n_cols = 2
     target_names = [t.name for t in targets]
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True)
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True, vertical_spacing=0.08)
     for a, analysis in enumerate(RUN_IDS):
         row, col = get_row_col_for_subplots(a, n_cols)
         analysis_data = quantile_outputs[analysis]

@@ -107,12 +107,12 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
     model.request_function_output('notifications', Function(convolve_probability, [DerivedOutput('incidence'), delay]) * tracked_ratio_interp)
     model.request_function_output('notifications_ma', Function(get_rolling_reduction(jnp.mean, TARGETS_AVERAGE_WINDOW), [DerivedOutput('notifications')]))
 
-    survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
+    survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True).update_layout(height=400)
     caption = 'Raw survey values from Household Impacts of COVID-19 surveys.'
     add_image_to_doc(survey_fig, 'survey_results', 'svg', caption, tex_doc, 'Outputs')
     
     ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
-    ratio_fig.update_layout(showlegend=False)
+    ratio_fig.update_layout(showlegend=False, height=400)
     caption = 'Ratio of proportion of households testing to proportion reporting symptoms.'
     add_image_to_doc(ratio_fig, 'survey_ratio', 'svg', caption, tex_doc, 'Outputs')
 
