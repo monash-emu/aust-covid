@@ -60,12 +60,12 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
 def add_calibration_blurb_to_tex(tex_doc: TexDoc):
     description = 'The metrics of the performance of our calibration algorithm are presented in ' \
         'Table \\ref{calibration_metrics}. '
-    tex_doc.add_line(description, 'Calibration', subsection='Calibration performance')
+    tex_doc.add_line(description, 'Calibration results', subsection='Calibration performance')
     description = 'Parameter-specific chain traces with parameter and chain-specific posterior densities ' \
         'are presented in Figures \\ref{trace_fig_1}, \\ref{trace_fig_2} and \\ref{trace_fig_3}. ' \
         'Overall posterior densitites (pooled over calibration chains) compared against prior distributions are ' \
         'presented in Figures \\ref{comp_fig_1} and \\ref{comp_fig_2}. '
-    tex_doc.add_line(description, 'Calibration', subsection='Parameter inference')
+    tex_doc.add_line(description, 'Calibration results', subsection='Parameter inference')
 
 
 def add_dispersion_blurb_to_tex(tex_doc: TexDoc):

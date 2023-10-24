@@ -60,7 +60,7 @@ def get_priors(vacc_sens: bool, abbreviations: pd.Series, tex_doc: TexDoc) -> li
         'is not included in the priors implemented; whereas in the case of the ' \
         f'two analyses not involving time-varying immunity, the ``{default_omit_str}" parameter ' \
         'is omitted. '
-    tex_doc.add_line(description, 'Calibration', subsection='Priors')
+    tex_doc.add_line(description, 'Calibration methods', subsection='Priors')
 
     all_priors = get_all_priors()
     leave_out_prior = vacc_omit_prior if vacc_sens else default_omit_prior
