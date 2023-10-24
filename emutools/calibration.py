@@ -402,7 +402,7 @@ def plot_output_ranges(
     """
     n_cols = 2
     target_names = [t.name for t in targets]
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=[o.replace('_ma', '').replace('_', ' ') for o in outputs])
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=[o.replace('_ma', '').replace('_', ' ') for o in outputs], vertical_spacing=0.08)
     analysis_data = quantile_outputs[analysis]
     for i, output in enumerate(outputs):
         row, col = get_row_col_for_subplots(i, n_cols)
@@ -416,9 +416,8 @@ def plot_output_ranges(
             target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
-    fig.update_layout(height=700, showlegend=False)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
-    return fig
+    return fig.update_layout(height=600, showlegend=False)
 
 
 def plot_output_ranges_by_analysis(
@@ -457,9 +456,8 @@ def plot_output_ranges_by_analysis(
             target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
-    fig.update_layout(height=700, showlegend=False)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
-    return fig
+    return fig.update_layout(height=600, showlegend=False)
 
 
 def get_like_components(

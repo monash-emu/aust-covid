@@ -209,9 +209,9 @@ def plot_processed_mobility(mobility_types):
                 values = model_mob.loc[:, (patch, mob_loc)]
                 patch_name = patch.replace(' ', '_')
                 trace_name = f'{mob_loc}, {locations[patch_name]}, {mob_type}'
-                mob_trace = go.Scatter(x=values.index, y=values, name=trace_name, line=dict(color=COLOURS[l], dash=style[m]))
+                mob_trace = go.Scatter(x=values.index, y=values, name=trace_name, line=dict(color=COLOURS[m + l * 3], dash=style[m]))
                 fig.add_trace(mob_trace, row=1, col=p + 1)
-    return fig.update_layout(height=500)
+    return fig.update_layout(height=400)
 
 
 def plot_example_model_matrices(model, parameters):
@@ -252,7 +252,7 @@ def plot_full_vacc(
         trace_name = age.replace('- Number of people fully vaccinated', '').replace('Age group - ', '')
         data = df[age].dropna()
         fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}))
-    return fig.update_layout(height=500)
+    return fig.update_layout(height=480)
 
 
 def plot_program_coverage(
@@ -274,8 +274,7 @@ def plot_program_coverage(
         col = m % 2 + 1
         row = int(np.floor(m / 2)) + 1
         fig.add_traces(px.line(df[program_masks[mask]]).data, rows=row, cols=col)
-    fig.update_layout(height=550, showlegend=False)
-    return fig
+    return fig.update_layout(height=500, showlegend=False)
 
 
 def plot_immune_props(
@@ -285,7 +284,8 @@ def plot_immune_props(
 ) -> go.Figure:
     epoch = model.get_epoch()
     age_breaks = ['5', '15']
-    fig = make_subplots(2, 1, subplot_titles=[f'{k} age group' for k in age_breaks], vertical_spacing=0.08)
+    titles = ['Modelled 5 to 9 age group', 'Modelled 15 and above age groups']
+    fig = make_subplots(2, 1, subplot_titles=titles, vertical_spacing=0.08)
     for i_plot, age in enumerate(age_breaks):
         cols = [f'prop_{age}_{imm}' for imm in model.stratifications['immunity'].strata][::-1]
         model_vacc_df = model.get_derived_outputs_df()[cols]
