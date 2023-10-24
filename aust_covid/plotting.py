@@ -90,7 +90,7 @@ def plot_subvariant_props(
     
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     fig.update_yaxes(range=(0.0, 1.0))
-    return fig.update_layout(showlegend=False, height=400)
+    return fig.update_layout(showlegend=False, height=320)
 
 
 def plot_cdr_examples(samples):
@@ -160,7 +160,7 @@ def plot_dispersion_examples(
     fig = go.Figure(layout=go.Layout(width=1000, height=900))
     targets = [t for t in all_targets if hasattr(t, 'dispersion_param')]
     outputs = [t.name for t in targets]
-    fig = make_subplots(rows=n_samples, cols=len(outputs), figure=fig, subplot_titles=[' '] * n_samples * len(outputs))
+    fig = make_subplots(rows=n_samples, cols=len(outputs), figure=fig, subplot_titles=[' '] * n_samples * len(outputs), vertical_spacing=0.13)
     up_back_list = get_count_up_back_list(len(req_centiles) - 1)
     alphas = [(a / max(up_back_list)) * (1.0 - base_alpha) + base_alpha for a in up_back_list]
     for i_sample in range(n_samples):
@@ -180,7 +180,7 @@ def plot_dispersion_examples(
             target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {out}', mode='markers', marker={'color': f'rgb({output_colours[o]})', 'size': 4})
             fig.add_trace(target_trace, row=row, col=col)
             fig.layout.annotations[i_sample * len(outputs) + i_out].update(text=f'{out}, dispersion param: {round(float(disps.data), 1)}')
-    return fig
+    return fig.update_xaxes(tickangle=45)
 
 
 def plot_state_mobility(state_data, jurisdictions, mob_locs):
@@ -209,9 +209,9 @@ def plot_processed_mobility(mobility_types):
                 values = model_mob.loc[:, (patch, mob_loc)]
                 patch_name = patch.replace(' ', '_')
                 trace_name = f'{mob_loc}, {locations[patch_name]}, {mob_type}'
-                mob_trace = go.Scatter(x=values.index, y=values, name=trace_name, line=dict(color=COLOURS[m + l * 3], dash=style[m]))
+                mob_trace = go.Scatter(x=values.index, y=values, name=trace_name, line=dict(color=COLOURS[m + l * 3]))
                 fig.add_trace(mob_trace, row=1, col=p + 1)
-    return fig.update_layout(height=400)
+    return fig.update_layout(height=350)
 
 
 def plot_example_model_matrices(model, parameters):
@@ -228,7 +228,7 @@ def plot_example_model_matrices(model, parameters):
             row=int(np.floor(i_date /4) + 1), 
             col=i_date % 4 + 1,
         )
-    return fig.update_layout(height=550, width=800)
+    return fig.update_layout(height=570, width=800)
 
 
 def plot_full_vacc(
@@ -252,7 +252,7 @@ def plot_full_vacc(
         trace_name = age.replace('- Number of people fully vaccinated', '').replace('Age group - ', '')
         data = df[age].dropna()
         fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}))
-    return fig.update_layout(height=480)
+    return fig.update_layout(height=470)
 
 
 def plot_program_coverage(
@@ -274,7 +274,7 @@ def plot_program_coverage(
         col = m % 2 + 1
         row = int(np.floor(m / 2)) + 1
         fig.add_traces(px.line(df[program_masks[mask]]).data, rows=row, cols=col)
-    return fig.update_layout(height=500, showlegend=False)
+    return fig.update_layout(height=480, showlegend=False)
 
 
 def plot_immune_props(
@@ -285,7 +285,7 @@ def plot_immune_props(
     epoch = model.get_epoch()
     age_breaks = ['5', '15']
     titles = ['Modelled 5 to 9 age group', 'Modelled 15 and above age groups']
-    fig = make_subplots(2, 1, subplot_titles=titles, vertical_spacing=0.08)
+    fig = make_subplots(2, 1, subplot_titles=titles, vertical_spacing=0.1)
     for i_plot, age in enumerate(age_breaks):
         cols = [f'prop_{age}_{imm}' for imm in model.stratifications['immunity'].strata][::-1]
         model_vacc_df = model.get_derived_outputs_df()[cols]
@@ -332,7 +332,7 @@ def plot_targets(targets, for_plotly: bool=True):
     serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')
     fig.add_trace(go.Scatter(x=serosurvey_ceiling.index, y=serosurvey_ceiling, name='seroprevalence ceiling'), row=2, col=2)
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
-    return fig.update_layout(height=600)
+    return fig.update_layout(height=420)
 
 
 def plot_multi_spaghetti(

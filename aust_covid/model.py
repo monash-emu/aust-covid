@@ -275,7 +275,7 @@ def plot_mixing_matrices(
     strata: list, 
 ) -> tuple:
     matrix_figsize = 800
-    matrix_fig = make_subplots(rows=2, cols=2, subplot_titles=[m.replace('_', ' ') for m in MATRIX_LOCATIONS], vertical_spacing=0.05, horizontal_spacing=0.05)
+    matrix_fig = make_subplots(rows=2, cols=2, subplot_titles=[m.replace('_', ' ') for m in MATRIX_LOCATIONS], vertical_spacing=0.08, horizontal_spacing=0.07)
     positions = [[1, 1], [1, 2], [2, 1], [2, 2]]
     for i_loc, loc in enumerate(MATRIX_LOCATIONS):
         cur_pos = positions[i_loc]
@@ -318,10 +318,10 @@ def adapt_gb_matrices_to_aust(
 
     # UK population
     raw_uk_data = load_uk_pop_data(tex_doc)
-    uk_pop_fig = px.bar(raw_uk_data)
+    uk_pop_fig = px.bar(raw_uk_data, labels={'value': '', 'age_group': ''})
     uk_pop_fig.update_layout(showlegend=False, height=400)
     caption = 'United Kingdom population sizes used in matrix weighting.'
-    add_image_to_doc(input_pop_fig, 'uk_population', 'svg', caption, tex_doc, 'Mixing')
+    add_image_to_doc(uk_pop_fig, 'uk_population', 'svg', caption, tex_doc, 'Mixing')
 
     # Weighting calculations
     aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
