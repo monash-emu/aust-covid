@@ -152,7 +152,7 @@ def load_pop_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
     """
     sheet_name = '31010do002_202206.xlsx'
     sheet = sheet_name.replace('_', '\_')
-    description = f'For estimates of the Australian population, the data were downloaded ' \
+    description = f'For estimates of the Australian population, data were downloaded ' \
         f'from the Australian Bureau of Statistics website on {get_tex_formatted_date(datetime(2023, 3, 1))} \cite{{abs2022}} ' \
         f"(sheet {sheet}). Minor jurisdictions other than Australia's eight major state and territories " \
         '(i.e. Christmas island, the Cocos Islands, Norfolk Island and Jervis Bay Territory) are excluded from these data. ' \
@@ -160,7 +160,7 @@ def load_pop_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
         'and are also unlikely to mix homogeneously with the larger states/territories. ' \
         'The populations of states other than Western Australia (WA) were summed to obtain the population ' \
         'of the other states, and the population estimates for the age groups from 75 to 79 and up ' \
-        'were summed to obtain the 75 and above estimates. '
+        'were summed to obtain the 75 and above estimates (Figure \\ref{input_population}). '
     tex_doc.add_line(description, 'Population')
 
     raw_data = load_raw_pop_data(sheet_name)
@@ -351,9 +351,9 @@ def get_raw_state_mobility(tex_doc: StandardTexDoc) -> pd.DataFrame:
         State-level mobility data, names of jurisdictions and locations
     """
     description = 'We undertook an alternative analysis in which estimates of population mobility ' \
-        'were used to scale transmission rates. ' \
+        'were used to scale transmission rates.\n\n ' \
         'Raw estimates of Australian population mobility were obtained from Google, ' \
-        'with 2021 and 2022 data concatenated together. '
+        'with 2021 and 2022 data concatenated together (Figure \\ref{state_mobility}). '
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
 
     raw_data_2021 = pd.read_csv(DATA_PATH / '2021_AU_Region_Mobility_Report.csv', index_col=8)

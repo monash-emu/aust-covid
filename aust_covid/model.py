@@ -29,6 +29,8 @@ Rather than docstrings for each, the text string to be included
 in the documentation is best description of the code's function.
 """
 
+REOPEN_PARAM_STR = 'wa_reopen_period'
+
 
 def build_model(
     tex_doc: StandardTexDoc,
@@ -149,9 +151,10 @@ def build_base_model(
     infectious_compartments: list,
     tex_doc: StandardTexDoc,
 ) -> tuple:
+    compartment_names = ", ".join(compartments).replace("_", "\_")
     description = f'The base model consists of {len(compartments)} states, ' \
-        'representing the following epidemiological conditions with regards SARS-CoV-2 infection: ' \
-        f'{", ".join(compartments).replace("_", "")}. ' \
+        'representing sequential epidemiological conditions with regards SARS-CoV-2 infection and COVID-19 disease ' \
+        f'({compartment_names}). ' \
         f"Each of the sequentially numbered infectious compartments contribute equally to the force of infection. \n"
     time_desc =  f'Each simulation is run from {get_tex_formatted_date(ANALYSIS_START_DATE)} to ' \
         f'{get_tex_formatted_date(ANALYSIS_END_DATE)}. '
@@ -190,8 +193,9 @@ def add_infection(
     process = 'infection'
     origin = 'susceptible'
     destination = latent_compartments[0]
-    description = f'The {process} process moves people from the {origin.replace("_", "")} ' \
-        f'compartment to the {destination.replace("_", "")} compartment ' \
+    dest_str = destination.replace('_', '\_')
+    description = f'The {process} process moves people from the {origin} ' \
+        f'compartment to the {dest_str} compartment ' \
         '(i.e. the first latent compartment), ' \
         'under the assumption of frequency-dependent transmission. '
     tex_doc.add_line(description, 'Base compartmental structure')
@@ -240,8 +244,8 @@ def add_infectious_transition(
     n_inf_comps = len(infectious_compartments)
     description = f'As for the latent compartments, the infectious compartments are also chained in series, ' \
         f'with a total of {n_inf_comps} again chained together in sequence. ' \
-        f'As for the latent compartments, each transition rate is multiplied by {n_inf_comps}. ' \
-        'As persons exit the final infectious compartment, they enter the recovered compartment.\n'    
+        f'As for the latent compartments, each transition rate is multiplied by {n_inf_comps}.\n ' \
+        'As persons exit the final infectious compartment, they enter the recovered compartment. '    
     tex_doc.add_line(description, 'Base compartmental structure')
 
     rate = 1.0 / Parameter(parameter_name) * n_inf_comps
@@ -291,15 +295,15 @@ def adapt_gb_matrices_to_aust(
     description = 'Raw, location-specific social contact matrices from the POLYMOD study ' \
         'for Great Britain (Figure \\ref{raw_matrices}) ' \
         'were adjusted to account for the differences in the age distribution betweem the ' \
-        'Australian population distribution in 2022 \\ref{input_population} ' \
-        'and the population of Great Britain in 2000 \\ref{uk_population}. ' \
-        'The matrices were adjusted by taking the dot product of the location-specific unadjusted matrices ' \
+        'Australian population distribution in 2022 (Figure \\ref{input_population}) ' \
+        'and the population of Great Britain in 2000 (Figure \\ref{uk_population}). ' \
+        'The raw matrices were adjusted by taking the dot product of the location-specific unadjusted matrices ' \
         'and the diagonal matrix containing the vector of the ratios between ' \
         'the proportion of the British and Australian populations ' \
         'within each age bracket as its diagonal elements. ' \
         'In analyses without contact scaling for mobility, the resulting adjusted matrices ' \
-        'summed over location \\ref{adjusted_matrices} were implemented ' \
-        'as fixed rates of contact between each pair of age groups. '
+        'summed over location (Figure \\ref{adjusted_matrices}) were implemented ' \
+        'as fixed rates of contact between each possible pair of age groups. '
     tex_doc.add_line(description, 'Mixing')
 
     # Australia population
@@ -355,15 +359,15 @@ def get_age_stratification(
     matrix: np.array,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    description = 'We stratified all compartments of the model described above ' \
+    description = 'We stratified all compartments of the base model described above ' \
         '(Section \\ref{base_compartmental_structure}) into sequential age brackets comprising 5-year ' \
         f'bands from age {AGE_STRATA[0]} to {AGE_STRATA[0] + 4} through to age {AGE_STRATA[-2]} to {AGE_STRATA[-2] + 4}, ' \
         f'with a final age band to represent those aged {AGE_STRATA[-1]} and above. ' \
         'These age brackets were chosen to match those used by the POLYMOD survey \cite{mossong2008} ' \
-        'and so fit with the mixing approach implemented (described below \\ref{mixing}). ' \
+        'and so fit with the mixing approach implemented (described below in Section \\ref{mixing}). ' \
         'The population distribution by modelled age group was obtained from the Australian ' \
         'Bureau of Statistics data introduced previously (Section \\ref{population}, ' \
-        'illustrated in Figure \\ref{input_population}).' \
+        'Figure \\ref{input_population}). ' \
         'Ageing between sequential bands was not permitted given the short time window of the simulation. '
     tex_doc.add_line(description, 'Stratification', subsection='Age')
 
@@ -377,13 +381,16 @@ def get_strain_stratification(
     tex_doc: StandardTexDoc,
 ) -> tuple:
     strain_strings = [f'{strain.replace("ba", "BA.")}' for strain in STRAIN_STRATA]
-    compartments_to_stratify = [comp for comp in compartments if comp != 'susceptible']
-    description = f'We stratified the following compartments according to strain: ' \
-        f'{", ".join(compartments_to_stratify).replace("_", "")}, ' \
+    non_strat_comp = 'susceptible'
+    compartments_to_stratify = [comp for comp in compartments if comp != non_strat_comp]
+    comps_to_stratify_str = ", ".join(compartments_to_stratify).replace('_', '\_')
+    description = f'We stratified all compartments other than {non_strat_comp} according to strain ' \
+        f'({comps_to_stratify_str}), ' \
         'replicating all of these compartments to represent the various major Omicron sub-variants ' \
         "relevant to Australia's 2022 epidemic, " \
         f'namely: {", ".join(strain_strings)}. ' \
-        f"This was implemented using the summer library's `{StrainStratification.__name__}' class. "
+        f"This was implemented using the summer library's `{StrainStratification.__name__}' class.\n"
+    # TODO: Is it appropriate to link to summer2 repo code
     tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
 
     return StrainStratification('strain', STRAIN_STRATA, compartments_to_stratify)
@@ -398,17 +405,17 @@ def get_default_imm_strat(
     protect_param_str = protect_param.replace('_', '\_')
     description = 'All (multiply stratified) compartments introduced above were further ' \
         f'stratified into {len(imm_strata)} strata with differing levels of susceptibility to infection. ' \
-        f'A calibrated parameter {protect_param_str} was used to quantify the relative reduction in the rate of ' \
+        f'A calibrated parameter ({protect_param_str}) was used to quantify the relative reduction in the rate of ' \
         'infection and reinfection for those in the stratum with reduced susceptibility. ' \
-        'In the base analysis without the methodological extension to represent vaccination, ' \
-        'a second parameter was calibrated to represent the proportion of the population with ' \
+        'In the two analyses without extension for vaccination, ' \
+        'a further parameter was calibrated to represent the proportion of the population with ' \
         'immunological protection against infection. ' \
         'This approach was adopted because some population heterogeneity in susceptibility ' \
         'may have been introduced through a proportion of the population having greater ' \
         'protection through vaccination, boosting or other intrinsic individual variation that ' \
         'would not otherwise be captured under the assumptions inherent in our compartmental model. ' \
-        'By contrast to the vaccination extension approach, no flows between these strata were ' \
-        'implemented, such that the proportion of the population protected remained fixed over time. '
+        'By contrast to the vaccination extension approach, no flows between these strata were applied, ' \
+        'such that the proportion of the population in each of the two strata remains fixed over time. '
     tex_doc.add_line(description, 'Stratification', subsection='Heterogeneous susceptibility')
 
     imm_strat = Stratification('immunity', imm_strata, compartments)
@@ -466,11 +473,12 @@ def add_reinfection(
         'In the case of early reinfection, this is only possible ' \
         'for persons who have recovered from an earlier circulating sub-variant. ' \
         'That is, early BA.2 reinfection is possible for persons previously infected with ' \
-        'BA.1, while early BA.5 reinfection is possible for persons previously infected with ' \
-        'BA.1 or BA.2. The parameter governing the degree of immune escape is determined ' \
+        'BA.1, and early BA.5 reinfection is possible for persons previously infected with ' \
+        'BA.1 or BA.2, while other reinfection processes are not permitted.\n' \
+        'The parameter governing the degree of immune escape is determined ' \
         'by the infecting variant was estimated separately for BA.2 and BA.5. ' \
         'Therefore, the rate of reinfection is equal for BA.5 reinfecting those recovered from past BA.1 infection ' \
-        'as for those recovered from past BA.2 infection.\n ' \
+        'as for those recovered from past BA.2 infection.\n\n ' \
         'For late reinfection, all natural immunity is lost for persons in the waned compartment, ' \
         'such that the rate of reinfection for these persons is the same as the rate of infection ' \
         'for fully susceptible persons. \n' \
@@ -502,9 +510,8 @@ def add_reinfection(
 def get_wa_infection_scaling(
     model: CompartmentalModel,
 ) -> Function:
-    reopen_param_str = 'wa_reopen_period'
     reopen_index = model.get_epoch().dti_to_index(WA_REOPEN_DATE)
-    reopen_times = [reopen_index, reopen_index + Parameter(reopen_param_str)]
+    reopen_times = [reopen_index, reopen_index + Parameter(REOPEN_PARAM_STR)]
     return linear_interp(reopen_times, np.array([0.0, 1.0]))
 
 
@@ -512,11 +519,11 @@ def get_spatial_stratification(
     compartments: list, 
     model_pops: pd.DataFrame, 
     tex_doc: StandardTexDoc,
-    reopen_func,
+    reopen_func: Function,
 ) -> Stratification:
     strata = model_pops.columns
-    reopen_param_str = 'wa_reopen_period'
-    description = 'All model compartments previously described are further ' \
+    reopen_str = 'wa_reopen_period'.replace('_', '\_')
+    description = 'All model compartments previously described were further ' \
         f"stratified into strata to represent Western Australia ({strata[0].upper()}) and `{strata[1]}' " \
         'to represent the remaining major jurisdictions of Australia. ' \
         'This approach was adopted to avoid community transmission occurring in Western Australia ' \
@@ -524,7 +531,7 @@ def get_spatial_stratification(
         f'To achieve this effect, transmission in {strata[0].upper()} was initially set to zero, ' \
         f'and subsquently scaled up to being equal to that of the {strata[1]} ' \
         f'jurisdictions of Australia over a period that governed by a calibrated ' \
-        f"parameter (`{reopen_param_str.replace('_', ' ')}'). "
+        f"parameter (`{reopen_str}'). "
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)

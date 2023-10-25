@@ -7,27 +7,33 @@ def add_intro_blurb_to_tex(tex_doc: TexDoc):
         'of the 2022 SARS-CoV-2 epidemic in Australia. ' \
         f'We constructed {len(RUN_IDS)} alternative dynamic models ' \
         'based around the same core features. ' \
-        f"These were termed `{', '.join(RUN_IDS.keys())}' and were all based on the features " \
+        f"These are named `{', '.join(RUN_IDS.keys())}' and were all based on the features " \
         'described in Sections \\ref{base_compartmental_structure}, \\ref{population}, ' \
         '\\ref{stratification}, \\ref{reinfection}, \\ref{mixing}. ' \
         'Two of the models incorporated additional structure to capture time-varying ' \
-        'mobility, while two incorporated additional structure for time-varying ' \
-        'vaccination effects, such that these additional features are applied factorially ' \
+        'mobility \\ref{mobility_extension}, while two incorporated additional structure for time-varying ' \
+        'vaccination effects \\ref{vaccination_extension}, such that these additional features are applied factorially ' \
         'to the core model structure.\n\n' \
         'Each of the four alternative modelling approaches were then calibrated to the ' \
-        'same target data for the 2022 Australian COVID-19 epidemic. ' \
-        'The calibration algorithms were also harmonised to the greatest extent possible, ' \
+        'same target data for the 2022 Australian COVID-19 epidemic (see Section \\ref{targets}). ' \
+        'The calibration algorithms were also harmonised to the greatest extent possible (see Section \\ref{calibration_methods}), ' \
         'although the two analysis approaches that included structure for vaccination ' \
         'required a different parameter to be substituted for the parameters used ' \
-        'in the analyses not incorporating this structure. ' \
+        'in the analyses not incorporating this structure (as described below). ' \
         'These four approaches were then compared with regards to their fit to ' \
-        'the target data, with the analysis that included structure for mobility ' \
-        'but not for vaccination found to achieve the highest likelihood. ' \
-        f"As a result of this comparison, the `{PRIMARY_ANALYSIS}' analysiswas  selected as " \
+        "the target data, with the `mob' analysis (with structure for mobility " \
+        'but not for vaccination) found to achieve the highest likelihood. ' \
+        f"As a result, this approach to analysis was selected as " \
         'the primary analysis (see Section \\ref{analysis_comparison})). ' \
         'This approach was used for the further analyses, ' \
         'including parameter inference (e.g. Section \\ref{calibration_results}). '
     tex_doc.add_line(description, 'Approach to analyses')
+
+
+def add_model_structure_blurb_to_tex(tex_doc: TexDoc):
+    description = 'This section describes the model features that were common to the model ' \
+        'used for all four analyses. '
+    tex_doc.add_line(description, 'Base compartmental structure')
 
 
 def add_parameters_blurb_to_tex(tex_doc: TexDoc):
@@ -73,3 +79,10 @@ def add_dispersion_blurb_to_tex(tex_doc: TexDoc):
         'parameter used in the calibration algorithm to adjust the calculation of the contribution ' \
         'to the likelihood from the notifications and deaths time series. '
     tex_doc.add_line(description, 'Targets')
+
+
+def add_mobility_blurb_to_tex(tex_doc: TexDoc):
+    description = 'The two scaling functions developed in the previous were used to adjust ' \
+        'rates of contact over time in the two time-varying matrix locations. ' \
+        'These were summed with the two static locations to obtain the final matrix. '
+    tex_doc.add_line(description, 'Mobility extension', subsection='Application')
