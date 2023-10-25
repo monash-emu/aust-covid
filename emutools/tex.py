@@ -269,12 +269,13 @@ class ConcreteTexDoc:
             splits = col_splits
         col_widths = [w * table_width for w in splits]
         col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
+        caption_str = f'\n\caption{{\\textbf{{{title}}}}}'
         table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
         table_text = table_text.replace('{tabular}', '{longtable}') if longtable else table_text
-        table_text = table_text.replace('\\bottomrule', f'\\bottomrule\n\label{{{name}}}')
+        bottom_str = f'\\bottomrule{caption_str}\n\label{{{name}}}'
+        table_text = table_text.replace('\\bottomrule', bottom_str)
         table_text = table_text.replace('\\toprule', '\\toprule\n\\centering')
         self.add_line('' if longtable else '\\begin{table}', section, subsection=subsection)
-        self.add_line(f'\caption{{\\textbf{{{title}}}}}', section, subsection=subsection)
         self.add_line(table_text, section, subsection=subsection)
         self.add_line('' if longtable else '\\end{table}', section, subsection=subsection)
 
