@@ -37,6 +37,22 @@ def remove_underscore_multiindexcol(
     return df
 
 
+def get_tex_longtable(table, col_format_str, caption_str, label_str):
+    start_str = '\\begin{longtable}\n'
+    table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
+    table_text = table_text.replace('\\begin{tabular}', '')
+    table_text = table_text.replace('\\end{tabular}', '')
+    end_str = '\\end{longtable}'
+    return start_str + table_text + caption_str + label_str + end_str
+
+
+def get_tex_table(table, col_format_str, caption_str, label_str):
+    start_str = '\\begin{table}\n'
+    table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
+    end_str = '\\end{table}'
+    return start_str + table_text + caption_str + label_str + end_str
+
+
 class TexDoc(ABC):
     def __init__(self):
         pass
@@ -268,16 +284,11 @@ class ConcreteTexDoc:
         else:
             splits = col_splits
         col_widths = [w * table_width for w in splits]
-        col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
-        caption_str = f'\n\caption{{\\textbf{{{title}}}}}'
-        table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
-        table_text = table_text.replace('{tabular}', '{longtable}') if longtable else table_text
-        bottom_str = f'\\bottomrule{caption_str}\n\label{{{name}}}'
-        table_text = table_text.replace('\\bottomrule', bottom_str)
-        table_text = table_text.replace('\\toprule', '\\toprule\n\\centering')
-        self.add_line('' if longtable else '\\begin{table}', section, subsection=subsection)
-        self.add_line(table_text, section, subsection=subsection)
-        self.add_line('' if longtable else '\\end{table}', section, subsection=subsection)
+        col_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
+        label_str = f'\label{{{name}}}\n'
+        caption_str = f'\caption{{\\textbf{{{title}}}}}\n'
+        table_line = get_tex_longtable(table, col_str, caption_str, label_str) if longtable else get_tex_table(table, col_str, caption_str, label_str)
+        self.add_line(table_line, section, subsection=subsection)
 
     def save_content(self):
         with open(self.path / f'{self.doc_name}.yml', 'w') as file:
