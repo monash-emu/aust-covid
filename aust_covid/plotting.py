@@ -252,7 +252,7 @@ def plot_full_vacc(
         trace_name = age.replace('- Number of people fully vaccinated', '').replace('Age group - ', '')
         data = df[age].dropna()
         fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}))
-    return fig.update_layout(height=470)
+    return fig.update_layout(height=470, yaxis_title='persons vaccinated')
 
 
 def plot_program_coverage(
@@ -269,12 +269,10 @@ def plot_program_coverage(
     Returns:
         The plotly figure object
     """
-    fig = make_subplots(rows=2, cols=2, subplot_titles=list(program_masks.keys()), vertical_spacing=0.12)
+    fig = make_subplots(rows=4, cols=1, subplot_titles=list(program_masks.keys()), vertical_spacing=0.12)
     for m, mask in enumerate(program_masks):
-        col = m % 2 + 1
-        row = int(np.floor(m / 2)) + 1
-        fig.add_traces(px.line(df[program_masks[mask]]).data, rows=row, cols=col)
-    return fig.update_layout(height=480, showlegend=False)
+        fig.add_traces(px.line(df[program_masks[mask]]).data, rows=m + 1, cols=1)
+    return fig.update_layout(height=600, showlegend=False)
 
 
 def plot_immune_props(

@@ -306,20 +306,17 @@ def adapt_gb_matrices_to_aust(
     aust_props_disp = copy(pop_data)
     aust_props_disp['age_group'] = [f'{age}-{age + 4}' for age in AGE_STRATA[:-1]] + ['75 and over']
 
-    input_pop_fig = px.bar(
-        aust_props_disp.melt(id_vars=['age_group']), 
-        x='age_group', 
-        y='value', 
-        color='variable', 
-        labels={'value': 'population', 'age_group': ''},
-    ).update_layout(height=400)
+    pop_labels = {'value': 'population'}
+    input_pop_data = aust_props_disp.melt(id_vars=['age_group'])
+    input_pop_fig = px.bar(input_pop_data, x='age_group', y='value', color='variable', labels=pop_labels)
+    input_pop_fig = input_pop_fig.update_layout(height=400, showlegend=False)
     title = 'Stacked Australian population sizes implemented in the model.'
     caption = 'Western Australia (blue bars), aggregate of remaining major jurisdictions of Australia (red bars).'
     add_image_to_doc(input_pop_fig, 'input_population', 'svg', title, tex_doc, 'Mixing', caption=caption)
 
     # UK population
     raw_uk_data = load_uk_pop_data(tex_doc)
-    uk_pop_fig = px.bar(raw_uk_data, labels={'value': '', 'age_group': ''})
+    uk_pop_fig = px.bar(raw_uk_data, labels=pop_labels)
     uk_pop_fig.update_layout(showlegend=False, height=400)
     caption = 'United Kingdom population sizes used in matrix weighting.'
     add_image_to_doc(uk_pop_fig, 'uk_population', 'svg', caption, tex_doc, 'Mixing')
@@ -342,11 +339,13 @@ def adapt_gb_matrices_to_aust(
         adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
     
     # Plot matrices
-    caption_end = ' daily contact rates by age group (row), contact age group (column) and location (panel). '
     raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA)
     adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA)
-    add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'svg', f'Raw{caption_end}', tex_doc, 'Mixing')
-    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', 'svg', f'Adjusted{caption_end}', tex_doc, 'Mixing')
+    caption = 'Number of contacts per day by respondent age group (row), contact age group (column) and location (panel). '
+    title = 'Raw contact rates obtained from POLYMOD surveys for the United Kingdom.'
+    add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'svg', title, tex_doc, 'Mixing', caption=caption)
+    title = 'Contact rates after adjustment to the Australian population distribution.'
+    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', 'svg', title, tex_doc, 'Mixing', caption=caption)
 
     return adjusted_matrices
 
