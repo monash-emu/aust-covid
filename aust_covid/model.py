@@ -306,7 +306,7 @@ def adapt_gb_matrices_to_aust(
     aust_props_disp = copy(pop_data)
     aust_props_disp['age_group'] = [f'{age}-{age + 4}' for age in AGE_STRATA[:-1]] + ['75 and over']
 
-    pop_labels = {'value': 'population'}
+    pop_labels = {'value': 'population', 'age_group': 'age group'}
     input_pop_data = aust_props_disp.melt(id_vars=['age_group'])
     input_pop_fig = px.bar(input_pop_data, x='age_group', y='value', color='variable', labels=pop_labels)
     input_pop_fig = input_pop_fig.update_layout(height=400, showlegend=False)
