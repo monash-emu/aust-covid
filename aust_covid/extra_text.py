@@ -84,5 +84,7 @@ def add_dispersion_blurb_to_tex(tex_doc: TexDoc):
 def add_mobility_blurb_to_tex(tex_doc: TexDoc):
     description = 'The two scaling functions developed in the previous were used to adjust ' \
         'rates of contact over time in the two time-varying matrix locations. ' \
-        'These were summed with the two static locations to obtain the final matrix. '
+        'These were summed with the two static locations to obtain the final matrix. ' \
+        'Examples of the final effect of the matrix scaling function on the dynamic ' \
+        'mixing matrices are presented in Figure \\ref{example_matrices}. '
     tex_doc.add_line(description, 'Mobility extension', subsection='Application')
