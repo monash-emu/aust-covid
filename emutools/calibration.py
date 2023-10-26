@@ -145,6 +145,7 @@ def plot_param_progression(
     trace_fig = trace_plot[0, 0].figure
     trace_fig.set_figheight(15)
     trace_fig.tight_layout()
+    plt.close()
     return trace_fig
 
 
@@ -172,13 +173,14 @@ def plot_posterior_comparison(
         labeller=MapLabeller(var_name_map=display_names), 
         point_estimate=None,
         hdi_prob=dens_interval_req,
-    );
+    )
     req_priors = [p for p in priors if p.name in request_vars]
     for i_ax, ax in enumerate(comparison_plot.ravel()[:len(request_vars)]):
         ax_limits = ax.get_xlim()
         x_vals = np.linspace(ax_limits[0], ax_limits[1], 100)
         y_vals = req_priors[i_ax].pdf(x_vals)
         ax.fill_between(x_vals, y_vals, color='k', alpha=0.2, linewidth=2)
+    plt.close()
     return comparison_plot[0, 0].figure
 
 
