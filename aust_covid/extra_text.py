@@ -1,4 +1,4 @@
-from inputs.constants import RUN_IDS, PRIMARY_ANALYSIS
+from inputs.constants import RUN_IDS, PRIMARY_ANALYSIS, BURN_IN, OPTI_DRAWS
 from emutools.tex import TexDoc
 
 
@@ -64,6 +64,18 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
 
 
 def add_calibration_blurb_to_tex(tex_doc: TexDoc):
+    description = "We calibrated the model using the `DE Metropolis Z' method " \
+        "provided in the `PyMC package for Bayesian statistical inference.\n\n" \
+        'First, we used Latin hypercube sampling to select parameter values from across the ' \
+        f'multi-dimensional parameter space. Next, we ran a short optimisation algorithm of {OPTI_DRAWS} draws ' \
+        'to move the parameter sets from these dispersed starting positions towards ' \
+        'values that were associated with a greater likelihood, ' \
+        'but remained substantially dispersed from one-another. ' \
+        'We then ran the calibration algorithm from these starting points for 10,000 draws ' \
+        'during the tuning phase, and for 20,000 draws during the calibration phase ' \
+        f'of the algorithm, discarding the first {str(BURN_IN)} draws as burn-in. ' \
+        'An identical and independent algorithm was applied for each of the four analysis approaches. '        
+    tex_doc.add_line(description, 'Calibration methods')
     description = 'The metrics of the performance of our calibration algorithm are presented in ' \
         'Table \\ref{calibration_metrics}. '
     tex_doc.add_line(description, 'Calibration results', subsection='Calibration performance')
