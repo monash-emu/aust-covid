@@ -354,3 +354,11 @@ def plot_multi_spaghetti(
         fig.add_trace(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker={'color': 'black', 'size': 12}), row=row, col=col)
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig.update_layout(height=600, margin={i: 30 for i in ['t', 'b', 'l', 'r']})
+
+
+def plot_vacc_implementation(df):
+    fig = make_subplots(3, 1, subplot_titles=['persons vaccinated', 'coverage', 'rates implemented'], vertical_spacing=0.08)
+    fig.add_traces(df[['primary full', 'adult booster']].plot().data, rows=1, cols=1)
+    fig.add_traces(df[['prop primary full', 'prop adult booster']].plot().data, rows=2, cols=1)
+    fig.add_traces(df[['rate primary full', 'rate adult booster']].plot().data, rows=3, cols=1)
+    return fig.update_layout(height=800, showlegend=False, margin={'t': 40})
