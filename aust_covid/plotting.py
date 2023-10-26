@@ -234,25 +234,30 @@ def plot_example_model_matrices(model, parameters):
 def plot_full_vacc(
     full_vacc_masks: List[str], 
     df: pd.DataFrame,
+    prop_df: pd.DataFrame,
 ) -> go.Figure:
     """
-    Plot full (2) dose vaccination coverage by age group over time.
+    Plot full (2) dose vaccination coverage by age group over time
+    as absolute number and proportion.
 
     Args:
         full_vacc_masks: Strings identifying the needed columns
         df: The vaccination dataframe
+        prop_df: The adjusted dataframe with proportions instead of numbers (from get_full_vacc_props)
 
     Returns:
         The plotly figure object
     """
-    fig = go.Figure()
+    fig = make_subplots(2, 1, vertical_spacing=0.1, subplot_titles=['number', 'proportion'])
     for a, age in enumerate(full_vacc_masks):
-        prop = int(np.round(a / len(full_vacc_masks) * 250.0))
-        colour = f'rgb({prop},{250 - prop},250)'
+        prop_age = int(np.round(a / len(full_vacc_masks) * 250.0))
+        colour = f'rgb({prop_age},{250 - prop_age},250)'
         trace_name = age.replace('- Number of people fully vaccinated', '').replace('Age group - ', '')
         data = df[age].dropna()
-        fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}))
-    return fig.update_layout(height=470, yaxis_title='persons vaccinated')
+        prop_data = prop_df[age].dropna()
+        fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}), row=1, col=1)
+        fig.add_trace(go.Scatter(x=prop_data.index, y=prop_data, name=trace_name, line={'color': colour}), row=2, col=1)
+    return fig.update_layout(height=600)
 
 
 def plot_program_coverage(
