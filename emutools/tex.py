@@ -329,11 +329,10 @@ class StandardTexDoc(ConcreteTexDoc):
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
         self.add_line('\\begin{document}', 'preamble')
-        if self.table_of_contents:
-            self.add_line('\\tableofcontents', 'preamble')
         self.add_line('\date{}', 'preamble')
         self.add_line('\maketitle', 'preamble')
-        
+        if self.table_of_contents:
+            self.add_line('\\tableofcontents', 'preamble')        
         self.add_line('\\printbibliography', 'endings')
         self.add_line('\\end{document}', 'endings')
             
