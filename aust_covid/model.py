@@ -37,6 +37,9 @@ def build_model(
     mobility_sens: bool=False,
     vacc_sens: bool=False,
 ):
+    description = 'We used the \\href{summer}[https://summer2.readthedocs.io/en/latest/] framework ' \
+        'to construct a compartmental model of COVID-19 dynamics. '
+    tex_doc.add_line(description, 'Base compartmental structure')
 
     # Model construction
     n_infectious_comps = N_LATENT_COMPARTMENTS
@@ -390,7 +393,6 @@ def get_strain_stratification(
         "relevant to Australia's 2022 epidemic, " \
         f'namely: {", ".join(strain_strings)}. ' \
         f"This was implemented using the summer library's `{StrainStratification.__name__}' class.\n"
-    # TODO: Is it appropriate to link to summer2 repo code
     tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
 
     return StrainStratification('strain', STRAIN_STRATA, compartments_to_stratify)

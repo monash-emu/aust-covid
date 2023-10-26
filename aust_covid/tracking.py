@@ -93,7 +93,7 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
         "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
         "$s = 1 - e^{-p \\times r}$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. " \
         'This approach led to an estimated fall in the case detection ratio by a factor of two over the first half of 2022. ' \
-        'This is consistent with our intuition and with epidemiological modelling from New Zealand over a similar time period. '
+        'This is consistent with our intuition and with epidemiological modelling from New Zealand over a similar time period \\cite{watson2023}. '
     tex_doc.add_line(description, 'Outputs', 'Notifications')
 
     hh_impact = load_household_impacts_data()

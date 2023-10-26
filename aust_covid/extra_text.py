@@ -54,7 +54,7 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
         f"but the likelihood of the `{PRIMARY_ANALYSIS}' analysis was slightly higher than " \
         'that of the other three approaches, with the inclusion of the mobility structure ' \
         "appearing to improve the calibration algorithm's fit to targets " \
-        '(See Figures \\ref{like_comparison} and \\ref{violin_comparison}). ' \
+        '(See Figure \\ref{like_comparison}). ' \
         f"For this reason, the `{PRIMARY_ANALYSIS}' was considered as the primary analysis " \
         'throughout the remaining sections. ' \
         'Figures \\ref{case_ranges}, \\ref{death_ranges} and \\ref{seropos_ranges} illustrate ' \
@@ -65,9 +65,10 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
 
 def add_calibration_blurb_to_tex(tex_doc: TexDoc):
     description = "We calibrated the model using the `DE Metropolis Z' method " \
-        "provided in the `PyMC package for Bayesian statistical inference.\n\n" \
+        'provided in the \\href{https://www.pymc.io/welcome.html}[PyMC] package for Bayesian inference.\n\n' \
         'First, we used Latin hypercube sampling to select parameter values from across the ' \
         f'multi-dimensional parameter space. Next, we ran a short optimisation algorithm of {OPTI_DRAWS} draws ' \
+        "using Facebook Research's \\href{https://facebookresearch.github.io/nevergrad/}[nevergrad]" \
         'to move the parameter sets from these dispersed starting positions towards ' \
         'values that were associated with a greater likelihood, ' \
         'but remained substantially dispersed from one-another. ' \
@@ -80,7 +81,9 @@ def add_calibration_blurb_to_tex(tex_doc: TexDoc):
         'Table \\ref{calibration_metrics}. '
     tex_doc.add_line(description, 'Calibration results', subsection='Calibration performance')
     description = 'Parameter-specific chain traces with parameter and chain-specific posterior densities ' \
+        f"for the primary `{PRIMARY_ANALYSIS}' analysis " \
         'are presented in Figures \\ref{trace_fig_1}, \\ref{trace_fig_2} and \\ref{trace_fig_3}. ' \
+        'These are used for the epidemiological interpretation of our results in the main manuscript. ' \
         'Overall posterior densitites (pooled over calibration chains) compared against prior distributions are ' \
         'presented in Figures \\ref{comp_fig_1} and \\ref{comp_fig_2}. '
     tex_doc.add_line(description, 'Calibration results', subsection='Parameter inference')
@@ -90,7 +93,7 @@ def add_dispersion_blurb_to_tex(tex_doc: TexDoc):
     description = 'Figure \\ref{dispersion_examples} provides an illustration of the effect of specific values of the calibrated dispersion ' \
         'parameter used in the calibration algorithm to adjust the calculation of the contribution ' \
         'to the likelihood from the notifications and deaths time series. '
-    tex_doc.add_line(description, 'Targets')
+    tex_doc.add_line(description, 'Targets', subsection='Calibrated dispersion parameters')
 
 
 def add_mobility_blurb_to_tex(tex_doc: TexDoc):
