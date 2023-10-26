@@ -88,3 +88,41 @@ def add_mobility_blurb_to_tex(tex_doc: TexDoc):
         'Examples of the final effect of the matrix scaling function on the dynamic ' \
         'mixing matrices are presented in Figure \\ref{example_matrices}. '
     tex_doc.add_line(description, 'Mobility extension', subsection='Application')
+
+
+def add_vaccination_blurb_to_tex(tex_doc: TexDoc):
+    description = "Although Australia's population was relatively unexposed to SARS-CoV-2 " \
+        'infection and so had little natural immunity at the start of our simulation period, ' \
+        'the population had extensive vaccination-derived immunity across eligible age groups. ' \
+        'This is illustrated in Figure \\ref{full_vacc}, which shows that most age groups ' \
+        'had reached very high coverage with a second-dose of vaccine by early 2022. ' \
+        'As such, we considered that the continuing roll-out of second doses were ' \
+        'very unlikely to have substantially modified the epidemic, ' \
+        'particularly given the questionable impact of such vaccination programs on ' \
+        'onward transmission.\n\n' \
+        'We therefore considered programs that were rolled out over the course of 2022 ' \
+        'for their potential impact on transmission. ' \
+        'As shown in Figure \\ref{program_coverage}, we considered that the most likely ' \
+        'programs to have had an effect on transmission through 2022 were the fourth dose ' \
+        "`winter booster' program, and the primary course (completing second doses) " \
+        'program for children aged 5 to 11 years. ' \
+        'The heterogeneous immunity stratification of the base model was utilised to ' \
+        'consider the impact of these programs on community transmission, ' \
+        'as described in the following section. '
+    tex_doc.add_line(description, 'Vaccination extension', subsection='Rationale')
+    description = 'Using the various reporting streams from which the vaccination data ' \
+        'were derived (illustrated as different colours in Figure \\ref{program_coverage}), ' \
+        'we calculated the total number of persons vaccinated (Figure \\ref{modelled_group_vacc}). ' \
+        'Next, we converted this to a proportion using the population denominators supplied ' \
+        'by the Commonwealth in the same dataset (Figure \\ref{modelled_group_prop}). ' \
+        'We then calculated the proportion of the population previously unvaccinated ' \
+        'under each of these programs and divided by the time interval over which this occurred ' \
+        'to calculate the rate at which these population groups ' \
+        'received vaccination (Figure \\ref{modelled_group_rates}). ' \
+        'These were then applied as unidirectional flows taht transitioned persons from ' \
+        'the unvaccinated stratum to the vaccinated stratum. ' \
+        'For this extended model configuration, a third stratum was added to ' \
+        'the immunity stratification. ' \
+        'The reported coverage and coverage lagged by 14 days are compared against the ' \
+        'modelled population distribution across the three immunity strata in Figure \\ref{vaccination_distribution}. '
+    tex_doc.add_line(description, 'Vaccination extension', subsection='Application')
