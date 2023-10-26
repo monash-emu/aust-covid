@@ -123,6 +123,7 @@ class ConcreteTexDoc:
         doc_name: str, 
         title: str, 
         bib_filename: str,
+        table_of_contents: bool=False,
     ):
         """
         Object that can do the basic collation and emitting of a TeX-formatted
@@ -141,6 +142,7 @@ class ConcreteTexDoc:
         self.title = title
         self.prepared = False
         self.standard_sections = ['preamble', 'endings']
+        self.table_of_contents = table_of_contents
 
     def add_line(
         self, 
@@ -326,6 +328,8 @@ class StandardTexDoc(ConcreteTexDoc):
         self.add_line(r'\usepackage[labelfont=bf,it]{caption}', 'preamble')
         self.add_line(f'\\addbibresource{{{self.bib_filename}.bib}}', 'preamble')
         self.add_line(f'\\title{{{self.title}}}', 'preamble')
+        if self.table_of_contents:
+            self.add_line('\\\tableofcontents', 'preamble')
         self.add_line('\\begin{document}', 'preamble')
         self.add_line('\date{}', 'preamble')
         self.add_line('\maketitle', 'preamble')
