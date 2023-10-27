@@ -10,7 +10,7 @@ import arviz as az
 from summer2 import CompartmentalModel
 
 from aust_covid.inputs import load_national_case_data, load_owid_case_data, load_case_targets, load_who_death_data, load_serosurvey_data
-from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE
+from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, AGE_STRATA
 from emutools.tex import DummyTexDoc
 from aust_covid.inputs import load_household_impacts_data
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
@@ -362,3 +362,12 @@ def plot_vacc_implementation(df):
     fig.add_traces(df[['prop primary full', 'prop adult booster']].plot().data, rows=2, cols=1)
     fig.add_traces(df[['rate primary full', 'rate adult booster']].plot().data, rows=3, cols=1)
     return fig.update_layout(height=800, showlegend=False, margin={'t': 40})
+
+
+def plot_mixing_matrices(matrices):
+    n_cols = 2
+    fig = make_subplots(2, n_cols, vertical_spacing=0.08, horizontal_spacing=0.07, subplot_titles=[k.replace('_', ' ') for k in matrices])
+    for i, matrix in enumerate(matrices):
+        row, col = get_row_col_for_subplots(i, n_cols)
+        fig.add_traces(px.imshow(matrices[matrix], x=AGE_STRATA, y=AGE_STRATA).data, rows=row, cols=col)
+    return fig.update_layout(height=800, width=850, margin={'t': 40})

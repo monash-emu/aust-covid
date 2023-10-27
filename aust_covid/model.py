@@ -16,9 +16,9 @@ from aust_covid.inputs import load_pop_data, load_uk_pop_data, get_base_vacc_dat
 from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number, track_immune_prop
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
 from aust_covid.vaccination import add_derived_data_to_vacc
+from aust_covid.plotting import plot_mixing_matrices
 from emutools.tex import StandardTexDoc, get_tex_formatted_date
 from emutools.parameters import capture_kwargs
-from emutools.plotting import get_row_col_for_subplots
 from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
 from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES, DATA_PATH
 
@@ -277,28 +277,6 @@ def add_waning(
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
 
 
-def plot_mixing_matrices(
-    matrices: dict, 
-    strata: list, 
-) -> tuple:
-    matrix_figsize = 800
-    matrix_fig = make_subplots(rows=2, cols=2, subplot_titles=[m.replace('_', ' ') for m in MATRIX_LOCATIONS], vertical_spacing=0.08, horizontal_spacing=0.07)
-    positions = [[1, 1], [1, 2], [2, 1], [2, 2]]
-    for i_loc, loc in enumerate(MATRIX_LOCATIONS):
-        cur_pos = positions[i_loc]
-        matrix_fig.add_trace(go.Heatmap(x=strata, y=strata, z=matrices[loc], coloraxis = 'coloraxis'), cur_pos[0], cur_pos[1])
-    return matrix_fig.update_layout(width=matrix_figsize, height=matrix_figsize * 0.9)
-
-
-def alternative_plot_matrices(matrices):
-    n_cols = 2
-    fig = make_subplots(2, n_cols, vertical_spacing=0.08, horizontal_spacing=0.07, subplot_titles=[k.replace('_', ' ') for k in matrices])
-    for i, matrix in enumerate(matrices):
-        row, col = get_row_col_for_subplots(i, n_cols)
-        fig.add_traces(px.imshow(matrices[matrix], x=AGE_STRATA, y=AGE_STRATA).data, rows=row, cols=col)
-    return fig.update_layout(height=800, width=850, margin={'t': 40})
-
-
 def adapt_gb_matrices_to_aust(
     unadjusted_matrices: dict, 
     pop_data: pd.DataFrame,
@@ -355,8 +333,8 @@ def adapt_gb_matrices_to_aust(
         adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
     
     # Plot matrices
-    raw_matrix_fig = alternative_plot_matrices(unadjusted_matrices, AGE_STRATA)
-    adj_matrix_fig = alternative_plot_matrices(adjusted_matrices, AGE_STRATA)
+    raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices)
+    adj_matrix_fig = plot_mixing_matrices(adjusted_matrices)
     caption = 'Number of contacts per day by respondent age group (row), contact age group (column) and location (panel). '
     title = 'Raw contact rates obtained from POLYMOD surveys for the United Kingdom.'
     add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'svg', title, tex_doc, 'Mixing', caption=caption)
