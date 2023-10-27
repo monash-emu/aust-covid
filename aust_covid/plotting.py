@@ -364,7 +364,17 @@ def plot_vacc_implementation(df):
     return fig.update_layout(height=800, showlegend=False, margin={'t': 40})
 
 
-def plot_mixing_matrices(matrices):
+def plot_mixing_matrices(
+    matrices: Dict[str, np.array],
+) -> go.Figure:
+    """Plot mixing matrices from their standard location-specific format.
+
+    Args:
+        matrices: The matrices
+
+    Returns:
+        Interactive figure
+    """
     n_cols = 2
     fig = make_subplots(2, n_cols, vertical_spacing=0.08, horizontal_spacing=0.07, subplot_titles=[k.replace('_', ' ') for k in matrices])
     for i, matrix in enumerate(matrices):

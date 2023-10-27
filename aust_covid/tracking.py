@@ -2,6 +2,7 @@ from jax import numpy as jnp
 import numpy as np
 import pandas as pd
 from datetime import datetime
+from plotly.subplots import make_subplots
 
 from summer2 import CompartmentalModel
 from summer2.functions.time import get_linear_interpolation_function
@@ -109,14 +110,18 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
     model.request_function_output('notifications', Function(convolve_probability, [DerivedOutput('incidence'), delay]) * tracked_ratio_interp)
     model.request_function_output('notifications_ma', Function(get_rolling_reduction(jnp.mean, TARGETS_AVERAGE_WINDOW), [DerivedOutput('notifications')]))
 
-    survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True).update_layout(height=400)
-    caption = 'Raw survey values from Household Impacts of COVID-19 surveys.'
-    add_image_to_doc(survey_fig, 'survey_results', 'svg', caption, tex_doc, 'Outputs')
-    
+    survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
     ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
-    ratio_fig.update_layout(showlegend=False, height=400)
-    caption = 'Ratio of proportion of households testing to proportion reporting symptoms.'
-    add_image_to_doc(ratio_fig, 'survey_ratio', 'svg', caption, tex_doc, 'Outputs')
+    caption = 'Raw survey values from Household Impacts of COVID-19 surveys (upper panel), ' \
+        'with proportion of households reporting symptoms (blue line), ' \
+        'proportion of households positive for COVID-19 (green line) ' \
+        'and proportion of hoseholds reporting testing for COVID-19 (red line). ' \
+        'Ratio of testing to reporting symptoms (blue line, lower panel). '
+    fig = make_subplots(2, 1)
+    fig.add_traces(survey_fig.data, rows=1, cols=1)
+    fig.add_traces(ratio_fig.data, rows=2, cols=1)
+    fig.update_layout(showlegend=False, height=600)
+    add_image_to_doc(fig, 'cdr_construction', 'svg', 'Construction of CDR function.', tex_doc, 'Outputs', caption=caption)
 
 
 def track_deaths(
