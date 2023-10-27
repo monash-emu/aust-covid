@@ -18,9 +18,9 @@ from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_fr
 from aust_covid.vaccination import add_derived_data_to_vacc
 from emutools.tex import StandardTexDoc, get_tex_formatted_date
 from emutools.parameters import capture_kwargs
+from emutools.plotting import get_row_col_for_subplots
 from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
-from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES, IMMUNITY_STRATA
-from inputs.constants import SUPPLEMENT_PATH, DATA_PATH
+from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES, DATA_PATH
 
 
 """
@@ -37,7 +37,7 @@ def build_model(
     mobility_sens: bool=False,
     vacc_sens: bool=False,
 ):
-    description = 'We used the \\href{summer}[https://summer2.readthedocs.io/en/latest/] framework ' \
+    description = 'We used the \\href{summer}{https://summer2.readthedocs.io/en/latest/} framework ' \
         'to construct a compartmental model of COVID-19 dynamics. '
     tex_doc.add_line(description, 'Base compartmental structure')
 
@@ -290,6 +290,15 @@ def plot_mixing_matrices(
     return matrix_fig.update_layout(width=matrix_figsize, height=matrix_figsize * 0.9)
 
 
+def alternative_plot_matrices(matrices):
+    n_cols = 2
+    fig = make_subplots(2, n_cols, vertical_spacing=0.08, horizontal_spacing=0.07, subplot_titles=[k.replace('_', ' ') for k in matrices])
+    for i, matrix in enumerate(matrices):
+        row, col = get_row_col_for_subplots(i, n_cols)
+        fig.add_traces(px.imshow(matrices[matrix], x=AGE_STRATA, y=AGE_STRATA).data, rows=row, cols=col)
+    return fig.update_layout(height=800, width=850, margin={'t': 40})
+
+
 def adapt_gb_matrices_to_aust(
     unadjusted_matrices: dict, 
     pop_data: pd.DataFrame,
@@ -346,8 +355,8 @@ def adapt_gb_matrices_to_aust(
         adjusted_matrices[location] = np.dot(unadjusted_matrix, np.diag(aust_uk_ratios))
     
     # Plot matrices
-    raw_matrix_fig = plot_mixing_matrices(unadjusted_matrices, AGE_STRATA)
-    adj_matrix_fig = plot_mixing_matrices(adjusted_matrices, AGE_STRATA)
+    raw_matrix_fig = alternative_plot_matrices(unadjusted_matrices, AGE_STRATA)
+    adj_matrix_fig = alternative_plot_matrices(adjusted_matrices, AGE_STRATA)
     caption = 'Number of contacts per day by respondent age group (row), contact age group (column) and location (panel). '
     title = 'Raw contact rates obtained from POLYMOD surveys for the United Kingdom.'
     add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'svg', title, tex_doc, 'Mixing', caption=caption)

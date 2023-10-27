@@ -127,13 +127,13 @@ def add_vaccination_blurb_to_tex(tex_doc: TexDoc):
     tex_doc.add_line(description, 'Vaccination extension', subsection='Rationale')
     description = 'Using the various reporting streams from which the vaccination data ' \
         'were derived (illustrated as different colours in Figure \\ref{program_coverage}), ' \
-        'we calculated the total number of persons vaccinated (Figure \\ref{modelled_group_vacc}). ' \
+        'we calculated the total number of persons vaccinated. ' \
         'Next, we converted this to a proportion using the population denominators supplied ' \
-        'by the Commonwealth in the same dataset (Figure \\ref{modelled_group_prop}). ' \
+        'by the Commonwealth in the same dataset. ' \
         'We then calculated the proportion of the population previously unvaccinated ' \
         'under each of these programs and divided by the time interval over which this occurred ' \
         'to calculate the rate at which these population groups ' \
-        'received vaccination (Figure \\ref{modelled_group_rates}). ' \
+        'received vaccination (Figure \\ref{vacc_implement}). ' \
         'These were then applied as unidirectional flows taht transitioned persons from ' \
         'the unvaccinated stratum to the vaccinated stratum. ' \
         'For this extended model configuration, a third stratum was added to ' \
