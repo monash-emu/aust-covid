@@ -80,10 +80,10 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
         f'(downloded on the {get_tex_formatted_date(datetime(2023, 6, 12))}). ' \
         'These surveys reported on several indicators, ' \
         'including the proportion of households reporting a household member with symptoms of cold, flu or COVID-19, ' \
-        'and the proportion of households reporting a household member has had a COVID-19 test (Figure \\ref{survey_results}). ' \
+        'and the proportion of households reporting a household member has had a COVID-19 test. ' \
         'We considered that the ratio of the proportion of households reporting having undertaken COVID-19 tests to the ' \
         'proportion of households with a symptomatic member provided the best available estimate of the decline in ' \
-        'testing over this period (Figure \\ref{survey_ratio}). ' \
+        'testing over this period (Figure \\ref{cdr_construction}). ' \
         'We define the case detection rate (CDR) as the proportion of all incident SARS-CoV-2 infection episodes ' \
         '(including asymptomatic and undetected episodes) that were captured through the surveillance data we used in calibration.\n\n' \
         'In calibration, we varied the starting case detection rate at the time of the first survey through plausible ranges, ' \

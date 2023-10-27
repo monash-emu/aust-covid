@@ -226,12 +226,12 @@ def get_ifrs(tex_doc: StandardTexDoc) -> dict:
     Returns:
         Values for each IFR parameter by age bracket
     """
-    description = 'Age-specific infection fatality rates (IFRs) were estimated by various groups ' \
+    description = 'Age-specific infection fatality rates (IFRs) have previously been estimated by various groups ' \
         "in unvaccinated populations, including O'Driscoll and colleagues who estimated " \
-        'IFRs using data from 45 countries. These IFRs pertained to the risk of death given infection ' \
+        'IFRs using data from 45 countries \\cite{odriscoll2021}. These IFRs pertained to the risk of death given infection ' \
         'for the wild-type strain of SARS-CoV-2 in unvaccinated populations, and so are unlikely to represent ' \
         'IFRs that would be applicable to the Australian population in 2022 because of vaccine-induced immunity ' \
-        'and differences in severity for the variants we simulated. ' \
+        'and differences in severity in severity between the wild-type variant and Omicron subvariants simulated in this analysis. ' \
         'We therefore considered more recent studies, such as that of Erikstrup and colleagues to be better ' \
         'applicable to our local context, although also with limitations. ' \
         'Danish investigators used the increase in anti-nucleocapsid IgG seroprevalence in blood donors ' \
@@ -328,14 +328,15 @@ def get_ifrs(tex_doc: StandardTexDoc) -> dict:
     fig.add_trace(go.Scatter(x=erikstrup.index, y=erikstrup, name='Erikstrup'))
     fig.add_trace(go.Scatter(x=upper_adjusted.index, y=upper_adjusted, name="Upper adjusted O'Driscoll"))
     fig.add_trace(go.Scatter(x=lower_adjusted.index, y=lower_adjusted, name="Lower adjusted O'Driscoll"))
-    fig.add_trace(go.Scatter(x=combined.index, y=combined, name="Combined Erikstrup, O'Driscoll"))
-    fig.add_trace(go.Scatter(x=final_values.index, y=final_values, name='Combined and interpolated'))
+    fig.add_trace(go.Scatter(x=final_values.index, y=final_values, name='Combined and interpolated', line={'dash': 'dot'}))
     fig.add_trace(go.Scatter(x=model_breakpoint_values.index, y=model_breakpoint_values, name='Values by model breakpoints'))
     fig.update_yaxes(type='log', tickformat='E')
     fig.update_layout(height=400)
     ifr_fig_name = 'ifr_calculation'
-    caption = 'Illustration of the calculation of the base age-specific infection-fatality rates applied in the model. '
-    add_image_to_doc(fig, ifr_fig_name, 'svg', caption, tex_doc, 'Parameters')
+    title = 'Illustration of the calculation of the base age-specific infection-fatality rates applied in the model. '
+    caption = "O'Driscoll and Erikstrup indicate the original data reported in the studies of interest. " \
+        'Subsequent traces indicate the further steps in estimating values for use in the model.'
+    add_image_to_doc(fig, ifr_fig_name, 'svg', title, tex_doc, 'Parameters')
     model_breakpoint_values.index = model_breakpoint_values.index.map(lambda i: f'ifr_{int(i)}')
     return model_breakpoint_values.to_dict()
 

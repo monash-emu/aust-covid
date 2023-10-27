@@ -13,8 +13,9 @@ def add_intro_blurb_to_tex(tex_doc: TexDoc):
         f'Two of the models ({", ".join([analysis for analysis, feature in ANALYSIS_FEATURES.items() if feature["mob"]])}) ' \
         'incorporated additional structure to capture time-varying ' \
         'mobility \\ref{mobility_extension}, while two incorporated additional structure for time-varying ' \
-        'vaccination effects \\ref{vaccination_extension}, such that these additional features are applied factorially ' \
-        'to the core model structure.\n\n' \
+        f'vaccination effects {", ".join([analysis for analysis, feature in ANALYSIS_FEATURES.items() if feature["vacc"]])} \\ref{{vaccination_extension}}, ' \
+        'such that these additional features are applied factorially ' \
+        'to the base model structure (therefore including one model with neither extension).\n\n' \
         'Each of the four alternative modelling approaches were then calibrated to the ' \
         'same target data for the 2022 Australian COVID-19 epidemic (see Section \\ref{targets}). ' \
         'The calibration algorithms were also harmonised to the greatest extent possible (see Section \\ref{calibration_methods}), ' \
