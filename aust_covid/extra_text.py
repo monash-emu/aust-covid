@@ -65,10 +65,10 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
 
 def add_calibration_blurb_to_tex(tex_doc: TexDoc):
     description = "We calibrated the model using the `DE Metropolis Z' method " \
-        'provided in the \\href{https://www.pymc.io/welcome.html}[PyMC] package for Bayesian inference.\n\n' \
+        'provided in the \\href{https://www.pymc.io/welcome.html}{PyMC} package for Bayesian inference.\n\n' \
         'First, we used Latin hypercube sampling to select parameter values from across the ' \
         f'multi-dimensional parameter space. Next, we ran a short optimisation algorithm of {OPTI_DRAWS} draws ' \
-        "using Facebook Research's \\href{https://facebookresearch.github.io/nevergrad/}[nevergrad]" \
+        "using Facebook Research's \\href{https://facebookresearch.github.io/nevergrad/}{nevergrad}" \
         'to move the parameter sets from these dispersed starting positions towards ' \
         'values that were associated with a greater likelihood, ' \
         'but remained substantially dispersed from one-another. ' \

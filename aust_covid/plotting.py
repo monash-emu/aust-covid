@@ -356,7 +356,17 @@ def plot_multi_spaghetti(
     return fig.update_layout(height=600, margin={i: 30 for i in ['t', 'b', 'l', 'r']})
 
 
-def plot_vacc_implementation(df):
+def plot_vacc_implementation(
+    df: pd.DataFrame,
+) -> go.Figure:
+    """Illustrate the process of calculating between stratum transitions.
+
+    Args:
+        df: Augmented vaccination data
+
+    Returns:
+        Plot in three vertical panels
+    """
     fig = make_subplots(3, 1, subplot_titles=['persons vaccinated', 'coverage', 'rates implemented'], vertical_spacing=0.08)
     fig.add_traces(df[['primary full', 'adult booster']].plot().data, rows=1, cols=1)
     fig.add_traces(df[['prop primary full', 'prop adult booster']].plot().data, rows=2, cols=1)
