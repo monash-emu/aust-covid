@@ -1,16 +1,17 @@
-from inputs.constants import RUN_IDS, PRIMARY_ANALYSIS, BURN_IN, OPTI_DRAWS
+from inputs.constants import RUN_IDS, PRIMARY_ANALYSIS, BURN_IN, OPTI_DRAWS, ANALYSIS_FEATURES
 from emutools.tex import TexDoc
 
 
 def add_intro_blurb_to_tex(tex_doc: TexDoc):
     description = 'The following document describes the methods used in our analyses ' \
         'of the 2022 SARS-CoV-2 epidemic in Australia. ' \
-        f'We constructed {len(RUN_IDS)} alternative dynamic models ' \
+        f'We constructed {len(RUN_IDS)} alternative dynamic transmission models ' \
         'based around the same core features. ' \
         f"These are named `{', '.join(RUN_IDS.keys())}' and were all based on the features " \
         'described in Sections \\ref{base_compartmental_structure}, \\ref{population}, ' \
         '\\ref{stratification}, \\ref{reinfection}, \\ref{mixing}. ' \
-        'Two of the models incorporated additional structure to capture time-varying ' \
+        f'Two of the models ({", ".join([analysis for analysis, feature in ANALYSIS_FEATURES.items() if feature["mob"]])}) ' \
+        'incorporated additional structure to capture time-varying ' \
         'mobility \\ref{mobility_extension}, while two incorporated additional structure for time-varying ' \
         'vaccination effects \\ref{vaccination_extension}, such that these additional features are applied factorially ' \
         'to the core model structure.\n\n' \
