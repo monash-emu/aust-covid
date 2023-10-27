@@ -96,9 +96,13 @@ def build_gamma_dens_interval_func(
 def add_image_to_doc(
     fig: Union[MplFig, PlotlyFig], 
     filename: str, 
-    caption: str, 
+    filetype: str,
+    title: str, 
     tex_doc: StandardTexDoc, 
     section: str,
+    subsection: str='',
+    caption: str='',
+    fig_width: float=0.85,
 ):
     """
     Save an figure image to a local directory and include in TeX doc.
@@ -113,11 +117,12 @@ def add_image_to_doc(
     Raises:
         TypeError: If the figure is not one of the two supported formats
     """
-    full_filename = f'{filename}.jpg'
+    full_filename = f'{filename}.{filetype}'
     if isinstance(fig, MplFig):
         fig.savefig(SUPPLEMENT_PATH / full_filename)
     elif isinstance(fig, PlotlyFig):
+        fig.update_layout(margin={'t': 25})
         fig.write_image(SUPPLEMENT_PATH / full_filename)
     else:
         raise TypeError('Figure type not supported')
-    tex_doc.include_figure(caption, filename, section)
+    tex_doc.include_figure(title, filename, filetype, section, subsection=subsection, caption=caption, fig_width=fig_width)

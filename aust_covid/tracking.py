@@ -2,6 +2,7 @@ from jax import numpy as jnp
 import numpy as np
 import pandas as pd
 from datetime import datetime
+from plotly.subplots import make_subplots
 
 from summer2 import CompartmentalModel
 from summer2.functions.time import get_linear_interpolation_function
@@ -36,16 +37,16 @@ def track_incidence(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
 ):
-    description = 'Age group and strain-specific, and overall incidence of SARS-CoV-2 ' \
-        '(including episodes that are never detected) were tracked. ' \
-        'This modelled incident quantity was not used explicitly in the calibration process, ' \
+    description = 'Age group, strain-specific, and overall incidence of SARS-CoV-2 ' \
+        '(including modelled episodes would never have been detected) were tracked. ' \
+        'This incidence was not used explicitly in the calibration process, ' \
         'but tracking this process was necessary for the calculation of several other  ' \
         'model outputs, as described below. ' \
         'The point at which new cases contribute to incidence is taken as ' \
         'the time of symptom onset in those infected persons who do develop symptoms. ' \
         'To account for the observation that infectiousness is often present for ' \
         'a short period prior to the onset of symptoms, ' \
-        'we estimate incidence as the transition from the first to second ' \
+        'we estimated incidence as the transition from the first to second ' \
         'chained sequential infectious compartment.\n'
     tex_doc.add_line(description, 'Outputs', subsection='Notifications')
 
@@ -79,23 +80,25 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
         f'(downloded on the {get_tex_formatted_date(datetime(2023, 6, 12))}). ' \
         'These surveys reported on several indicators, ' \
         'including the proportion of households reporting a household member with symptoms of cold, flu or COVID-19, ' \
-        'and the proportion of households reporting a household member has had a COVID-19 test. ' \
+        'and the proportion of households reporting a household member has had a COVID-19 test (Figure \\ref{survey_results}). ' \
         'We considered that the ratio of the proportion of households reporting having undertaken COVID-19 tests to the ' \
         'proportion of households with a symptomatic member provided the best available estimate of the decline in ' \
-        'testing over this period. ' \
+        'testing over this period (Figure \\ref{survey_ratio}). ' \
         'We define the case detection rate (CDR) as the proportion of all incident SARS-CoV-2 infection episodes ' \
-        '(including asymptomatic and undetected episodes) that are captured through the surveillance data we used in calibration. ' \
+        '(including asymptomatic and undetected episodes) that were captured through the surveillance data we used in calibration.\n\n' \
         'In calibration, we varied the starting case detection rate at the time of the first survey through plausible ranges, ' \
         'which declined thereafter according to the survey estimates described. ' \
         'The relationship between CDR and our calculated ratio of testing in households to symptomatic persons in households ' \
         'was defined by an exponential function to ensure that the CDR remained in the domain [0, 1], ' \
-        'dropping to zero when household testing reached zero and approaching one as household testing approaches very high levels. ' \
+        'dropping to zero when household testing reached zero and approaching one were household testing to approach very high levels. ' \
         "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
-        "$s = 1 - e^{-p \\times r}$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. \n"
+        "$s = 1 - e^{-p \\times r}$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. " \
+        'This approach led to an estimated fall in the case detection ratio by a factor of two over the first half of 2022. ' \
+        'This is consistent with our intuition and with epidemiological modelling from New Zealand over a similar time period \\cite{watson2023}. '
     tex_doc.add_line(description, 'Outputs', 'Notifications')
 
     hh_impact = load_household_impacts_data()
-    hh_test_ratio = hh_impact['Proportion testing'] / hh_impact['Proportion symptomatic']
+    hh_test_ratio = hh_impact['testing'] / hh_impact['symptomatic']
 
     exp_param = get_param_to_exp_plateau(hh_test_ratio[0], Parameter('start_cdr'))
     cdr_values = get_cdr_values(exp_param, hh_test_ratio.to_numpy())
@@ -108,13 +111,17 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
     model.request_function_output('notifications_ma', Function(get_rolling_reduction(jnp.mean, TARGETS_AVERAGE_WINDOW), [DerivedOutput('notifications')]))
 
     survey_fig = hh_impact.plot(labels={'value': 'percentage', 'index': ''}, markers=True)
-    caption = 'Raw survey values from Household Impacts of COVID-19 surveys.'
-    add_image_to_doc(survey_fig, 'survey_results', caption, tex_doc, 'Outputs')
-    
     ratio_fig = hh_test_ratio.plot(labels={'value': 'ratio', 'index': ''}, markers=True)
-    ratio_fig.update_layout(showlegend=False)
-    caption = 'Ratio of proportion of households testing to proportion reporting symptoms.'
-    add_image_to_doc(ratio_fig, 'survey_ratio', caption, tex_doc, 'Outputs')
+    caption = 'Raw survey values from Household Impacts of COVID-19 surveys (upper panel), ' \
+        'with proportion of households reporting symptoms (blue line), ' \
+        'proportion of households positive for COVID-19 (green line) ' \
+        'and proportion of hoseholds reporting testing for COVID-19 (red line). ' \
+        'Ratio of testing to reporting symptoms (blue line, lower panel). '
+    fig = make_subplots(2, 1)
+    fig.add_traces(survey_fig.data, rows=1, cols=1)
+    fig.add_traces(ratio_fig.data, rows=2, cols=1)
+    fig.update_layout(showlegend=False, height=600)
+    add_image_to_doc(fig, 'cdr_construction', 'svg', 'Construction of CDR function.', tex_doc, 'Outputs', caption=caption)
 
 
 def track_deaths(
@@ -123,16 +130,16 @@ def track_deaths(
 ) -> str:
     ba2_adj_name = 'ba2_rel_ifr'
     ba2_adj_str = ba2_adj_name.replace('_', '\_')
-    description = 'Calculation of the COVID-19-specific deaths follows an analogous ' \
+    description = 'Calculation of the COVID-19-specific deaths followed an analogous ' \
         'approach to that described for notifications, ' \
         'except that there is no assumption of partial observation and ' \
-        'age-specific infection fatality rates are used. ' \
-        'For each age group, we first multiply the age-specific incidence ' \
+        'age-specific infection fatality rates are used (as described in Section \\ref{infection_fatality_rates}). ' \
+        'For each age group, we first multiplied the age-specific incidence ' \
         'by the infection fatality rate for that group, ' \
-        'and then adjust this rate according to the relative infectiousness of the BA.2 ' \
-        f"subvariant in the case of this strain with the `{ba2_adj_str}' parameter. " \
-        'Next, we convolve this rate with a gamma distribution ' \
-        'to obtain the daily rate of deaths for each age group, and lastly sum over age groups. \n'
+        'and then adjusted this rate according to the relative infectiousness of the BA.2 ' \
+        f"subvariant in the case of this strain (with the `{ba2_adj_str}' parameter). " \
+        'Next, we convolved this rate with a gamma distribution for the delay from symptom onset to death' \
+        'to obtain the daily rate of deaths for each age group, and lastly summed over age groups.'
     tex_doc.add_line(description, 'Outputs', subsection='Deaths')
     
     agegroups = model.stratifications['agegroup'].strata
@@ -163,7 +170,7 @@ def track_adult_seroprev(
     never_infected_comp = 'susceptible'
     description = 'The proportion of the overall population in any ' \
         f'compartment other than the {never_infected_comp} compartment among those aged {adult_cut_off} years and above ' \
-        "is used to estimate the adult `seropositive' proportion. \n"
+        "was used to estimate the adult `seropositive' proportion."
     tex_doc.add_line(description, 'Outputs', 'Seroprevalence')
 
     seropos_comps = [comp for comp in compartments if comp != 'susceptible']
@@ -180,9 +187,9 @@ def track_strain_prop(
     tex_doc: StandardTexDoc,
 ) -> tuple:
     description = 'Proportional prevalence of each Omicron sub-variant ' \
-        'is tracked as the proportion of the population currently in any of ' \
+        'was tracked as the proportion of the population currently in any of ' \
         'the infectious compartments that is infected with the modelled strain of interest ' \
-        '(noting that simultaneous infection with multiple strains is not permitted). \n'
+        '(noting that simultaneous infection with multiple strains is not permitted).'
     tex_doc.add_line(description, 'Outputs', subsection='Sub-variants')
 
     model.request_output_for_compartments('prev', infectious_compartments, save_results=False)
@@ -220,11 +227,11 @@ def track_reproduction_number(
     infectious_compartments: list,
     tex_doc: StandardTexDoc,
 ):
-    description = 'The time-varying effective reproduction number is calculated as ' \
+    description = 'The time-varying effective reproduction number was calculated as ' \
         'the rate of all infections (including both first infection and reinfection) ' \
         'divided by the prevalence of infectious persons (i.e. in the infectious compartments) ' \
         'multiplied by the duration of the infectious period. ' \
-        'This quantity was tracked for illustrative purposes, but did not contribute to calibration. \n'
+        'This quantity was tracked for illustrative purposes, but did not contribute to any modelled processes or to likelihood calculation.'
     tex_doc.add_line(description, 'Outputs', subsection='Reproduction Number')
 
     model.request_output_for_compartments('n_infectious', infectious_compartments)

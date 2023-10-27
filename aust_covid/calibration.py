@@ -3,31 +3,13 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 from jax import numpy as jnp
-from plotly.subplots import make_subplots
 
 import estival.priors as esp
 import estival.targets as est
 
 from emutools.tex import TexDoc, get_tex_formatted_date
-from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, RUN_IDS, RUNS_PATH
-from aust_covid.inputs import load_calibration_targets, load_who_data, load_serosurvey_data
-from emutools.plotting import get_row_col_for_subplots
-
-
-def get_target_from_name(
-    targets: list, 
-    name: str,
-) -> pd.Series:
-    """Get the data for a specific target from a set of targets from its name.
-
-    Args:
-        targets: All the targets
-        name: The name of the desired target
-
-    Returns:
-        Single target to identify
-    """
-    return next((t.data for t in targets if t.name == name))
+from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
+from aust_covid.inputs import load_case_targets, load_who_death_data, load_serosurvey_data
 
 
 def get_all_priors() -> list:
@@ -78,7 +60,7 @@ def get_priors(vacc_sens: bool, abbreviations: pd.Series, tex_doc: TexDoc) -> li
         'is not included in the priors implemented; whereas in the case of the ' \
         f'two analyses not involving time-varying immunity, the ``{default_omit_str}" parameter ' \
         'is omitted. '
-    tex_doc.add_line(description, 'Priors')
+    tex_doc.add_line(description, 'Calibration methods', subsection='Priors')
 
     all_priors = get_all_priors()
     leave_out_prior = vacc_omit_prior if vacc_sens else default_omit_prior
@@ -105,8 +87,8 @@ def get_targets(tex_doc: TexDoc) -> list:
         'and summarised in Figure \\ref{target_fig}. '
     tex_doc.add_line(description, 'Targets')
 
-    case_targets = load_calibration_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
-    death_targets = load_who_data(tex_doc)[TARGETS_START_DATE:].rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
+    case_targets = load_case_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
+    death_targets = load_who_death_data(tex_doc)[TARGETS_START_DATE:].rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     serosurvey_targets = load_serosurvey_data(tex_doc)
 
     description = f'The composite daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
@@ -135,43 +117,7 @@ def get_targets(tex_doc: TexDoc) -> list:
     targets = [
         est.NegativeBinomialTarget('notifications_ma', case_targets, dispersion_param=esp.UniformPrior('notifications_ma_dispersion', (10.0, 140.0))),
         est.NegativeBinomialTarget('deaths_ma', death_targets, dispersion_param=esp.UniformPrior('deaths_ma_dispersion', (60.0, 200.0))),
-        est.BinomialTarget('adult_seropos_prop', serosurvey_targets, pd.Series([20] * 4, index=serosurvey_targets.index)),
+        est.BinomialTarget('adult_seropos_prop', serosurvey_targets, pd.Series([20] * 3, index=serosurvey_targets.index)),
     ]
     targets.append(est.CustomTarget('seropos_ceiling', pd.Series([seropos_ceiling], index=[ceiling_date]), truncation_ceiling, model_key='adult_seropos_prop'))
     return targets
-
-
-def get_outcome_df_by_chain() -> Dict[str, pd.DataFrame]:
-    """Compile dictionary of dataframes for each analysis type,
-    each with column multi-index for likelihood component
-    and chain number.
-
-    Returns:
-        Compiled data structure
-    """
-    like_dfs = {}
-    for analysis, run_id in RUN_IDS.items():
-        like_df = pd.read_hdf(RUNS_PATH / run_id / 'output/results.hdf', 'likelihood')
-        like_df['chain'] = like_df.index.get_level_values(0)
-        like_df['index'] = like_df.index.get_level_values(1)
-        like_dfs[analysis] = like_df.pivot(index='index', columns=['chain'])
-    return like_dfs
-
-
-def plot_indicator_progression(like_dfs, measure):
-    """Plot posterior or one of its components by run for each analysis.
-
-    Args:
-        like_dfs: The output of get_outcome_df_by_chain above
-        measure: The metric (posterior component) to make the comparison on
-
-    Returns:
-        _description_
-    """
-    n_cols = 2
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True)
-    for i, analysis in enumerate(RUN_IDS.keys()):
-        row, col = get_row_col_for_subplots(i, n_cols)
-        fig.add_traces(like_dfs[analysis][measure].plot().data, rows=row, cols=col)
-    fig.update_layout(height=1000, title={'text': measure})
-    return fig

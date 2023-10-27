@@ -31,10 +31,10 @@ def get_non_wa_mob_averages(
     """
     description = 'Values for Western Australia were extracted separately from the pooled data, ' \
         'while the data for the remaining states were linked to the same population size ' \
-        'data as used to set the compartment sizes for the model. ' \
+        'data as used to set the compartment sizes for the model (Figure \\ref{input_population}). ' \
         'These population values were then used as weights to calculate weighted national averages ' \
         "for population mobility by each Google `location' " \
-        f'(being {", ".join([i.replace("_percent_change_from_baseline", "").replace("_", " ") for i in mob_locs])}). '
+        f'({", ".join([i.replace("_percent_change_from_baseline", "").replace("_", " ") for i in mob_locs])}).\n\n'
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
     non_wa_data = state_data.copy().loc[state_data['sub_region_1'] != 'Western Australia']
 
@@ -84,8 +84,8 @@ def map_mobility_locations(
     Returns:
         Mobility functions for use in the model
     """
-    description = 'Next, we used a mapping dictionary to map from the reported ' \
-        "`locations' to the contact locations of the model's mixing matrix. "
+    description = 'Next, we used the mapping algorithm displayed in Table \\ref{mob_map} to map ' \
+        "from Google's reported `locations' to the contact locations of the model's mixing matrix. "
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
 
     patch_data = {
@@ -131,7 +131,8 @@ def get_processed_mobility_data(
 
     description = 'Last, we squared the relative variations in mobility to account for ' \
         'the effect of reductions in visits to specific locations for both the infector ' \
-        'and the infectee of the modelled social contacts. '
+        'and the infectee of the modelled social contacts. ' \
+        'These sequentially processed functions of time are illustrated in Figure \\ref{processed_mobility}. '
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
     squared_mob = smoothed_mob ** 2.0
 

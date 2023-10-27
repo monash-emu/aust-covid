@@ -19,6 +19,40 @@ def get_tex_formatted_date(date):
     return f'{date_of_month}\\textsuperscript{{{text_super}}}{date.strftime(" of %B %Y")}'
 
 
+def remove_underscore_multiindexcol(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Remove underscores from multi-index columns
+    (particularly because TeX so often crashes with underscores in floats, such as tables).
+
+    Args:
+        df: Dataframe to modify
+
+    Returns:
+        Revised dataframe
+    """
+    for l in range(df.columns.nlevels):
+        new_index = df.columns.levels[l].str.replace('_', ' ')
+        df.columns = df.columns.set_levels(new_index, level=l)
+    return df
+
+
+def get_tex_longtable(table, col_format_str, caption_str, label_str):
+    start_str = '\\begin{longtable}\n'
+    table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
+    table_text = table_text.replace('\\begin{tabular}', '')
+    table_text = table_text.replace('\\end{tabular}', '')
+    end_str = '\\end{longtable}'
+    return start_str + table_text + caption_str + label_str + end_str
+
+
+def get_tex_table(table, col_format_str, caption_str, label_str):
+    start_str = '\\begin{table}\n'
+    table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
+    end_str = '\\end{table}'
+    return start_str + table_text + caption_str + label_str + end_str
+
+
 class TexDoc(ABC):
     def __init__(self):
         pass
@@ -40,7 +74,7 @@ class TexDoc(ABC):
         pass
 
     @abstractmethod
-    def include_figure(self, caption: str, filename: str, section: str, subsection: str=''):
+    def include_figure(self, title: str, filename: str, filetype: str, section: str, subsection: str='', caption: str=''):
         pass
 
     @abstractmethod
@@ -69,7 +103,7 @@ class DummyTexDoc(TexDoc):
     def emit_doc(self, section_order: list=[]) -> str:
         pass
 
-    def include_figure(self, caption: str, filename: str, section: str, subsection: str=''):
+    def include_figure(self, title: str, filename: str, filetype: str, section: str, subsection: str='', caption: str='', fig_width: float=1.0):
         pass
 
     def include_table(self, table: pd.DataFrame, section: str, subsection: str='', col_splits=None, table_width=14.0, longtable=False):
@@ -89,6 +123,7 @@ class ConcreteTexDoc:
         doc_name: str, 
         title: str, 
         bib_filename: str,
+        table_of_contents: bool=False,
     ):
         """
         Object that can do the basic collation and emitting of a TeX-formatted
@@ -107,6 +142,7 @@ class ConcreteTexDoc:
         self.title = title
         self.prepared = False
         self.standard_sections = ['preamble', 'endings']
+        self.table_of_contents = table_of_contents
 
     def add_line(
         self, 
@@ -186,10 +222,13 @@ class ConcreteTexDoc:
 
     def include_figure(
         self, 
-        caption: str, 
+        title: str, 
         filename: str, 
+        filetype: str,
         section: str, 
         subsection: str='',
+        caption: str='',
+        fig_width: float=0.85,
     ):
         """
         Add a figure with standard formatting to the document.
@@ -200,15 +239,26 @@ class ConcreteTexDoc:
             section: The heading of the section for the figure to go into
             subsection: The heading of the subsection for the figure to go into
         """
+        if filetype == 'jpg':
+            command = 'includegraphics'
+        elif filetype == 'svg':
+            command = 'includesvg'
+        else:
+            raise ValueError('File type for figure not supported yet')
         self.add_line('\\begin{figure}', section, subsection)
-        self.add_line(f'\\caption{{{caption}}}', section, subsection)
-        self.add_line(f'\\includegraphics[width=\\textwidth]{{{filename}.jpg}}', section, subsection)
+        self.add_line(f'\\caption{{\\textbf{{{title}}} {caption}}}', section, subsection)
+        self.add_line('\\begin{adjustbox}{center, max width=\paperwidth}', section, subsection)
+        command_str = f'\\{command}[width={str(round(fig_width, 2))}\\paperwidth]{{{filename}.{filetype}}}'
+        self.add_line(command_str, section, subsection)
+        self.add_line('\\end{adjustbox}', section, subsection)
         self.add_line(f'\\label{{{filename}}}', section, subsection)
-        self.add_line('\\end{figure}', section, subsection)
+        self.add_line('\\end{figure}\n', section, subsection)
 
     def include_table(
         self, 
         table: pd.DataFrame, 
+        name: str,
+        title: str,
         section: str, 
         subsection: str='', 
         col_splits=None, 
@@ -220,9 +270,11 @@ class ConcreteTexDoc:
 
         Args:
             table: The table to be written
+            name: Short name of table for label
+            title: Title for table
             section: The heading of the section for the figure to go into
             subsection: The heading of the subsection for the figure to go into
-            widths: Optional user request for columns widths if not evenly distributed
+            col_splits: Optional user request for columns widths if not evenly distributed
             table_width: Overall table width if widths not requested
             longtable: Whether to use the longtable module to span pages
         """
@@ -234,15 +286,11 @@ class ConcreteTexDoc:
         else:
             splits = col_splits
         col_widths = [w * table_width for w in splits]
-        col_format_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
-        table_text = table.style.to_latex(
-            column_format=col_format_str,
-            hrules=True,
-        )
-        table_text = table_text.replace('{tabular}', '{longtable}') if longtable else table_text
-        self.add_line('\\begin{center}', section, subsection=subsection)
-        self.add_line(table_text, section, subsection=subsection)
-        self.add_line('\end{center}', section, subsection=subsection)
+        col_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
+        label_str = f'\label{{{name}}}\n'
+        caption_str = f'\caption{{\\textbf{{{title}}}}}\n'
+        table_line = get_tex_longtable(table, col_str, caption_str, label_str) if longtable else get_tex_table(table, col_str, caption_str, label_str)
+        self.add_line(table_line, section, subsection=subsection)
 
     def save_content(self):
         with open(self.path / f'{self.doc_name}.yml', 'w') as file:
@@ -269,9 +317,12 @@ class StandardTexDoc(ConcreteTexDoc):
             'longtable',
             'booktabs',
             'array',
+            'svg',
+            'adjustbox',
         ]
         for package in standard_packages:
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')
+        self.add_line('\DeclareUnicodeCharacter{2212}{-}', 'preamble')  # SVG compilation often crashes without this
 
         self.add_line(r'\usepackage[a4paper, total={15cm, 20cm}]{geometry}', 'preamble')
         self.add_line(r'\usepackage[labelfont=bf,it]{caption}', 'preamble')
@@ -280,7 +331,8 @@ class StandardTexDoc(ConcreteTexDoc):
         self.add_line('\\begin{document}', 'preamble')
         self.add_line('\date{}', 'preamble')
         self.add_line('\maketitle', 'preamble')
-        
+        if self.table_of_contents:
+            self.add_line('\\tableofcontents', 'preamble')        
         self.add_line('\\printbibliography', 'endings')
         self.add_line('\\end{document}', 'endings')
             

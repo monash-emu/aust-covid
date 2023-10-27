@@ -164,6 +164,14 @@ def add_derived_data_to_vacc(
     return df, lagged_df
 
 
+def get_full_vacc_props(df, masks):
+    full_prop_df = pd.DataFrame()
+    for full_vacc_mask in masks:
+        age_str = full_vacc_mask.replace('Age group - ', '').replace('- Number of people fully vaccinated', '').replace(' ', '')
+        full_prop_df[full_vacc_mask] = df[full_vacc_mask] / df[f'Age group - {age_str} - Population']
+    return full_prop_df
+
+
 def piecewise_constant(x, breakpoints, values):
     return values[sum(x >= breakpoints)]
 

@@ -20,6 +20,19 @@ from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_P
 from emutools.plotting import get_row_col_for_subplots
 
 
+def get_target_from_name(targets: list, name: str) -> pd.Series:
+    """Get the data for a specific target from a set of targets from its name.
+
+    Args:
+        targets: All the targets
+        name: The name of the desired target
+
+    Returns:
+        Single target to identify
+    """
+    return next((t.data for t in targets if t.name == name))
+
+
 def round_sigfig(
     value: float, 
     sig_figs: int
@@ -127,11 +140,12 @@ def plot_param_progression(
     Returns:
         Formatted figure object created from arviz plotting command
     """
-    # mpl.rcParams['axes.titlesize'] = 25
     labeller = MapLabeller(var_name_map=descriptions)
     trace_plot = az.plot_trace(idata, figsize=(16, 21), compact=False, legend=False, labeller=labeller, var_names=request_vars)
     trace_fig = trace_plot[0, 0].figure
+    trace_fig.set_figheight(15)
     trace_fig.tight_layout()
+    plt.close()
     return trace_fig
 
 
@@ -159,13 +173,14 @@ def plot_posterior_comparison(
         labeller=MapLabeller(var_name_map=display_names), 
         point_estimate=None,
         hdi_prob=dens_interval_req,
-    );
+    )
     req_priors = [p for p in priors if p.name in request_vars]
     for i_ax, ax in enumerate(comparison_plot.ravel()[:len(request_vars)]):
         ax_limits = ax.get_xlim()
         x_vals = np.linspace(ax_limits[0], ax_limits[1], 100)
         y_vals = req_priors[i_ax].pdf(x_vals)
         ax.fill_between(x_vals, y_vals, color='k', alpha=0.2, linewidth=2)
+    plt.close()
     return comparison_plot[0, 0].figure
 
 
@@ -291,7 +306,7 @@ def plot_priors(
         row = int(np.floor(p / n_cols)) + 1
         col = p % n_cols + 1
         fig.add_trace(go.Scatter(x=x_values, y=y_values, fill='tozeroy'), row=row, col=col)
-    fig.update_layout(height=1000, showlegend=False)
+    fig.update_layout(height=800, showlegend=False)
     return fig
 
 
@@ -314,8 +329,8 @@ def plot_spaghetti(
         The spaghetti plot figure object
     """
     rows = int(np.ceil(len(indicators) / n_cols))
-
-    fig = make_subplots(rows=rows, cols=n_cols, subplot_titles=indicators)
+    titles = [i.replace('_', ' ') for i in indicators]
+    fig = make_subplots(rows=rows, cols=n_cols, subplot_titles=titles, horizontal_spacing=0.04, vertical_spacing=0.08)
     for i, ind in enumerate(indicators):
         row = int(np.floor(i / n_cols)) + 1
         col = i % n_cols + 1
@@ -327,13 +342,13 @@ def plot_spaghetti(
         fig.add_traces(px.line(ind_spagh).data, rows=row, cols=col)
 
         # Targets
-        target = next((t.data for t in targets if t.name == ind), None)
-        if target is not None:
+        if ind != 'reproduction_number':
+            target = get_target_from_name(targets, ind)
             target = target[(PLOT_START_DATE < target.index) & (target.index < ANALYSIS_END_DATE)]
             target_marker_config = dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey'))
             lines = go.Scatter(x=target.index, y=target, marker=target_marker_config, name='targets', mode='markers')
             fig.add_trace(lines, row=row, col=col)
-    fig.update_layout(showlegend=False, height=400 * rows)
+    fig.update_layout(height=600, margin={i: 30 for i in ['t', 'b', 'l', 'r']})
     return fig
 
 
@@ -365,10 +380,31 @@ def plot_param_hover_spaghetti(
     return fig
 
 
-def plot_output_ranges(quantile_outputs, targets, outputs, analysis, quantiles, max_alpha=0.7):
+def plot_output_ranges(
+    quantile_outputs: Dict[str, pd.DataFrame], 
+    targets: list, 
+    outputs: List[str], 
+    analysis: str, 
+    quantiles: List[float], 
+    max_alpha: float=0.7
+) -> go.Figure:
+    """Plot the credible intervals with subplots for each output,
+    for a single run of interest.
+
+    Args:
+        quantile_outputs: Dataframes containing derived outputs of interest for each analysis type
+        targets: Calibration targets
+        output: User-requested output of interest
+        analysis: The key for the analysis type
+        quantiles: User-requested quantiles for the patches to be plotted over
+        max_alpha: Maximum alpha value to use in patches
+
+    Returns:
+        The interactive figure
+    """
     n_cols = 2
     target_names = [t.name for t in targets]
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=[o.replace('_ma', '').replace('_', ' ') for o in outputs])
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=[o.replace('_ma', '').replace('_', ' ') for o in outputs], vertical_spacing=0.1)
     analysis_data = quantile_outputs[analysis]
     for i, output in enumerate(outputs):
         row, col = get_row_col_for_subplots(i, n_cols)
@@ -379,23 +415,38 @@ def plot_output_ranges(quantile_outputs, targets, outputs, analysis, quantiles, 
             fig.add_traces(go.Scatter(x=data.index, y=data[quant], fill='tonexty', fillcolor=fill_colour, line={'width': 0}, name=quant), rows=row, cols=col)
         fig.add_traces(go.Scatter(x=data.index, y=data[0.5], line={'color': 'black'}, name='median'), rows=row, cols=col)
         if output in target_names:
-            target = next((t for t in targets if t.name == output))
+            target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
-            fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
-    fig.update_layout(height=700)
+            fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
-    return fig
+    fig.update_layout(yaxis4={'range': [0.0, 2.5]})
+    return fig.update_layout(height=500, showlegend=False)
 
 
-def plot_output_ranges_by_analysis(quantile_outputs, targets, output, analyses, quantiles, max_alpha=0.7):
-    """
-    Plot the credible intervals with subplots for each analysis type,
+def plot_output_ranges_by_analysis(
+    quantile_outputs: Dict[str, pd.DataFrame], 
+    targets: list, 
+    output: str, 
+    quantiles: List[float], 
+    max_alpha: float=0.7
+) -> go.Figure:
+    """Plot the credible intervals with subplots for each analysis type,
     for a single output of interest.
+
+    Args:
+        quantile_outputs: Dataframes containing derived outputs of interest for each analysis type
+        targets: Calibration targets
+        output: User-requested output of interest
+        quantiles: User-requested quantiles for the patches to be plotted over
+        max_alpha: Maximum alpha value to use in patches
+
+    Returns:
+        The interactive figure
     """
     n_cols = 2
     target_names = [t.name for t in targets]
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(analyses))
-    for a, analysis in enumerate(analyses):
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True, vertical_spacing=0.1)
+    for a, analysis in enumerate(RUN_IDS):
         row, col = get_row_col_for_subplots(a, n_cols)
         analysis_data = quantile_outputs[analysis]
         data = analysis_data[output]
@@ -405,12 +456,11 @@ def plot_output_ranges_by_analysis(quantile_outputs, targets, output, analyses, 
             fig.add_traces(go.Scatter(x=data.index, y=data[quant], fill='tonexty', fillcolor=fill_colour, line={'width': 0}, name=quant), rows=row, cols=col)
         fig.add_traces(go.Scatter(x=data.index, y=data[0.5], line={'color': 'black'}, name='median'), rows=row, cols=col)
         if output in target_names:
-            target = next((t for t in targets if t.name == output))
+            target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
-            fig.add_traces(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
-    fig.update_layout(height=700, title=output)
+            fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
-    return fig
+    return fig.update_layout(height=500, showlegend=False)
 
 
 def get_like_components(
@@ -435,7 +485,9 @@ def get_like_components(
 def plot_like_components_by_analysis(
     like_outputs: Dict[str, pd.DataFrame], 
     plot_type: str, 
-    clips: Dict[str, float]={}
+    clips: Dict[str, float]={},
+    alpha: float=0.2,
+    linewidth: float=1.0,
 ) -> plt.figure:
     """Use seaborn plotting functions to show likelihood components from various runs.
 
@@ -453,7 +505,7 @@ def plot_like_components_by_analysis(
     legend_plot_types = ['kdeplot', 'histplot']
     for m, comp in enumerate(like_outputs.keys()):
         clip = (clips[comp], 0.0) if clips else None
-        kwargs = {'common_norm': False, 'clip': clip, 'shade': True} if plot_type == 'kdeplot' else {}        
+        kwargs = {'common_norm': False, 'clip': clip, 'fill': True, 'alpha': alpha, 'linewidth': linewidth} if plot_type == 'kdeplot' else {}        
         ax = axes[m]
         plotter(like_outputs[comp].loc[:, BURN_IN:, :], ax=ax, **kwargs)
         subtitle = comp.replace('log', '').replace('ll_', '').replace('_ma', '').replace('_', ' ')
@@ -464,3 +516,20 @@ def plot_like_components_by_analysis(
             ax.legend_.set_visible(False)
     fig.tight_layout()
     return fig
+
+
+def get_outcome_df_by_chain() -> Dict[str, pd.DataFrame]:
+    """Compile dictionary of dataframes for each analysis type,
+    each with column multi-index for likelihood component
+    and chain number.
+
+    Returns:
+        Compiled data structure
+    """
+    like_dfs = {}
+    for analysis, run_id in RUN_IDS.items():
+        like_df = pd.read_hdf(RUNS_PATH / run_id / 'output/results.hdf', 'likelihood')
+        like_df['chain'] = like_df.index.get_level_values(0)
+        like_df['index'] = like_df.index.get_level_values(1)
+        like_dfs[analysis] = like_df.pivot(index='index', columns=['chain'])
+    return like_dfs
