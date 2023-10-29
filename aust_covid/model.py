@@ -34,6 +34,7 @@ REOPEN_PARAM_STR = 'wa_reopen_period'
 
 def build_model(
     tex_doc: StandardTexDoc,
+    abbreviations: pd.Series,
     mobility_sens: bool=False,
     vacc_sens: bool=False,
 ):
@@ -81,11 +82,11 @@ def build_model(
     # Other stratifications and reinfection
     strain_strat = get_strain_stratification(compartments, tex_doc)
     aust_model.stratify_with(strain_strat)
-    seed_vocs(aust_model, latent_compartments, tex_doc)
+    seed_vocs(aust_model, latent_compartments, tex_doc, abbreviations)
 
     add_reinfection(aust_model, latent_compartments, tex_doc)
 
-    spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, wa_reopen_func)
+    spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, abbreviations, wa_reopen_func)
     aust_model.stratify_with(spatial_strat)
 
     if vacc_sens:
@@ -128,7 +129,7 @@ def build_model(
             )
 
     else:
-        imm_strat = get_default_imm_strat(compartments, tex_doc)
+        imm_strat = get_default_imm_strat(compartments, tex_doc, abbreviations)
         aust_model.stratify_with(imm_strat)
 
     # Outputs
@@ -389,16 +390,16 @@ def get_strain_stratification(
 def get_default_imm_strat(
     compartments: list, 
     tex_doc: StandardTexDoc,
+    abbreviations: pd.Series,
 ) -> Stratification:
     imm_strata = ['imm', 'nonimm']
     protect_param = 'imm_infect_protect'
-    protect_param_str = protect_param.replace('_', '\_')
     description = 'All (multiply stratified) compartments introduced above were further ' \
         f'stratified into {len(imm_strata)} strata with differing levels of susceptibility to infection ' \
         'in the two analyses without extension for vaccination. ' \
         'For these two analyses, a calibrated parameter was used to represent ' \
         'the proportion of the population with immunological protection against infection. ' \
-        f'A second calibrated parameter ({protect_param_str}) was then used ' \
+        f'A second calibrated parameter ({abbreviations[protect_param]}) was then used ' \
         'to quantify the relative reduction in the rate of ' \
         'infection and reinfection for those in the stratum with reduced susceptibility. ' \
         'This approach was adopted because some population heterogeneity in susceptibility ' \
@@ -432,22 +433,21 @@ def seed_vocs(
     model: CompartmentalModel,
     latent_compartments: list,
     tex_doc: StandardTexDoc,
+    abbreviations: pd.Series,
 ) -> str:
     strains = model.stratifications['strain'].strata
     strains_str = [s.replace('ba', 'BA.') for s in strains]
     seed_comp = latent_compartments[0]
     seed_comp_str = seed_comp.replace('_', '\_')
     seed_duration = 'seed_duration'
-    seed_duration_str = seed_duration.replace('_', '\_')
     seed_rate = 'seed_rate'
-    seed_rate_str = seed_rate.replace('_', '\_')
     description = 'In Australia, three sequential but overlapping epidemic waves were observed, ' \
         f'which were attributable to the subvariants: {", ".join(strains_str)}' \
         f'Each strain (including the starting {strains_str[0]} strain) was seeded through ' \
         'a triangular step function that introduces new infectious ' \
         f'persons into the {seed_comp_str} compartment over a fixed seeding duration defined by a single ' \
-        f'variable {seed_duration_str} parameter (i.e. applied to all subvariants) ' \
-        f'at a peak rate defined by a single {seed_rate_str} parameter ' \
+        f'variable {abbreviations[seed_duration]} parameter (i.e. applied to all subvariants) ' \
+        f'at a peak rate defined by a single {abbreviations[seed_rate]} parameter ' \
         '(also applied to all subvariants). ' \
         'The time of first emergence of each strain into the system was defined by ' \
         'a separate emergence time parameter for each modelled subvariant strain. ' \
@@ -518,10 +518,10 @@ def get_spatial_stratification(
     compartments: list, 
     model_pops: pd.DataFrame, 
     tex_doc: StandardTexDoc,
+    abbreviations: pd.Series,
     reopen_func: Function,
 ) -> Stratification:
     strata = model_pops.columns
-    reopen_str = 'wa_reopen_period'.replace('_', '\_')
     description = 'All model compartments previously described were further ' \
         f"stratified into strata to represent Western Australia ({strata[0].upper()}) and `{strata[1]}' " \
         'to represent the remaining major jurisdictions of Australia. ' \
@@ -530,7 +530,7 @@ def get_spatial_stratification(
         f'To achieve this effect, transmission in {strata[0].upper()} was initially set to zero, ' \
         f'and subsquently scaled up to being equal to that of the {strata[1]} ' \
         f'jurisdictions of Australia over a period that governed by a calibrated ' \
-        f"parameter (`{reopen_str}'). "
+        f"parameter (`{abbreviations['wa_reopen_period']}'). "
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
     spatial_strat = Stratification('states', model_pops.columns, compartments)
