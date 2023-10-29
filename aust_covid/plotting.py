@@ -321,15 +321,17 @@ def plot_targets(targets, for_plotly: bool=True):
     if for_plotly:
         fig.add_trace(go.Scatter(x=combined_data.index, y=combined_data, name='combined cases'), row=1, col=1)
         fig.add_trace(go.Scatter(x=serosurvey_targets.index, y=serosurvey_targets, name='serosurvey target'), row=2, col=2)
-    fig.add_trace(go.Scatter(x=national_data.index, y=national_data, name='national cases'), row=1, col=1)
+    thin_line = {'width': 0.8}
+    fig.add_trace(go.Scatter(x=national_data.index, y=national_data, name='national cases', line=thin_line), row=1, col=1)
     owid_data = load_owid_case_data(dummy_doc)
-    fig.add_trace(go.Scatter(x=owid_data.index, y=owid_data, name='owid cases'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=owid_data.index, y=owid_data, name='owid cases', line=thin_line), row=1, col=1)
     case_targets = get_target_from_name(targets, 'notifications_ma')
     fig.add_trace(go.Scatter(x=case_targets.index, y=case_targets, name='final case target (smoothed)'), row=1, col=1)
+    thin_line = {'width': 1.2}
     death_data = load_who_death_data(dummy_doc)
-    fig.add_trace(go.Scatter(x=death_data.index, y=death_data, name='who deaths'), row=2, col=1)
+    fig.add_trace(go.Scatter(x=death_data.index, y=death_data, name='who deaths', line=thin_line), row=2, col=1)
     death_targets = get_target_from_name(targets, 'deaths_ma')
-    fig.add_trace(go.Scatter(x=death_targets.index, y=death_targets, name='death target (smoothed)'), row=2, col=1)
+    fig.add_trace(go.Scatter(x=death_targets.index, y=death_targets, name='death target (smoothed)', line=thin_line), row=2, col=1)
     serosurvey_data = load_serosurvey_data(dummy_doc)
     fig.add_trace(go.Scatter(x=serosurvey_data.index, y=serosurvey_data, name='serosurvey data'), row=2, col=2)
     serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')

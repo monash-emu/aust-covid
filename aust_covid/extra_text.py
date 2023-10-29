@@ -39,8 +39,11 @@ def add_model_structure_blurb_to_tex(tex_doc: TexDoc):
 
 
 def add_parameters_blurb_to_tex(tex_doc: TexDoc):
-    description = 'All model parameters, including those used in the calibration algorithm ' \
-        'are presented in Table \\ref{params}. ' \
+    description = 'All epidemiologial parameters, including those used in the calibration algorithm ' \
+        'are presented in Table \\ref{params}. In addition to these epidemiological parameters, ' \
+        'the dispersion parameter for the negative binomial distribution used when calculating ' \
+        'the case time-series and death time-series contributions to the likelihood ' \
+        'were included in our calibration algorithm (See Section \\ref{calibrated_dispersion_parameters}). ' \
         'The approach to estimating the age-specific infection fatality rate for each ' \
         'modelled age group is described in \\ref{infection_fatality_rates}. ' \
         'All epidemiologically significant model parameters were included as priors ' \
@@ -99,7 +102,7 @@ def add_dispersion_blurb_to_tex(tex_doc: TexDoc):
 
 
 def add_mobility_blurb_to_tex(tex_doc: TexDoc):
-    description = 'The two scaling functions developed in the previous were used to adjust ' \
+    description = 'The two scaling functions developed in the previous section were used to adjust ' \
         'rates of contact over time in the two time-varying matrix locations. ' \
         'These were summed with the two static locations to obtain the final matrix. ' \
         'Examples of the final effect of the matrix scaling function on the dynamic ' \

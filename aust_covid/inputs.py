@@ -61,11 +61,14 @@ def load_case_targets(tex_doc: TexDoc) -> tuple:
     Returns:
         Full case targets
     """
-    description = 'Because domestic data were not available for 2021, ' \
+    description = 'Because official Australian Government notification data were unavailable for 2021, ' \
         'and the initial upslope of the epidemic occurred in the last months of this year, ' \
         'the calibration target for cases was constructed ' \
         "from the `Our World in Data' (OWID) data for 2021 " \
-        'concatenated with the Australian Government data for 2022. '
+        'concatenated with the Australian Government data for 2022. ' \
+        'That is, we preferentially used Australian Government data throughout most of our ' \
+        "simulation period of interest, which is extracted from Australia's " \
+        '\\href{https://www.health.gov.au/our-work/nndss}{national surveillance reporting system}. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
     national_data = load_national_case_data(tex_doc)
@@ -85,7 +88,7 @@ def load_who_death_data(tex_doc: StandardTexDoc) -> pd.Series:
         Death targets
     """
     description = 'The daily time series of deaths for Australia was obtained from the ' \
-        "World Heath Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
+        "World Health Organization's \href{https://covid19.who.int/WHO-COVID-19-global-data.csv}" \
         f'{{Coronavirus (COVID-19) Dashboard}}, downloaded on {get_tex_formatted_date(datetime(2023, 7, 18))}. '
     tex_doc.add_line(description, 'Targets', subsection='Deaths')
 
@@ -106,13 +109,19 @@ def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
     Returns:
         Serosurvey targets
     """
-    description = 'We obtained estimates of the seroprevalence of antibodies to ' \
+    description = 'In Australia, all programmatically available vaccines were directed ' \
+        'at the SARS-CoV-2 spike protein, such that nucleocapsid-directed antibodies serve ' \
+        'to indicate past immunological exposore to the virus. ' \
+        'We obtained estimates of the seroprevalence of antibodies to ' \
         'nucleocapsid antigen from Australian blood donors from Kirby Institute serosurveillance reports. ' \
         'Data are available from \href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf}' \
         '{the round 4 serosurvey}, with ' \
         '\href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf}' \
         '{information on assay sensitivity also reported}. ' \
-        f'We lagged these empiric estimates by {int(IMMUNITY_LAG)} days to account for the delay between infection and seroconversion. '
+        f'We lagged these empiric estimates by {int(IMMUNITY_LAG)} days to account for the delay between infection and seroconversion. ' \
+        'Although anti-nucleocapsid antibodies likely wane with time to some extent, ' \
+        'most exposed persons maintain a response for ten months following infection, ' \
+        'which is well within the time period of infection for which we used these estimates \\cite{vanelslande2022}. '
     tex_doc.add_line(description, 'Targets', subsection='Seroprevalence')
 
     data = pd.Series(
@@ -152,6 +161,7 @@ def load_pop_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
     """
     sheet_name = '31010do002_202206.xlsx'
     sheet = sheet_name.replace('_', '\_')
+    start_ageup_band = '75-79'
     description = f'For estimates of the Australian population, data were downloaded ' \
         f'from the Australian Bureau of Statistics website on {get_tex_formatted_date(datetime(2023, 3, 1))} \cite{{abs2022}} ' \
         f"(sheet {sheet}). Minor jurisdictions other than Australia's eight major state and territories " \
@@ -159,14 +169,15 @@ def load_pop_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
         'These much smaller jurisdictions likely contribute little to overall COVID-19 epidemiology ' \
         'and are also unlikely to mix homogeneously with the larger states/territories. ' \
         'The populations of states other than Western Australia (WA) were summed to obtain the population ' \
-        'of the other states, and the population estimates for the age groups from 75 to 79 and up ' \
-        'were summed to obtain the 75 and above estimates (Figure \\ref{input_population}). '
+        "of the second `other states' spatial patch of the model. " \
+        f'The population estimates for all 5-year age brackets from {start_ageup_band} upwards ' \
+        'were summed to obtain the 75 and above age group estimates (Figure \\ref{input_population}). '
     tex_doc.add_line(description, 'Population')
 
     raw_data = load_raw_pop_data(sheet_name)
     other_cols = [col for col in raw_data.columns if col not in ['Western Australia', 'Australia']]
     spatial_pops = pd.DataFrame({'wa': raw_data['Western Australia'], 'other': raw_data[other_cols].sum(axis=1)})
-    model_pop_data = pd.concat([spatial_pops.loc[:'70-74'], pd.DataFrame([spatial_pops.loc['75-79':].sum()])])
+    model_pop_data = pd.concat([spatial_pops.loc[:'70-74'], pd.DataFrame([spatial_pops.loc[start_ageup_band:].sum()])])
     model_pop_data.index = AGE_STRATA
     return model_pop_data
 
@@ -245,7 +256,9 @@ def get_ifrs(tex_doc: StandardTexDoc) -> dict:
         "As expected, the estimates from Erikstrup are consideraly lower than those of O'Driscoll. " \
         'However, there are also several potential differences between the Danish epidemic and that of Australia, ' \
         'most notably that community transmission had been established from much earlier in the pandemic in ' \
-        'Denmark than in Australia. Further, given that these estimates estimate attack rates from blood donors, ' \
+        'Denmark than in Australia, such that the Danish population would have markedly greater natural immunity, '  \
+        'which could provide significant additional protection given the same vaccination status. ' \
+        'Further, given that these estimates estimate attack rates from blood donors, ' \
         'the age ranges covered by this study extend from 17 years to 73 years of age, making it necessary ' \
         'to extrapolate from these estimates to the extremes of age. ' \
         'We approached this extrapolation by identifying broadly equivalent younger and older age groups ' \
@@ -335,7 +348,8 @@ def get_ifrs(tex_doc: StandardTexDoc) -> dict:
     ifr_fig_name = 'ifr_calculation'
     title = 'Illustration of the calculation of the base age-specific infection-fatality rates applied in the model. '
     caption = "O'Driscoll and Erikstrup indicate the original data reported in the studies of interest. " \
-        'Subsequent traces indicate the further steps in estimating values for use in the model.'
+        'Subsequent traces indicate the further steps in estimating values for use in the model, ' \
+        'with the last trace representing the parameter applied according to the lower value of each age bracket. '
     add_image_to_doc(fig, ifr_fig_name, 'svg', title, tex_doc, 'Parameters')
     model_breakpoint_values.index = model_breakpoint_values.index.map(lambda i: f'ifr_{int(i)}')
     return model_breakpoint_values.to_dict()
@@ -353,7 +367,8 @@ def get_raw_state_mobility(tex_doc: StandardTexDoc) -> pd.DataFrame:
     """
     description = 'We undertook an alternative analysis in which estimates of population mobility ' \
         'were used to scale transmission rates.\n\n ' \
-        'Raw estimates of Australian population mobility were obtained from Google, ' \
+        'Raw estimates of Australian population mobility were obtained, ' \
+        '\\href{https://www.google.com/covid19/mobility/}{from Google} ' \
         'with 2021 and 2022 data concatenated together (Figure \\ref{state_mobility}). '
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
 

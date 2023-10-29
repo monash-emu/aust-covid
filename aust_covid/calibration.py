@@ -99,7 +99,7 @@ def get_targets(tex_doc: TexDoc) -> list:
         'The effect of the dispersion parameter on the comparison between modelled and empiric values ' \
         'is illustrated in Figure \\ref{dispersion_examples}.'
     tex_doc.add_line(description, 'Targets', 'Notifications')
-    description = f'The WHO data were also smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
+    description = f'These data were also smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
         'As for case notifications, the comparison distribution used to obtain the likelihood of a given parameter set ' \
         'was negative binomial with calibrated dispersion parameter. '
     tex_doc.add_line(description, 'Targets', 'Deaths')
@@ -110,6 +110,7 @@ def get_targets(tex_doc: TexDoc) -> list:
         'We added a further recovered proportion target to avoid accepting runs with higher likelihood values ' \
         'in which the acceptable fit to data was a result of an implausibly high initial epidemic wave ' \
         'that occurred prior to the availability of target data (i.e. in late 2021 during the model run-in period). ' \
+        "This is indicated as the `seroprevalence ceiling' in Figure \\ref{target_fig}" \
         'This was achieved by adding a large negative number to the likelihood estimate for any runs with a ' \
         f'proportion ever infected greater than {int(seropos_ceiling * 100)}\% on {get_tex_formatted_date(ceiling_date)}. '
     tex_doc.add_line(description, 'Targets', 'Seroprevalence')

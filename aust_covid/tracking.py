@@ -38,7 +38,7 @@ def track_incidence(
     tex_doc: StandardTexDoc,
 ):
     description = 'Age group, strain-specific, and overall incidence of SARS-CoV-2 ' \
-        '(including modelled episodes would never have been detected) were tracked. ' \
+        '(including modelled episodes that would never have been detected) were tracked. ' \
         'This incidence was not used explicitly in the calibration process, ' \
         'but tracking this process was necessary for the calculation of several other  ' \
         'model outputs, as described below. ' \
@@ -80,9 +80,9 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
         f'(downloded on the {get_tex_formatted_date(datetime(2023, 6, 12))}). ' \
         'These surveys reported on several indicators, ' \
         'including the proportion of households reporting a household member with symptoms of cold, flu or COVID-19, ' \
-        'and the proportion of households reporting a household member has had a COVID-19 test. ' \
+        'and the proportion of households reporting a household member that has had a COVID-19 test. ' \
         'We considered that the ratio of the proportion of households reporting having undertaken COVID-19 tests to the ' \
-        'proportion of households with a symptomatic member provided the best available estimate of the decline in ' \
+        'proportion of households with a symptomatic member provided the best available indicator of the decline in ' \
         'testing over this period (Figure \\ref{cdr_construction}). ' \
         'We define the case detection rate (CDR) as the proportion of all incident SARS-CoV-2 infection episodes ' \
         '(including asymptomatic and undetected episodes) that were captured through the surveillance data we used in calibration.\n\n' \
@@ -94,7 +94,8 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
         "Specifically, the case detection rate when the ratio is equal to $r$ with starting CDR of $s$ is given by " \
         "$s = 1 - e^{-p \\times r}$. The value of $p$ is calculated to ensure that $s$ is equal to the intended CDR when $r$ is at its starting value. " \
         'This approach led to an estimated fall in the case detection ratio by a factor of two over the first half of 2022. ' \
-        'This is consistent with our intuition and with epidemiological modelling from New Zealand over a similar time period \\cite{watson2023}. '
+        'This is consistent with our intuition and with an epidemiological modelling analysis ' \
+        'from New Zealand over a similar time period that integrated surveillance and waste water data \\cite{watson2023}. '
     tex_doc.add_line(description, 'Outputs', 'Notifications')
 
     hh_impact = load_household_impacts_data()
@@ -138,7 +139,7 @@ def track_deaths(
         'by the infection fatality rate for that group, ' \
         'and then adjusted this rate according to the relative infectiousness of the BA.2 ' \
         f"subvariant in the case of this strain (with the `{ba2_adj_str}' parameter). " \
-        'Next, we convolved this rate with a gamma distribution for the delay from symptom onset to death' \
+        'Next, we convolved this rate with a gamma distribution for the delay from symptom onset to death ' \
         'to obtain the daily rate of deaths for each age group, and lastly summed over age groups.'
     tex_doc.add_line(description, 'Outputs', subsection='Deaths')
     
@@ -170,7 +171,7 @@ def track_adult_seroprev(
     never_infected_comp = 'susceptible'
     description = 'The proportion of the overall population in any ' \
         f'compartment other than the {never_infected_comp} compartment among those aged {adult_cut_off} years and above ' \
-        "was used to estimate the adult `seropositive' proportion."
+        "was used to estimate the adult `seropositive' proportion, in order to align with reported seroprevalence estiamtes. "
     tex_doc.add_line(description, 'Outputs', 'Seroprevalence')
 
     seropos_comps = [comp for comp in compartments if comp != 'susceptible']
