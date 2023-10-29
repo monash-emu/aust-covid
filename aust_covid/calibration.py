@@ -54,8 +54,8 @@ def get_priors(vacc_sens: bool, abbreviations: pd.Series, tex_doc: TexDoc) -> li
     vacc_omit_prior = 'imm_prop'
     vacc_omit_str = abbreviations[vacc_omit_prior]
     description = 'The priors used in any of the four analysis presented ' \
-        'are described in this section, and displayed in Figure \\ref{prior_distributions}. ' \
-        'In the case of the two alternative analyses ' \
+        'are described in this section, and displayed in Figure \\ref{prior_distributions} ' \
+        'and Table \\ref{priors_table}. In the case of the two alternative analyses ' \
         f'incorporating time-varying (vaccine-induced) immunity, the ``{vacc_omit_str}" parameter ' \
         'is not included in the priors implemented; whereas in the case of the ' \
         f'two analyses not involving time-varying immunity, the ``{default_omit_str}" parameter ' \
@@ -99,7 +99,7 @@ def get_targets(tex_doc: TexDoc) -> list:
         'The effect of the dispersion parameter on the comparison between modelled and empiric values ' \
         'is illustrated in Figure \\ref{dispersion_examples}.'
     tex_doc.add_line(description, 'Targets', 'Notifications')
-    description = f'The WHO data were also smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
+    description = f'These data were also smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
         'As for case notifications, the comparison distribution used to obtain the likelihood of a given parameter set ' \
         'was negative binomial with calibrated dispersion parameter. '
     tex_doc.add_line(description, 'Targets', 'Deaths')
@@ -110,6 +110,7 @@ def get_targets(tex_doc: TexDoc) -> list:
         'We added a further recovered proportion target to avoid accepting runs with higher likelihood values ' \
         'in which the acceptable fit to data was a result of an implausibly high initial epidemic wave ' \
         'that occurred prior to the availability of target data (i.e. in late 2021 during the model run-in period). ' \
+        "This is indicated as the `seroprevalence ceiling' in Figure \\ref{target_fig}" \
         'This was achieved by adding a large negative number to the likelihood estimate for any runs with a ' \
         f'proportion ever infected greater than {int(seropos_ceiling * 100)}\% on {get_tex_formatted_date(ceiling_date)}. '
     tex_doc.add_line(description, 'Targets', 'Seroprevalence')

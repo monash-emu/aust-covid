@@ -65,6 +65,24 @@ RUN_IDS = {
     'vacc': '2023-10-14T1101-vacc-d20k-t10k-b5k',
     'both': '2023-10-14T1608-both-d20k-t10k-b5k'
 }
+ANALYSIS_FEATURES = {
+    'none': {
+        'mob': False,
+        'vacc': False,
+    },
+    'mob': {
+        'mob': True,
+        'vacc': False,
+    },
+    'vacc': {
+        'mob': False,
+        'vacc': True,
+    },
+    'both': {
+        'mob': True,
+        'vacc': True,
+    },
+}
 PRIMARY_ANALYSIS = 'mob'
 
 BURN_IN = 5000

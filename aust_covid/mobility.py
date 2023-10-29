@@ -113,7 +113,8 @@ def get_processed_mobility_data(
     state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions, tex_doc)
 
     description = 'Values were then converted from the reported percentage ' \
-        'change from baseline to the proportional change relative to baseline. '
+        'change from baseline to the proportional change relative to baseline, ' \
+        'to obtain contact scaling factors. '
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
     non_wa_relmob = get_relative_mobility(state_averages)
     wa_relmob = get_relative_mobility(wa_data)
@@ -124,7 +125,7 @@ def get_processed_mobility_data(
 
     processed_mob = map_mobility_locations(wa_relmob, non_wa_relmob, tex_doc)
 
-    description = f'Next, we took the {MOBILITY_AVERAGE_WINDOW} moving average to smooth the ' \
+    description = f'Next, we took the {MOBILITY_AVERAGE_WINDOW}-day moving average to smooth the ' \
         'often abrupt shifts in mobility, including with weekend and public holidays. '
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
     smoothed_mob = processed_mob.rolling(MOBILITY_AVERAGE_WINDOW).mean().dropna()

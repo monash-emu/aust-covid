@@ -45,7 +45,7 @@ def build_model(
     n_infectious_comps = N_LATENT_COMPARTMENTS
     latent_compartments = [f'latent_{i}' for i in range(N_LATENT_COMPARTMENTS)]
     infectious_compartments = [f'infectious_{i}' for i in range(n_infectious_comps)]
-    compartments = ['susceptible', 'recovered', 'waned'] + infectious_compartments + latent_compartments
+    compartments = ['susceptible', 'recovered', 'waned'] + latent_compartments + infectious_compartments
 
     aust_model = build_base_model(compartments, infectious_compartments, tex_doc)
     epoch = aust_model.get_epoch()
@@ -222,11 +222,7 @@ def add_latent_transition(
         'the rate of transition between successive latent compartments ' \
         'and of exiting the the last latent compartment ' \
         f'are multiplied by the number of serial compartments (i.e. {N_LATENT_COMPARTMENTS}). ' \
-        'As persons exit the final latent compartment, they enter the first infectious compartment. ' \
-        'An Erlang-distributed infectious and latent duration is consistent with epidemiological evidence ' \
-        'that the serial interval \cite{anderheiden2022} and generation time \cite{ito2022} are often ' \
-        'well represented by a gamma distribution, with multiple past modelling studies choosing ' \
-        'a shape parameter of four or five having been previously used to fit this distribution \cite{davies2020b,davies2020c}. '
+        'As persons exit the final latent compartment, they enter the first infectious compartment. '
     tex_doc.add_line(description, 'Base compartmental structure')
 
     rate = 1.0 / Parameter(parameter_name) * N_LATENT_COMPARTMENTS
@@ -248,7 +244,11 @@ def add_infectious_transition(
     description = f'As for the latent compartments, the infectious compartments are also chained in series, ' \
         f'with a total of {n_inf_comps} again chained together in sequence. ' \
         f'As for the latent compartments, each transition rate is multiplied by {n_inf_comps}.\n ' \
-        'As persons exit the final infectious compartment, they enter the recovered compartment. '    
+        'As persons exit the final infectious compartment, they enter the recovered compartment. ' \
+        'An Erlang-distributed infectious and latent duration is consistent with epidemiological evidence ' \
+        'that the serial interval \cite{anderheiden2022} and generation time \cite{ito2022} are often ' \
+        'well represented by a gamma distribution, with multiple past modelling studies choosing ' \
+        'a shape parameter of four or five having been previously used to fit this distribution \cite{davies2020b,davies2020c}. '
     tex_doc.add_line(description, 'Base compartmental structure')
 
     rate = 1.0 / Parameter(parameter_name) * n_inf_comps
@@ -270,8 +270,9 @@ def add_waning(
     description = 'A waned compartment is included in the model ' \
         'to represent persons who no longer have natural immunity from past SARS-CoV-2 infection. ' \
         f'As these persons lose their infection-induced immunity, they transition from the ' \
-        f'{origin.replace("_", "")} compartment to the {destination.replace("_", "")} compartment '\
-        f'at a rate equal to the reciprocal of the {parameter_name.replace("_", " ")} parameter. '
+        f'{origin.replace("_", "")} compartment to the {destination.replace("_", "")} compartment ' \
+        f'at a rate equal to the reciprocal of the {parameter_name.replace("_", " ")} parameter ' \
+        '(See Table \\ref{params})'
     tex_doc.add_line(description, 'Base compartmental structure')
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
@@ -354,7 +355,7 @@ def get_age_stratification(
         f'bands from age {AGE_STRATA[0]} to {AGE_STRATA[0] + 4} through to age {AGE_STRATA[-2]} to {AGE_STRATA[-2] + 4}, ' \
         f'with a final age band to represent those aged {AGE_STRATA[-1]} and above. ' \
         'These age brackets were chosen to match those used by the POLYMOD survey \cite{mossong2008} ' \
-        'and so fit with the mixing approach implemented (described below in Section \\ref{mixing}). ' \
+        'and so fit with the mixing approach implemented (Section \\ref{mixing}). ' \
         'The population distribution by modelled age group was obtained from the Australian ' \
         'Bureau of Statistics data introduced previously (Section \\ref{population}, ' \
         'Figure \\ref{input_population}). ' \
@@ -393,12 +394,13 @@ def get_default_imm_strat(
     protect_param = 'imm_infect_protect'
     protect_param_str = protect_param.replace('_', '\_')
     description = 'All (multiply stratified) compartments introduced above were further ' \
-        f'stratified into {len(imm_strata)} strata with differing levels of susceptibility to infection. ' \
-        f'A calibrated parameter ({protect_param_str}) was used to quantify the relative reduction in the rate of ' \
+        f'stratified into {len(imm_strata)} strata with differing levels of susceptibility to infection ' \
+        'in the two analyses without extension for vaccination. ' \
+        'For these two analyses, a calibrated parameter was used to represent ' \
+        'the proportion of the population with immunological protection against infection. ' \
+        f'A second calibrated parameter ({protect_param_str}) was then used ' \
+        'to quantify the relative reduction in the rate of ' \
         'infection and reinfection for those in the stratum with reduced susceptibility. ' \
-        'In the two analyses without extension for vaccination, ' \
-        'a further parameter was calibrated to represent the proportion of the population with ' \
-        'immunological protection against infection. ' \
         'This approach was adopted because some population heterogeneity in susceptibility ' \
         'may have been introduced through a proportion of the population having greater ' \
         'protection through vaccination, boosting or other intrinsic individual variation that ' \
@@ -432,21 +434,29 @@ def seed_vocs(
     tex_doc: StandardTexDoc,
 ) -> str:
     strains = model.stratifications['strain'].strata
+    strains_str = [s.replace('ba', 'BA.') for s in strains]
     seed_comp = latent_compartments[0]
-    seed_duration_str = 'seed_duration'
-    seed_rate_str = 'seed_rate'
-    description = f'Each strain (including the starting {strains[0].replace("ba", "BA.")} strain) was seeded through ' \
+    seed_comp_str = seed_comp.replace('_', '\_')
+    seed_duration = 'seed_duration'
+    seed_duration_str = seed_duration.replace('_', '\_')
+    seed_rate = 'seed_rate'
+    seed_rate_str = seed_rate.replace('_', '\_')
+    description = 'In Australia, three sequential but overlapping epidemic waves were observed, ' \
+        f'which were attributable to the subvariants: {", ".join(strains_str)}' \
+        f'Each strain (including the starting {strains_str[0]} strain) was seeded through ' \
         'a triangular step function that introduces new infectious ' \
-        f'persons into the {seed_comp.replace("_", "")} compartment over a fixed seeding duration defined by a single ' \
-        f'variable {seed_duration_str.replace("_", " ")} parameter (i.e. applied to all subvariants) ' \
-        f'at a peak rate defined by a single {seed_rate_str.replace("_", " ")} parameter ' \
+        f'persons into the {seed_comp_str} compartment over a fixed seeding duration defined by a single ' \
+        f'variable {seed_duration_str} parameter (i.e. applied to all subvariants) ' \
+        f'at a peak rate defined by a single {seed_rate_str} parameter ' \
         '(also applied to all subvariants). ' \
         'The time of first emergence of each strain into the system was defined by ' \
-        'a separate emergence time parameter for each modelled subvariant strain. '
+        'a separate emergence time parameter for each modelled subvariant strain. ' \
+        'This emergence time was varied across credible intervals, ' \
+        'with model outputs then compared against available Australian sequencing data (see Figure \\ref{variant_prop_spaghetti}). '
     tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
 
     for strain in strains:
-        seed_args = [Time, Parameter(f'{strain}_seed_time'), Parameter(seed_duration_str), Parameter(seed_rate_str)]
+        seed_args = [Time, Parameter(f'{strain}_seed_time'), Parameter(seed_duration), Parameter(seed_rate)]
         voc_seed_func = Function(triangle_wave_func, seed_args)
         model.add_importation_flow(f'seed_{strain}', voc_seed_func, seed_comp, dest_strata={'strain': strain}, split_imports=True)
 
@@ -467,7 +477,7 @@ def add_reinfection(
         'The parameter governing the degree of immune escape is determined ' \
         'by the infecting variant was estimated separately for BA.2 and BA.5. ' \
         'Therefore, the rate of reinfection is equal for BA.5 reinfecting those recovered from past BA.1 infection ' \
-        'as for those recovered from past BA.2 infection.\n\n ' \
+        'as for those recently recovered from past BA.2 infection.\n\n ' \
         'For late reinfection, all natural immunity is lost for persons in the waned compartment, ' \
         'such that the rate of reinfection for these persons is the same as the rate of infection ' \
         'for fully susceptible persons. \n' \
@@ -515,8 +525,8 @@ def get_spatial_stratification(
     description = 'All model compartments previously described were further ' \
         f"stratified into strata to represent Western Australia ({strata[0].upper()}) and `{strata[1]}' " \
         'to represent the remaining major jurisdictions of Australia. ' \
-        'This approach was adopted to avoid community transmission occurring in Western Australia ' \
-        'prior to the date on which Western Australia re-opened its borders to the rest of the country. ' \
+        "This approach was adopted to remove WA's contribution to community transmission " \
+        f'prior to WA re-opening its borders to the rest of the country on {WA_REOPEN_DATE}. ' \
         f'To achieve this effect, transmission in {strata[0].upper()} was initially set to zero, ' \
         f'and subsquently scaled up to being equal to that of the {strata[1]} ' \
         f'jurisdictions of Australia over a period that governed by a calibrated ' \

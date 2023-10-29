@@ -1,19 +1,21 @@
-from inputs.constants import RUN_IDS, PRIMARY_ANALYSIS, BURN_IN, OPTI_DRAWS
+from inputs.constants import RUN_IDS, PRIMARY_ANALYSIS, BURN_IN, OPTI_DRAWS, ANALYSIS_FEATURES
 from emutools.tex import TexDoc
 
 
 def add_intro_blurb_to_tex(tex_doc: TexDoc):
     description = 'The following document describes the methods used in our analyses ' \
         'of the 2022 SARS-CoV-2 epidemic in Australia. ' \
-        f'We constructed {len(RUN_IDS)} alternative dynamic models ' \
+        f'We constructed {len(RUN_IDS)} alternative dynamic transmission models ' \
         'based around the same core features. ' \
         f"These are named `{', '.join(RUN_IDS.keys())}' and were all based on the features " \
         'described in Sections \\ref{base_compartmental_structure}, \\ref{population}, ' \
         '\\ref{stratification}, \\ref{reinfection}, \\ref{mixing}. ' \
-        'Two of the models incorporated additional structure to capture time-varying ' \
+        f'Two of the models ({", ".join([analysis for analysis, feature in ANALYSIS_FEATURES.items() if feature["mob"]])}) ' \
+        'incorporated additional structure to capture time-varying ' \
         'mobility \\ref{mobility_extension}, while two incorporated additional structure for time-varying ' \
-        'vaccination effects \\ref{vaccination_extension}, such that these additional features are applied factorially ' \
-        'to the core model structure.\n\n' \
+        f'vaccination effects {", ".join([analysis for analysis, feature in ANALYSIS_FEATURES.items() if feature["vacc"]])} \\ref{{vaccination_extension}}, ' \
+        'such that these additional features are applied factorially ' \
+        'to the base model structure (therefore including one model with neither extension).\n\n' \
         'Each of the four alternative modelling approaches were then calibrated to the ' \
         'same target data for the 2022 Australian COVID-19 epidemic (see Section \\ref{targets}). ' \
         'The calibration algorithms were also harmonised to the greatest extent possible (see Section \\ref{calibration_methods}), ' \
@@ -37,8 +39,11 @@ def add_model_structure_blurb_to_tex(tex_doc: TexDoc):
 
 
 def add_parameters_blurb_to_tex(tex_doc: TexDoc):
-    description = 'All model parameters, including those used in the calibration algorithm ' \
-        'are presented in Table \\ref{params}. ' \
+    description = 'All epidemiologial parameters, including those used in the calibration algorithm ' \
+        'are presented in Table \\ref{params}. In addition to these epidemiological parameters, ' \
+        'the dispersion parameter for the negative binomial distribution used when calculating ' \
+        'the case time-series and death time-series contributions to the likelihood ' \
+        'were included in our calibration algorithm (See Section \\ref{calibrated_dispersion_parameters}). ' \
         'The approach to estimating the age-specific infection fatality rate for each ' \
         'modelled age group is described in \\ref{infection_fatality_rates}. ' \
         'All epidemiologically significant model parameters were included as priors ' \
@@ -97,7 +102,7 @@ def add_dispersion_blurb_to_tex(tex_doc: TexDoc):
 
 
 def add_mobility_blurb_to_tex(tex_doc: TexDoc):
-    description = 'The two scaling functions developed in the previous were used to adjust ' \
+    description = 'The two scaling functions developed in the previous section were used to adjust ' \
         'rates of contact over time in the two time-varying matrix locations. ' \
         'These were summed with the two static locations to obtain the final matrix. ' \
         'Examples of the final effect of the matrix scaling function on the dynamic ' \
