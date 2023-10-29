@@ -56,9 +56,9 @@ def get_priors(vacc_sens: bool, abbreviations: pd.Series, tex_doc: TexDoc) -> li
     description = 'The priors used in any of the four analysis presented ' \
         'are described in this section, and displayed in Figure \\ref{prior_distributions} ' \
         'and Table \\ref{priors_table}. In the case of the two alternative analyses ' \
-        f'incorporating time-varying (vaccine-induced) immunity, the ``{vacc_omit_str}" parameter ' \
+        f"incorporating time-varying (vaccine-induced) immunity, the `{vacc_omit_str}' parameter " \
         'is not included in the priors implemented; whereas in the case of the ' \
-        f'two analyses not involving time-varying immunity, the ``{default_omit_str}" parameter ' \
+        f"two analyses not involving time-varying immunity, the `{default_omit_str}' parameter " \
         'is omitted. '
     tex_doc.add_line(description, 'Calibration methods', subsection='Priors')
 
