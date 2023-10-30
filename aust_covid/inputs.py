@@ -68,7 +68,9 @@ def load_case_targets(tex_doc: TexDoc) -> tuple:
         'concatenated with the Australian Government data for 2022. ' \
         'That is, we preferentially used Australian Government data throughout most of our ' \
         "simulation period of interest, which is extracted from Australia's " \
-        '\\href{https://www.health.gov.au/our-work/nndss}{national surveillance reporting system}. '
+        '\\href{https://www.health.gov.au/our-work/nndss}{national surveillance reporting system}. ' \
+        'Note that daily case data for Australia were unavailable from the World Health Organization website ' \
+        '(which draws from the Australian NNDSS), because reporting changed to weekly in 2021. '
     tex_doc.add_line(description, 'Targets', subsection='Notifications')
 
     national_data = load_national_case_data(tex_doc)
@@ -139,7 +141,7 @@ def load_raw_pop_data(sheet_name: str) -> pd.DataFrame:
     """Load Australian population data from original spreadsheet.
 
     Args:
-        sheet_name: Spreadsheet filenam
+        sheet_name: Spreadsheet filename
 
     Returns:
         Population data

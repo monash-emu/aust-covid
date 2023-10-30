@@ -20,8 +20,8 @@ def get_all_priors() -> list:
     """
     return [
         esp.UniformPrior('contact_rate', (0.02, 0.15)),
-        esp.GammaPrior.from_mode('latent_period', 2.5, 5.0),
-        esp.GammaPrior.from_mode('infectious_period', 3.5, 6.0),
+        esp.GammaPrior.from_mode('latent_period', 2.5, 3.5),
+        esp.GammaPrior.from_mode('infectious_period', 3.5, 5.0),
         esp.GammaPrior.from_mode('natural_immunity_period', 180.0, 1000.0),
         esp.UniformPrior('start_cdr', (0.1, 0.6)),
         esp.UniformPrior('imm_infect_protect', (0.0, 1.0)),
