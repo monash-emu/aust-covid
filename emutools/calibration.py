@@ -66,7 +66,7 @@ def param_table_to_tex(
     """
     table = param_info[[c for c in param_info.columns if c != 'description']]
     table['value'] = table['value'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))  # Round value
-    table.loc[[i for i in table.index if i in prior_names], 'values'] = 'Calibrated'  # Suppress value if calibrated
+    table.loc[[i for i in table.index if i in prior_names], 'value'] = 'Calibrated'  # Suppress value if calibrated
     table.index = param_info['descriptions']  # Use readable description for row names
     table.columns = table.columns.str.replace('_', ' ').str.capitalize()
     table.index.name = None
