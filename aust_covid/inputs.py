@@ -7,7 +7,7 @@ from aust_covid.utils import add_image_to_doc
 
 from emutools.tex import get_tex_formatted_date, TexDoc, StandardTexDoc
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
-from inputs.constants import DATA_PATH, NATIONAL_DATA_START_DATE
+from inputs.constants import DATA_PATH, NATIONAL_DATA_START_DATE, NUCLEOCAPS_SENS
 
 CHANGE_STR = '_percent_change_from_baseline'
 
@@ -128,11 +128,12 @@ def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
 
     data = pd.Series(
         {
-            datetime(2022, 2, 26): 0.207,
-            datetime(2022, 6, 13): 0.554,
-            datetime(2022, 8, 27): 0.782,
+            datetime(2022, 2, 26): 0.170,
+            datetime(2022, 6, 13): 0.462,
+            datetime(2022, 8, 27): 0.652,
         }
     )
+    data /= NUCLEOCAPS_SENS
     data.index = data.index - timedelta(days=IMMUNITY_LAG)
     return data
 
