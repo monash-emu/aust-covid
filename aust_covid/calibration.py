@@ -90,6 +90,7 @@ def get_targets(tex_doc: TexDoc) -> list:
     case_targets = load_case_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     death_targets = load_who_death_data(tex_doc)[TARGETS_START_DATE:].rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
     serosurvey_targets = load_serosurvey_data(tex_doc)
+    seroprev_spread = 0.125
 
     description = f'The composite daily case data were then smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
         'The notifications value for each date of the analysis were compared against the modelled estimate ' \
@@ -118,7 +119,7 @@ def get_targets(tex_doc: TexDoc) -> list:
     targets = [
         est.NegativeBinomialTarget('notifications_ma', case_targets, dispersion_param=esp.UniformPrior('notifications_ma_dispersion', (10.0, 140.0))),
         est.NegativeBinomialTarget('deaths_ma', death_targets, dispersion_param=esp.UniformPrior('deaths_ma_dispersion', (60.0, 200.0))),
-        est.BinomialTarget('adult_seropos_prop', serosurvey_targets, pd.Series([20] * 3, index=serosurvey_targets.index)),
+         est.BetaTarget.from_mean_and_ci('adult_seropos_prop', serosurvey_targets, seroprev_spread),
     ]
     targets.append(est.CustomTarget('seropos_ceiling', pd.Series([seropos_ceiling], index=[ceiling_date]), truncation_ceiling, model_key='adult_seropos_prop'))
     return targets

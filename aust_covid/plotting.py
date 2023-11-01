@@ -395,16 +395,32 @@ def plot_mixing_matrices(
     return fig.update_layout(height=800, width=850, margin={'t': 40})
 
 
-def plot_3d_spaghetti(indicator_name, spaghetti, targets, target_freq=5):
+def plot_3d_spaghetti(
+    indicator_name: str, 
+    spaghetti: pd.DataFrame, 
+    targets: list, 
+    target_freq=5,
+) -> go.Figure:
+    """Create interactive plotly figure for comparing outputs against targets.
+
+    Args:
+        indicator_name: Name of indicator to consider
+        spaghetti: The outputs from the sequential calibration runs
+        targets: The targets from the calibration algorithm
+        target_freq: How frequently to intersperse target plots between sequential runs
+
+    Returns:
+        The interactive figure
+    """
     fig = go.Figure()
     case_sample = spaghetti.loc[spaghetti.index > PLOT_START_DATE, indicator_name]
     case_sample.columns = case_sample.columns.map(lambda x: ', '.join([*map(str, x)]))
     case_target = get_target_from_name(targets, indicator_name)
     case_target = case_target[case_target.index < ANALYSIS_END_DATE]
-    for i, col in enumerate(case_sample.columns):
-        ypos = [i] * len(case_sample.index)
+    for i_col, col in enumerate(case_sample.columns):
+        ypos = [i_col] * len(case_sample.index)
         fig.add_trace(go.Scatter3d(x=case_sample.index, y=ypos, z=case_sample[col], name=col, mode='lines', line={'width': 5.0}))
-        if i % target_freq == 0:
+        if i_col % target_freq == 0:
             fig.add_trace(go.Scatter3d(x=case_target.index, y=ypos, z=case_target, name='target', mode='markers', marker={'size': 1.0}, line={'color': 'black'}))
     fig.update_yaxes(showticklabels=False)
     return fig.update_layout(height=800, scene=dict(xaxis_title='', yaxis_title='run', zaxis_title=indicator_name, yaxis={'showticklabels': False}))
