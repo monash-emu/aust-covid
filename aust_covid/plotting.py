@@ -393,3 +393,18 @@ def plot_mixing_matrices(
         row, col = get_row_col_for_subplots(i, n_cols)
         fig.add_traces(px.imshow(matrices[matrix], x=AGE_STRATA, y=AGE_STRATA).data, rows=row, cols=col)
     return fig.update_layout(height=800, width=850, margin={'t': 40})
+
+
+def plot_3d_spaghetti(indicator_name, spaghetti, targets, target_freq=5):
+    fig = go.Figure()
+    case_sample = spaghetti.loc[spaghetti.index > PLOT_START_DATE, indicator_name]
+    case_sample.columns = case_sample.columns.map(lambda x: ', '.join([*map(str, x)]))
+    case_target = get_target_from_name(targets, indicator_name)
+    case_target = case_target[case_target.index < ANALYSIS_END_DATE]
+    for i, col in enumerate(case_sample.columns):
+        ypos = [i] * len(case_sample.index)
+        fig.add_trace(go.Scatter3d(x=case_sample.index, y=ypos, z=case_sample[col], name=col, mode='lines', line={'width': 5.0}))
+        if i % target_freq == 0:
+            fig.add_trace(go.Scatter3d(x=case_target.index, y=ypos, z=case_target, name='target', mode='markers', marker={'size': 1.0}, line={'color': 'black'}))
+    fig.update_yaxes(showticklabels=False)
+    return fig.update_layout(height=800, scene=dict(xaxis_title='', yaxis_title='run', zaxis_title=indicator_name, yaxis={'showticklabels': False}))
