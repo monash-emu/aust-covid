@@ -502,13 +502,18 @@ def plot_like_components_by_analysis(
     axes = axes.reshape(-1)
     plotter = getattr(sns, plot_type)
     legend_plot_types = ['kdeplot', 'histplot']
+    title_map = {
+        'loglikelihood': 'total likelihood',
+        'll_adult_seropos_prop': 'seroprevalence contribution',
+        'll_deaths_ma': 'deaths contribution',
+        'll_notifications_ma': 'cases contribution',
+    }
     for m, comp in enumerate(like_outputs.keys()):
         clip = clips[comp] if clips else None
         kwargs = {'common_norm': False, 'clip': clip, 'fill': True, 'alpha': alpha, 'linewidth': linewidth} if plot_type == 'kdeplot' else {}        
         ax = axes[m]
         plotter(like_outputs[comp].loc[:, BURN_IN:, :], ax=ax, **kwargs)
-        subtitle = comp.replace('log', '').replace('ll_', '').replace('_ma', '').replace('_', ' ')
-        ax.set_title(subtitle)
+        ax.set_title(title_map[comp])
         if m == 0 and plot_type in legend_plot_types:
             sns.move_legend(ax, loc='upper left')
         elif plot_type in legend_plot_types:
