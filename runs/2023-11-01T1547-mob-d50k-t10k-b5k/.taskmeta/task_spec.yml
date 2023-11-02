@@ -1,7 +1,7 @@
 func_kwargs:
   draws: !!python/tuple
   - &id001 !!python/name:builtins.int ''
-  - '20000'
+  - '50000'
   sens: !!python/tuple
   - !!python/name:builtins.dict ''
   - '{''mob'': True, ''vacc'': False}'

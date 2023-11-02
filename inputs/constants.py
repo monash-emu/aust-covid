@@ -62,9 +62,9 @@ CHANGE_STR = '_percent_change_from_baseline'
 
 RUN_IDS = {
     'none': '2023-10-14T1058-none-d20k-t10k-b5k',
-    'mob': '2023-10-14T1059-mob-d20k-t10k-b5k',
+    'mob': '2023-11-01T1547-mob-d50k-t10k-b5k',
     'vacc': '2023-10-14T1101-vacc-d20k-t10k-b5k',
-    'both': '2023-10-14T1608-both-d20k-t10k-b5k'
+    'both': '2023-10-14T1608-both-d20k-t10k-b5k',
 }
 ANALYSIS_FEATURES = {
     'none': {
@@ -86,5 +86,5 @@ ANALYSIS_FEATURES = {
 }
 PRIMARY_ANALYSIS = 'mob'
 
-BURN_IN = 5000
+BURN_IN = 25000
 OPTI_DRAWS = 100
