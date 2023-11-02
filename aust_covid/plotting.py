@@ -424,3 +424,35 @@ def plot_3d_spaghetti(
             fig.add_trace(go.Scatter3d(x=case_target.index, y=ypos, z=case_target, name='target', mode='markers', marker={'size': 1.0}, line={'color': 'black'}))
     fig.update_yaxes(showticklabels=False)
     return fig.update_layout(height=800, scene=dict(xaxis_title='', yaxis_title='run', zaxis_title=indicator_name, yaxis={'showticklabels': False}))
+
+
+def plot_matrices_3d(
+    matrices: Dict[str, np.array],
+) -> go.Figure:
+    """Plot interactive 3D surface plots of matrices.
+
+    Args:
+        matrices: The mixing matrices by location
+
+    Returns:
+        The 4-panel plot
+    """
+    fig_type = {'type': 'surface'}
+    n_cols = 2
+    fig = make_subplots(
+        rows=2, 
+        cols=2, 
+        specs=[[fig_type, fig_type], [fig_type, fig_type]], 
+        horizontal_spacing=0.02, 
+        vertical_spacing=0.05,
+        subplot_titles=[k.replace('_', ' ') for k in matrices.keys()],
+    )
+    for l, location in enumerate(matrices):
+        row, col = get_row_col_for_subplots(l, n_cols)
+        fig.add_trace(go.Surface(x=AGE_STRATA, y=AGE_STRATA, z=matrices[location], showscale=False), row=row, col=col)
+    scene_req = {'zaxis': {'range': (0.0, 3.0), 'title': 'contacts', 'dtick': 1.0}, 'xaxis': {'title': ''}, 'yaxis': {'title': ''}}
+    return fig.update_layout(
+        scene1=scene_req, scene2=scene_req, scene3=scene_req, scene4=scene_req, 
+        height=800, 
+        margin={'t': 25, 'b': 25, 'l': 25, 'r': 25},
+    )
