@@ -155,6 +155,7 @@ def plot_posterior_comparison(
     request_vars: list, 
     display_names: dict,
     dens_interval_req: float,
+    grid: tuple=None,
 ):
     """
     Area plot posteriors against prior distributions.
@@ -173,6 +174,7 @@ def plot_posterior_comparison(
         labeller=MapLabeller(var_name_map=display_names), 
         point_estimate=None,
         hdi_prob=dens_interval_req,
+        grid=grid,
     )
     req_priors = [p for p in priors if p.name in request_vars]
     for i_ax, ax in enumerate(comparison_plot.ravel()[:len(request_vars)]):
