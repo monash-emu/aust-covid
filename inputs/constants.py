@@ -51,7 +51,7 @@ DATA_PATH = PROJECT_PATH / 'data'
 SUPPLEMENT_PATH = PROJECT_PATH / 'supplement'
 INPUTS_PATH = PROJECT_PATH / 'inputs'
 RUNS_PATH = PROJECT_PATH / 'runs'
-OUTPUT_PATH = PROJECT_PATH / 'outputs'
+OUTPUTS_PATH = PROJECT_PATH / 'outputs'
 
 AGE_STRATA = list(range(0, 80, 5))
 STRAIN_STRATA = ['ba1', 'ba2', 'ba5']

@@ -30,7 +30,7 @@ def get_target_from_name(targets: list, name: str) -> pd.Series:
     Returns:
         Single target to identify
     """
-    return next((t.data for t in targets if t.name == name))
+    return next((t.data for t in targets if t.name == name), None)
 
 
 def round_sigfig(
