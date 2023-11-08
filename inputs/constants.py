@@ -62,10 +62,10 @@ COLOURS = colorbrewer.Accent
 CHANGE_STR = '_percent_change_from_baseline'
 
 RUN_IDS = {
-    'none': '2023-10-14T1058-none-d20k-t10k-b5k',
+    'none': '2023-11-02T1101-none-d50k-t10k-b5k',
     'mob': '2023-11-01T1547-mob-d50k-t10k-b5k',
-    'vacc': '2023-10-14T1101-vacc-d20k-t10k-b5k',
-    'both': '2023-10-14T1608-both-d20k-t10k-b5k',
+    'vacc': '2023-11-02T1102-vacc-d50k-t10k-b5k',
+    'both': '2023-11-02T1103-both-d50k-t10k-b5k',
 }
 ANALYSIS_FEATURES = {
     'none': {

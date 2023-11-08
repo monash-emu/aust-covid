@@ -404,7 +404,7 @@ def plot_output_ranges(
     """
     n_cols = 2
     target_names = [t.name for t in targets]
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=[o.replace('_ma', '').replace('_', ' ') for o in outputs], vertical_spacing=0.1)
+    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=[o.replace('_ma', '').replace('_', ' ') for o in outputs], vertical_spacing=0.1, horizontal_spacing=0.04)
     analysis_data = quantile_outputs[analysis]
     for i, output in enumerate(outputs):
         row, col = get_row_col_for_subplots(i, n_cols)
@@ -419,8 +419,7 @@ def plot_output_ranges(
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
-    fig.update_layout(yaxis4={'range': [0.0, 2.5]})
-    return fig.update_layout(height=500, showlegend=False)
+    return fig.update_layout(yaxis4={'range': [0.0, 2.5]}, height=800, showlegend=False, margin={'t': 40, 'b': 40, 'l': 40, 'r': 40})
 
 
 def plot_output_ranges_by_analysis(
@@ -485,7 +484,7 @@ def get_like_components(
 def plot_like_components_by_analysis(
     like_outputs: Dict[str, pd.DataFrame], 
     plot_type: str, 
-    clips: Dict[str, float]={},
+    clips: Dict[str, tuple]={},
     alpha: float=0.2,
     linewidth: float=1.0,
 ) -> plt.figure:
@@ -503,13 +502,18 @@ def plot_like_components_by_analysis(
     axes = axes.reshape(-1)
     plotter = getattr(sns, plot_type)
     legend_plot_types = ['kdeplot', 'histplot']
+    title_map = {
+        'loglikelihood': 'total likelihood',
+        'll_adult_seropos_prop': 'seroprevalence contribution',
+        'll_deaths_ma': 'deaths contribution',
+        'll_notifications_ma': 'cases contribution',
+    }
     for m, comp in enumerate(like_outputs.keys()):
-        clip = (clips[comp], 0.0) if clips else None
+        clip = clips[comp] if clips else None
         kwargs = {'common_norm': False, 'clip': clip, 'fill': True, 'alpha': alpha, 'linewidth': linewidth} if plot_type == 'kdeplot' else {}        
         ax = axes[m]
         plotter(like_outputs[comp].loc[:, BURN_IN:, :], ax=ax, **kwargs)
-        subtitle = comp.replace('log', '').replace('ll_', '').replace('_ma', '').replace('_', ' ')
-        ax.set_title(subtitle)
+        ax.set_title(title_map[comp])
         if m == 0 and plot_type in legend_plot_types:
             sns.move_legend(ax, loc='upper left')
         elif plot_type in legend_plot_types:
