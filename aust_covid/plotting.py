@@ -413,14 +413,14 @@ def plot_3d_spaghetti(
         The interactive figure
     """
     fig = go.Figure()
-    case_sample = spaghetti.loc[spaghetti.index > PLOT_START_DATE, indicator_name]
-    case_sample.columns = case_sample.columns.map(lambda x: ', '.join([*map(str, x)]))
-    case_target = get_target_from_name(targets, indicator_name)
-    case_target = case_target[case_target.index < ANALYSIS_END_DATE]
-    for i_col, col in enumerate(case_sample.columns):
-        ypos = [i_col] * len(case_sample.index)
-        fig.add_trace(go.Scatter3d(x=case_sample.index, y=ypos, z=case_sample[col], name=col, mode='lines', line={'width': 5.0}))
-        if i_col % target_freq == 0:
-            fig.add_trace(go.Scatter3d(x=case_target.index, y=ypos, z=case_target, name='target', mode='markers', marker={'size': 1.0}, line={'color': 'black'}))
+    sample = spaghetti.loc[spaghetti.index > PLOT_START_DATE, indicator_name]
+    sample.columns = sample.columns.map(lambda x: ', '.join([*map(str, x)]))
+    target = get_target_from_name(targets, indicator_name)
+    for i_col, col in enumerate(sample.columns):
+        ypos = [i_col] * len(sample.index)
+        fig.add_trace(go.Scatter3d(x=sample.index, y=ypos, z=sample[col], name=col, mode='lines', line={'width': 5.0}))
+        if target is not None and i_col % target_freq == 0:
+            target = target[target.index < ANALYSIS_END_DATE]
+            fig.add_trace(go.Scatter3d(x=target.index, y=ypos, z=target, name='target', mode='markers', marker={'size': 1.0}, line={'color': 'black'}))
     fig.update_yaxes(showticklabels=False)
     return fig.update_layout(height=800, scene=dict(xaxis_title='', yaxis_title='run', zaxis_title=indicator_name, yaxis={'showticklabels': False}))
