@@ -442,7 +442,7 @@ def seed_vocs(
     seed_duration = 'seed_duration'
     seed_rate = 'seed_rate'
     description = 'In Australia, three sequential but overlapping epidemic waves were observed, ' \
-        f'which were attributable to the subvariants: {", ".join(strains_str)}' \
+        f'which were attributable to the subvariants: {", ".join(strains_str)}. ' \
         f'Each strain (including the starting {strains_str[0]} strain) was seeded through ' \
         'a triangular step function that introduces new infectious ' \
         f'persons into the {seed_comp_str} compartment over a fixed seeding duration defined by a single ' \

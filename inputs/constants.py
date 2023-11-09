@@ -14,6 +14,7 @@ NATIONAL_DATA_START_DATE = datetime(2022, 1, 1)
 TARGETS_AVERAGE_WINDOW = 7
 MOBILITY_AVERAGE_WINDOW = 7 
 IMMUNITY_LAG = 14.0
+NUCLEOCAPS_SENS = 0.78
 VACC_IMMUNE_DURATION = 100
 N_LATENT_COMPARTMENTS = 4
 
@@ -50,6 +51,7 @@ DATA_PATH = PROJECT_PATH / 'data'
 SUPPLEMENT_PATH = PROJECT_PATH / 'supplement'
 INPUTS_PATH = PROJECT_PATH / 'inputs'
 RUNS_PATH = PROJECT_PATH / 'runs'
+OUTPUTS_PATH = PROJECT_PATH / 'outputs'
 
 AGE_STRATA = list(range(0, 80, 5))
 STRAIN_STRATA = ['ba1', 'ba2', 'ba5']
@@ -60,10 +62,10 @@ COLOURS = colorbrewer.Accent
 CHANGE_STR = '_percent_change_from_baseline'
 
 RUN_IDS = {
-    'none': '2023-10-14T1058-none-d20k-t10k-b5k',
-    'mob': '2023-10-14T1059-mob-d20k-t10k-b5k',
-    'vacc': '2023-10-14T1101-vacc-d20k-t10k-b5k',
-    'both': '2023-10-14T1608-both-d20k-t10k-b5k'
+    'none': '2023-11-02T1101-none-d50k-t10k-b5k',
+    'mob': '2023-11-01T1547-mob-d50k-t10k-b5k',
+    'vacc': '2023-11-02T1102-vacc-d50k-t10k-b5k',
+    'both': '2023-11-02T1103-both-d50k-t10k-b5k',
 }
 ANALYSIS_FEATURES = {
     'none': {
@@ -85,5 +87,5 @@ ANALYSIS_FEATURES = {
 }
 PRIMARY_ANALYSIS = 'mob'
 
-BURN_IN = 5000
+BURN_IN = 25000
 OPTI_DRAWS = 100

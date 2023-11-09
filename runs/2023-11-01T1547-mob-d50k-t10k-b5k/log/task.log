@@ -1,0 +1,20 @@
+2023-11-01 15:50:45 ip-172-31-25-108 INFO Running AuTuMN task
+2023-11-01 15:50:55 ip-172-31-25-108 WARNING Matplotlib is building the font cache; this may take a moment.
+2023-11-01 15:51:30 ip-172-31-25-108 INFO generated new fontManager
+2023-11-01 15:52:10 ip-172-31-25-108 INFO Unable to initialize backend 'cuda': module 'jaxlib.xla_extension' has no attribute 'GpuAllocatorConfig'
+2023-11-01 15:52:10 ip-172-31-25-108 INFO Unable to initialize backend 'rocm': module 'jaxlib.xla_extension' has no attribute 'GpuAllocatorConfig'
+2023-11-01 15:52:10 ip-172-31-25-108 INFO Unable to initialize backend 'tpu': INTERNAL: Failed to open libtpu.so: libtpu.so: cannot open shared object file: No such file or directory
+2023-11-01 15:53:19 ip-172-31-25-108 INFO Compiling new CVM
+2023-11-01 15:53:19 ip-172-31-25-108 INFO New version 0.212
+2023-11-01 15:54:08 ip-172-31-25-108 INFO Multiprocess sampling (8 chains in 8 jobs)
+2023-11-01 15:54:08 ip-172-31-25-108 INFO DEMetropolisZ: [contact_rate, latent_period, infectious_period, natural_immunity_period, start_cdr, imm_infect_protect, ifr_adjuster, ba1_seed_time, ba2_seed_time, ba5_seed_time, ba2_escape, ba5_escape, ba2_rel_ifr, wa_reopen_period, notifs_mean, deaths_mean, imm_prop, notifications_ma_dispersion, deaths_ma_dispersion]
+2023-11-01 20:30:05 ip-172-31-25-108 INFO Sampling 8 chains for 10_000 tune and 50_000 draw iterations (80_000 + 400_000 draws total) took 16556 seconds.
+2023-11-01 20:30:14 ip-172-31-25-108 INFO The rhat statistic is larger than 1.01 for some parameters. This indicates problems during sampling. See https://arxiv.org/abs/1903.08008 for details
+2023-11-01 20:30:14 ip-172-31-25-108 ERROR The effective sample size per chain is smaller than 100 for some parameters.  A higher number is needed for reliable rhat and ess computation. See https://arxiv.org/abs/1903.08008 for details
+2023-11-01 20:48:46 ip-172-31-25-108 INFO Calibration complete
+2023-11-01 20:48:46 ip-172-31-25-108 INFO Task completed
+2023-11-01 20:48:47 ip-172-31-25-108 INFO Uploading from /home/ubuntu/taskdata/log/task.log to projects/aust_covid/alternate_analyses/2023-11-01T1547-mob-d50k-t10k-b5k/log/task.log
+2023-11-01 20:48:47 ip-172-31-25-108 INFO Uploading from /home/ubuntu/taskdata/output/results.hdf to projects/aust_covid/alternate_analyses/2023-11-01T1547-mob-d50k-t10k-b5k/output/results.hdf
+2023-11-01 20:48:47 ip-172-31-25-108 INFO Uploading from /home/ubuntu/taskdata/output/calib_extract_out.h5 to projects/aust_covid/alternate_analyses/2023-11-01T1547-mob-d50k-t10k-b5k/output/calib_extract_out.h5
+2023-11-01 20:48:47 ip-172-31-25-108 INFO Uploading from /home/ubuntu/taskdata/output/calib_full_out.nc to projects/aust_covid/alternate_analyses/2023-11-01T1547-mob-d50k-t10k-b5k/output/calib_full_out.nc
+2023-11-01 20:48:47 ip-172-31-25-108 INFO Uploading from /home/ubuntu/taskdata/log/task.log to projects/aust_covid/alternate_analyses/2023-11-01T1547-mob-d50k-t10k-b5k/log/task.log

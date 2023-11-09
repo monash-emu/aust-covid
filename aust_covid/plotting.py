@@ -393,3 +393,66 @@ def plot_mixing_matrices(
         row, col = get_row_col_for_subplots(i, n_cols)
         fig.add_traces(px.imshow(matrices[matrix], x=AGE_STRATA, y=AGE_STRATA).data, rows=row, cols=col)
     return fig.update_layout(height=800, width=850, margin={'t': 40})
+
+
+def plot_3d_spaghetti(
+    indicator_name: str, 
+    spaghetti: pd.DataFrame, 
+    targets: list, 
+    target_freq=5,
+) -> go.Figure:
+    """Create interactive plotly figure for comparing outputs against targets.
+
+    Args:
+        indicator_name: Name of indicator to consider
+        spaghetti: The outputs from the sequential calibration runs
+        targets: The targets from the calibration algorithm
+        target_freq: How frequently to intersperse target plots between sequential runs
+
+    Returns:
+        The interactive figure
+    """
+    fig = go.Figure()
+    sample = spaghetti.loc[spaghetti.index > PLOT_START_DATE, indicator_name]
+    sample.columns = sample.columns.map(lambda x: ', '.join([*map(str, x)]))
+    target = get_target_from_name(targets, indicator_name)
+    for i_col, col in enumerate(sample.columns):
+        ypos = [i_col] * len(sample.index)
+        fig.add_trace(go.Scatter3d(x=sample.index, y=ypos, z=sample[col], name=col, mode='lines', line={'width': 5.0}))
+        if target is not None and i_col % target_freq == 0:
+            target = target[target.index < ANALYSIS_END_DATE]
+            fig.add_trace(go.Scatter3d(x=target.index, y=ypos, z=target, name='target', mode='markers', marker={'size': 1.0}, line={'color': 'black'}))
+    fig.update_yaxes(showticklabels=False)
+    return fig.update_layout(height=800, scene=dict(xaxis_title='', yaxis_title='run', zaxis_title=indicator_name, yaxis={'showticklabels': False}))
+
+
+def plot_matrices_3d(
+    matrices: Dict[str, np.array],
+) -> go.Figure:
+    """Plot interactive 3D surface plots of matrices.
+
+    Args:
+        matrices: The mixing matrices by location
+
+    Returns:
+        The 4-panel plot
+    """
+    fig_type = {'type': 'surface'}
+    n_cols = 2
+    fig = make_subplots(
+        rows=2, 
+        cols=2, 
+        specs=[[fig_type, fig_type], [fig_type, fig_type]], 
+        horizontal_spacing=0.02, 
+        vertical_spacing=0.05,
+        subplot_titles=[k.replace('_', ' ') for k in matrices.keys()],
+    )
+    for l, location in enumerate(matrices):
+        row, col = get_row_col_for_subplots(l, n_cols)
+        fig.add_trace(go.Surface(x=AGE_STRATA, y=AGE_STRATA, z=matrices[location], showscale=False), row=row, col=col)
+    scene_req = {'zaxis': {'range': (0.0, 3.0), 'title': 'contacts', 'dtick': 1.0}, 'xaxis': {'title': ''}, 'yaxis': {'title': ''}}
+    return fig.update_layout(
+        scene1=scene_req, scene2=scene_req, scene3=scene_req, scene4=scene_req, 
+        height=800, 
+        margin={'t': 25, 'b': 25, 'l': 25, 'r': 25},
+    )
