@@ -3,18 +3,17 @@ import numpy as np
 from copy import copy
 from datetime import datetime, timedelta
 from plotly import graph_objects as go
-from aust_covid.utils import add_image_to_doc
 
 from emutools.tex import get_tex_formatted_date, TexDoc, StandardTexDoc
 from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
 from inputs.constants import DATA_PATH, NATIONAL_DATA_START_DATE, NUCLEOCAPS_SENS
+from aust_covid.utils import add_image_to_doc
 
 CHANGE_STR = '_percent_change_from_baseline'
 
 
 def load_national_case_data(tex_doc: StandardTexDoc) -> pd.Series:
-    """
-    See 'description' object text.
+    """See 'description' object text.
 
     Args:
         tex_doc: Documentation object
@@ -34,7 +33,7 @@ def load_national_case_data(tex_doc: StandardTexDoc) -> pd.Series:
 
 
 def load_owid_case_data(tex_doc: TexDoc) -> pd.Series:
-    """See 'description object text.
+    """See 'description' object text.
 
     Args:
         tex_doc: Documentation object
@@ -80,8 +79,7 @@ def load_case_targets(tex_doc: TexDoc) -> tuple:
 
 
 def load_who_death_data(tex_doc: StandardTexDoc) -> pd.Series:
-    """
-    See 'description' object text.
+    """See 'description' object text.
 
     Args:
         tex_doc: Documentation object
@@ -102,8 +100,7 @@ def load_who_death_data(tex_doc: StandardTexDoc) -> pd.Series:
 
 
 def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
-    """
-    See 'description' object text.
+    """See 'description' object text.
 
     Args:
         tex_doc: Documentation object
@@ -188,9 +185,8 @@ def load_pop_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
 
 
 def load_uk_pop_data(tex_doc: StandardTexDoc) -> pd.Series:
-    """
-    Get the UK census data. Data are in raw form,
-    except for renaming the sheet to omit a space (from "Sheet 1"),
+    """Get the UK census data. Data are in raw form,
+    (except for renaming the sheet to omit a space from 'Sheet 1' to 'Sheet_1'),
     to reduce the number of warnings.
 
     Args:
@@ -355,18 +351,18 @@ def get_ifrs(tex_doc: StandardTexDoc) -> dict:
     caption = "O'Driscoll and Erikstrup indicate the original data reported in the studies of interest. " \
         'Subsequent traces indicate the further steps in estimating values for use in the model, ' \
         'with the last trace representing the parameter applied according to the lower value of each age bracket. '
-    add_image_to_doc(fig, ifr_fig_name, 'svg', title, tex_doc, 'Parameters')
+    add_image_to_doc(fig, ifr_fig_name, 'svg', title, tex_doc, 'Parameters', caption=caption)
     model_breakpoint_values.index = model_breakpoint_values.index.map(lambda i: f'ifr_{int(i)}')
     return model_breakpoint_values.to_dict()
 
 
 def get_raw_state_mobility(tex_doc: StandardTexDoc) -> pd.DataFrame:
-    """
-    Get raw Google mobility data, concatenating 2021 and 2022 data,
+    """Get raw Google mobility data, concatenating 2021 and 2022 data,
     retaining only state-level data and converting to date index.
 
-    Returns:
-    
+    Args:
+        tex_doc: Documentation object
+            
     Returns:
         State-level mobility data, names of jurisdictions and locations
     """

@@ -21,7 +21,7 @@ def load_param_info() -> pd.DataFrame:
             descriptions: A brief reader-digestible name/description for the parameter
             units: The unit of measurement for the quantity (empty string if dimensionless)
             evidence: TeX-formatted full description of the evidence underpinning the choice of value
-            abbreviations: Short name for parameters, e.g. for some plots
+            abbreviations: Short names for parameters, e.g. for some plots
     """
     with open(INPUTS_PATH / 'parameters.yml', 'r') as param_file:
         param_info = yml.safe_load(param_file)

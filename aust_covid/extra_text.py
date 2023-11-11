@@ -1,5 +1,5 @@
-from inputs.constants import RUN_IDS, PRIMARY_ANALYSIS, BURN_IN, OPTI_DRAWS, ANALYSIS_FEATURES
 from emutools.tex import TexDoc
+from inputs.constants import RUN_IDS, PRIMARY_ANALYSIS, BURN_IN, OPTI_DRAWS, ANALYSIS_FEATURES
 
 
 def add_intro_blurb_to_tex(tex_doc: TexDoc):
