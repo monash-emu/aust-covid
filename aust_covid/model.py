@@ -164,7 +164,7 @@ def build_base_model(
     infectious_compartments: List[str],
     tex_doc: StandardTexDoc,
 ) -> CompartmentalModel:
-    """Build base model object, see 'description' object text.
+    """Build base model object, see 'description' string.
 
     Args:
         compartments: Names of all unstratified model compartments
@@ -200,10 +200,10 @@ def add_infection(
     latent_compartments: List[str],
     tex_doc: StandardTexDoc,
 ):
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
-        model: The model object
+        model: The summer epidemiological model
         latent_compartments: The names of the latent compartments
         tex_doc: Documentation object
     """
@@ -226,10 +226,10 @@ def add_latent_transition(
     infectious_compartments: List[str],
     tex_doc: StandardTexDoc,
 ):
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
-        model: The model object
+        model: The summer epidemiological model
         latent_compartments: The names of the latent compartments
         infectious_compartments: The names of the infectious compartments
         tex_doc: Documentation object
@@ -260,10 +260,10 @@ def add_infectious_transition(
     infectious_compartments: List[str],
     tex_doc: StandardTexDoc,
 ):
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
-        model: The model object
+        model: The summer epidemiological model
         infectious_compartments: The names of the infectious compartments
         tex_doc: Documentation object
     """
@@ -292,10 +292,10 @@ def add_waning(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
 ):
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
-        model: The model object
+        model: The summer epidemiological model
         tex_doc: Documentation object
     """
     process = 'waning'
@@ -318,7 +318,7 @@ def adapt_gb_matrices_to_aust(
     pop_data: pd.DataFrame,
     tex_doc: StandardTexDoc,
 ) -> Dict[np.array]:
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
         unadjusted_matrices: The raw matrices
@@ -395,7 +395,7 @@ def get_age_stratification(
     matrix: np.array,
     tex_doc: StandardTexDoc,
 ) -> Stratification:
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
         compartments: Names of all unstratified model compartments
@@ -426,7 +426,7 @@ def get_strain_stratification(
     compartments: list,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
         compartments: Names of all unstratified model compartments
@@ -455,7 +455,7 @@ def get_default_imm_strat(
     tex_doc: StandardTexDoc,
     abbreviations: pd.Series,
 ) -> Stratification:
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
         compartments: Names of all unstratified model compartments
@@ -493,7 +493,7 @@ def get_default_imm_strat(
 def get_vacc_imm_strat(
     compartments: List[str], 
 ) -> Stratification:
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
         compartments: Names of all unstratified model compartments
@@ -518,7 +518,7 @@ def seed_vocs(
     """Seed each sequentially emerging subvariant.
 
     Args:
-        model: The model object
+        model: The summer epidemiological model
         latent_compartments: The names of the latent compartments
         tex_doc: Documentation object
         abbreviations: Short names for parameters
@@ -554,10 +554,10 @@ def add_reinfection(
     latent_compartments: list,
     tex_doc: StandardTexDoc,
 ):
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
-        model: The model object
+        model: The summer epidemiological model
         latent_compartments: The names of the latent compartments
         tex_doc: Documentation object
     """
@@ -607,7 +607,7 @@ def get_wa_infection_scaling(
     """Get the simple linear interpolation function for WA reopening.
 
     Args:
-        model: The model object
+        model: The summer epidemiological model
 
     Returns:
         The function
@@ -624,7 +624,7 @@ def get_spatial_stratification(
     abbreviations: pd.Series,
     reopen_func: Function,
 ) -> Stratification:
-    """See 'description' object.
+    """see 'description' string.
 
     Args:
         compartments: Names of all unstratified model compartments
@@ -665,7 +665,7 @@ def initialise_comps(
     
     Args:
         pop_data: The population data (from load_pop_data)
-        model: The model object
+        model: The summer epidemiological model
         vacc_ext: Whether to include the vaccination extension
         tex_doc: Documentation object
     """

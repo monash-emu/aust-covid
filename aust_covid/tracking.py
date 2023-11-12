@@ -20,6 +20,18 @@ def get_cdr_values(
     param: float, 
     test_ratios: np.array,
 ) -> pd.Series:
+    """Get the case detection rate (proportion),
+    given values for the exponent and a multiplier applied to it.
+    The function returns zero when the product of the inputs is zero,
+    and approaches one as the product of the inputs increses.
+
+    Args:
+        param: The multiplier calculated by get_param_to_exp_plateau
+        test_ratios: The (scaling) input value
+
+    Returns:
+        The case detection rate (proportion of cases detected)
+    """
     return 1.0 - np.exp(0.0 - param * test_ratios)
 
 
@@ -27,8 +39,14 @@ def get_param_to_exp_plateau(
     input_ratio: float, 
     cdr_param_target: float,
 ) -> float:
-    """
-    Solve the preceding equation for a value of param, given a ratio input.
+    """Solve the preceding equation for a value of param, given a ratio input.
+
+    Args:
+        input_ratio: Survey-derived testing ratio at the time that the CDR is "known"
+        cdr_param_target: The "known" input CDR value at the same point in time
+
+    Returns:
+        The processed value of the parameter needed by get_cdr_values
     """
     return 0.0 - np.log(1.0 - cdr_param_target) / input_ratio
 
@@ -37,6 +55,12 @@ def track_incidence(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
 ):
+    """See 'description' string.
+
+    Args:
+        model: The summer epidemiological model
+        tex_doc: Documentation object
+    """
     description = 'Age group, strain-specific, and overall incidence of SARS-CoV-2 ' \
         '(including modelled episodes that would never have been detected) were tracked. ' \
         'This incidence was not used explicitly in the calibration process, ' \
@@ -71,7 +95,16 @@ def track_incidence(
     model.request_function_output('incidence', sum([DerivedOutput(f'incidenceXagegroup_{age}') for age in age_strata]))
 
 
-def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> tuple:
+def track_notifications(
+    model: CompartmentalModel, 
+    tex_doc: StandardTexDoc,
+):
+    """See 'description' string.
+
+    Args:
+        model: The summer epidemiological model
+        tex_doc: Documentation object
+    """
     description = 'The extent of community testing following symptomatic infection is likely to have declined ' \
         'over the course of 2022. To understand these trends, we first considered data from the \href' \
         '{https://www.abs.gov.au/statistics/people/people-and-communities/household-impacts-covid-19-survey/latest-release}' \
@@ -128,7 +161,13 @@ def track_notifications(model: CompartmentalModel, tex_doc: StandardTexDoc) -> t
 def track_deaths(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
-) -> str:
+):
+    """See 'description' string.
+
+    Args:
+        model: The summer epidemiological model
+        tex_doc: Documentation object
+    """
     ba2_adj_name = 'ba2_rel_ifr'
     ba2_adj_str = ba2_adj_name.replace('_', '\_')
     description = 'Calculation of the COVID-19-specific deaths followed an analogous ' \
@@ -167,7 +206,15 @@ def track_adult_seroprev(
     model: CompartmentalModel,
     adult_cut_off: int,
     tex_doc: StandardTexDoc,
-) -> str:
+):
+    """See 'description' string.
+
+    Args:
+        compartments: Names of all unstratified model compartments
+        model: The summer epidemiological model
+        adult_cut_off: The starting value above which an age bracket should be considered adult
+        tex_doc: Documentation object
+    """
     never_infected_comp = 'susceptible'
     description = 'The proportion of the overall population in any ' \
         f'compartment other than the {never_infected_comp} compartment among those aged {adult_cut_off} years and above ' \
@@ -186,7 +233,14 @@ def track_strain_prop(
     model: CompartmentalModel,
     infectious_compartments: list,
     tex_doc: StandardTexDoc,
-) -> tuple:
+):
+    """See 'description' string.
+
+    Args:
+        model: The summer epidemiological model
+        infectious_compartments: The names of the infectious compartments
+        tex_doc: Documentation object
+    """
     description = 'Proportional prevalence of each Omicron sub-variant ' \
         'was tracked as the proportion of the population currently in any of ' \
         'the infectious compartments that is infected with the modelled strain of interest ' \
@@ -200,6 +254,12 @@ def track_strain_prop(
 
 
 def track_immune_prop(model: CompartmentalModel):
+    """Track the proportions of the modelled population in each of the immune strata
+    (regardless of which approach to immune stratification is applied).
+
+    Args:
+        model: The summer epidemiological model
+    """
     model_comps = [c.name for c in model._original_compartment_names]
     age_strata = model.stratifications['agegroup'].strata
 
@@ -228,6 +288,13 @@ def track_reproduction_number(
     infectious_compartments: list,
     tex_doc: StandardTexDoc,
 ):
+    """See 'description' string.
+
+    Args:
+        model: The summer epidemiological model
+        infectious_compartments: The names of the infectious compartments
+        tex_doc: Documentation object
+    """
     description = 'The time-varying effective reproduction number was calculated as ' \
         'the rate of all infections (including both first infection and reinfection) ' \
         'divided by the prevalence of infectious persons (i.e. in the infectious compartments) ' \
