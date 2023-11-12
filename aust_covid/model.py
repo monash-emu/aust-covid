@@ -200,7 +200,7 @@ def add_infection(
     latent_compartments: List[str],
     tex_doc: StandardTexDoc,
 ):
-    """see 'description' string.
+    """See 'description' string.
 
     Args:
         model: The summer epidemiological model
@@ -226,7 +226,7 @@ def add_latent_transition(
     infectious_compartments: List[str],
     tex_doc: StandardTexDoc,
 ):
-    """see 'description' string.
+    """See 'description' string.
 
     Args:
         model: The summer epidemiological model
@@ -260,7 +260,7 @@ def add_infectious_transition(
     infectious_compartments: List[str],
     tex_doc: StandardTexDoc,
 ):
-    """see 'description' string.
+    """See 'description' string.
 
     Args:
         model: The summer epidemiological model
@@ -292,7 +292,7 @@ def add_waning(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
 ):
-    """see 'description' string.
+    """See 'description' string.
 
     Args:
         model: The summer epidemiological model
@@ -318,7 +318,7 @@ def adapt_gb_matrices_to_aust(
     pop_data: pd.DataFrame,
     tex_doc: StandardTexDoc,
 ) -> Dict[np.array]:
-    """see 'description' string.
+    """See 'description' string.
 
     Args:
         unadjusted_matrices: The raw matrices
@@ -395,7 +395,7 @@ def get_age_stratification(
     matrix: np.array,
     tex_doc: StandardTexDoc,
 ) -> Stratification:
-    """see 'description' string.
+    """See 'description' string.
 
     Args:
         compartments: Names of all unstratified model compartments
@@ -426,7 +426,7 @@ def get_strain_stratification(
     compartments: list,
     tex_doc: StandardTexDoc,
 ) -> tuple:
-    """see 'description' string.
+    """See 'description' string.
 
     Args:
         compartments: Names of all unstratified model compartments
@@ -455,7 +455,7 @@ def get_default_imm_strat(
     tex_doc: StandardTexDoc,
     abbreviations: pd.Series,
 ) -> Stratification:
-    """see 'description' string.
+    """See 'description' string.
 
     Args:
         compartments: Names of all unstratified model compartments
@@ -493,7 +493,7 @@ def get_default_imm_strat(
 def get_vacc_imm_strat(
     compartments: List[str], 
 ) -> Stratification:
-    """see 'description' string.
+    """Get the immunity stratification if the vaccination extension is included.
 
     Args:
         compartments: Names of all unstratified model compartments
@@ -501,7 +501,6 @@ def get_vacc_imm_strat(
     Returns:
         The summer stratification object for immune classes under the vaccination model extension structure
     """
-
     imm_strat = Stratification('immunity', ['unvacc', 'vacc', 'waned'], compartments)
     for infection_process in INFECTION_PROCESSES:
         heterogeneity = {'unvacc': None, 'vacc': Multiply(1.0 - Parameter('imm_infect_protect')), 'waned': None}
@@ -554,7 +553,7 @@ def add_reinfection(
     latent_compartments: list,
     tex_doc: StandardTexDoc,
 ):
-    """see 'description' string.
+    """See 'description' string.
 
     Args:
         model: The summer epidemiological model
@@ -624,7 +623,7 @@ def get_spatial_stratification(
     abbreviations: pd.Series,
     reopen_func: Function,
 ) -> Stratification:
-    """see 'description' string.
+    """See 'description' string.
 
     Args:
         compartments: Names of all unstratified model compartments
