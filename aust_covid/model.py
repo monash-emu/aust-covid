@@ -314,10 +314,10 @@ def add_waning(
 
 
 def adapt_gb_matrices_to_aust(
-    unadjusted_matrices: Dict[np.array], 
+    unadjusted_matrices: Dict[str, np.array], 
     pop_data: pd.DataFrame,
     tex_doc: StandardTexDoc,
-) -> Dict[np.array]:
+) -> Dict[str, np.array]:
     """See 'description' string.
 
     Args:

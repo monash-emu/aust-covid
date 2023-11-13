@@ -1,93 +1,20 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from datetime import datetime, timedelta
 from copy import deepcopy
 import pandas as pd
 from jax import numpy as jnp
 import numpy as np
-import scipy
-from scipy.optimize import minimize
 
 from summer2.parameters import Function, Data, Time
+from summer2.utils import Epoch
 
 from inputs.constants import IMMUNITY_LAG
-
-
-def calc_rates_for_interval(
-        start_props: pd.core.series.Series, end_props: pd.core.series.Series, delta_t: float, strata: List[str],
-        active_flows: dict
-) -> dict:
-    """
-    Calculate the transition rates associated with each inter-stratum flow for a given time interval.
-
-    The system can be described using a linear ordinary differential equations such as:
-    X'(t) = M.X(t) ,
-    where M is the transition matrix and X is a column vector representing the proportions over time
-
-    The solution of this equation is X(t) = exp(M.t).X_0,
-    where X_0 represents the proportions at the start of the time interval.
-
-    The transition parameters informing M must then verify the following equation:
-    X(t_end) = exp(M.delta_t).X_0,
-    where t_end represents the end of the time interval.
-
-    Args:
-        start_props: user-requested stratum proportions at the start of the time interval
-        end_props: user-requested stratum proportions at the end of the time interval
-        delta_t: width of the time interval
-        strata: list of strata
-        active_flows: Dictionary listing the flows driving the inter-stratum transitions. Keys are flow names and values
-        are length-two tuples representing the flows' sources and destinations.
-    Returns:
-        The estimated transition rates stored in a dictionary using the flow names as keys.
-
-    """
-    # Determine some basic characteristics
-    n_strata = len(strata)
-    n_params = len(active_flows)
-    ordered_flow_names = list(active_flows.keys())
-
-    # Create the function that we need to find the root of
-    def function_to_zero(params):
-        # params is a list ordered in the same order as ordered_flow_names
-
-        # Create the transition matrix associated with a given set of transition parameters
-        m = np.zeros((n_strata, n_strata))
-        for i_row, stratum_row in enumerate(strata):
-            for i_col, stratum_col in enumerate(strata):
-                if i_row == i_col:
-                    # Diagonal components capture flows starting from the associated stratum
-                    relevant_flow_names = [f_name for f_name, f_ends in active_flows.items() if f_ends[0] == stratum_row]
-                    for f_name in relevant_flow_names:
-                        m[i_row, i_col] -= params[ordered_flow_names.index(f_name)]
-                else:
-                    # Off-diagonal components capture flows from stratum_col to stratum_row
-                    for f_name, f_ends in active_flows.items():
-                        if f_ends == (stratum_col, stratum_row):
-                            m[i_row, i_col] = params[ordered_flow_names.index(f_name)]
-
-        # Calculate the matrix exponential, accounting for the time interval width
-        exp_mt = scipy.linalg.expm(m * delta_t)
-
-        # Calculate the difference between the left and right terms of the equation
-        diff = np.matmul(exp_mt, start_props) - end_props
-
-        # Return the norm of the vector to make the minimised function a scalar function
-        return scipy.linalg.norm(diff)
-
-    # Define bounds to force the parameters to be positive
-    bounds = [(0., None)] * n_params
-
-    # Numerical solving
-    solution = minimize(function_to_zero, x0=np.zeros(n_params), bounds=bounds, method="TNC")
-
-    return {ordered_flow_names[i]: solution.x[i] for i in range(len(ordered_flow_names))}
 
 
 def get_vacc_data_masks(
     df: pd.DataFrame,
 ) -> Dict[str, List[str]]:
-    """
-    Get masks for vaccination dataframe to identify the various programs.
+    """Get masks for vaccination dataframe to identify the various programs.
 
     Args:
         df: The vaccination dataframe returned by get_base_vacc_data
@@ -133,9 +60,9 @@ def get_vacc_data_masks(
 
 def add_derived_data_to_vacc(
     df: pd.DataFrame, 
-) -> pd.DataFrame:
-    """
-    Add the additional columns needed in the vaccination dataframe that are not included as raw data.
+) -> Tuple[pd.DataFrame]:
+    """Add the additional columns needed in the vaccination dataframe that are not included as raw data.
+    Lastly, lag all fields for development of immunity and return both unlagged and lagged dataframes.
 
     Args:
         df: The vaccination dataframe returned by get_base_vacc_data
@@ -144,6 +71,16 @@ def add_derived_data_to_vacc(
 
     Returns:
         Augmented vaccination dataframe with additional columns
+        Additional fields added are:
+            primary full: Numbers of 5-11 year-olds receiving second doses
+            adult booster: Numbers of 16+ year-olds receiving third or subsequent doses
+            prop primary full: 'primary full' as proportional coverage
+            prop adult booster: 'adult booster' as proportional coverage
+            prop remaining primary full: Proportion receiving primary dose over time interval
+            prop remaining adult booster: Proportion receiving booster dose over time interval
+            duration: Period since the previous time step
+            rate primary full: Per capita primary dose transition rate to move people between model strata
+            rate adult booster: Per capita adult booster transition rate
     """
     masks = get_vacc_data_masks(df)
     df['primary full'] = df[masks['age 5-11, 2+ doses']].sum(axis=1)
@@ -164,34 +101,25 @@ def add_derived_data_to_vacc(
     return df, lagged_df
 
 
-def get_full_vacc_props(df, masks):
-    full_prop_df = pd.DataFrame()
-    for full_vacc_mask in masks:
-        age_str = full_vacc_mask.replace('Age group - ', '').replace('- Number of people fully vaccinated', '').replace(' ', '')
-        full_prop_df[full_vacc_mask] = df[full_vacc_mask] / df[f'Age group - {age_str} - Population']
-    return full_prop_df
-
-
-def piecewise_constant(x, breakpoints, values):
-    return values[sum(x >= breakpoints)]
-
-
-def get_model_vacc_vals_from_data(
-    vacc_df: pd.DataFrame,
-    column: str,
-) -> pd.Series:
-    """
-    Extract, tidy and adapt data needed from vaccination dataframe.
+def get_full_vacc_props(
+    vacc_df: pd.DataFrame, 
+    masks: List[str],
+) -> pd.DataFrame:
+    """Get coverage of full vaccination by age group from main vaccination data,
+    retaining column names, even though these are now proportions.
 
     Args:
-        vacc_df: Vaccination data including calculated boosting proportions
+        vacc_df: The main vaccination data dataframe with original and derived fields
+        masks: The names of the columns pertaining to second dose in adults
 
     Returns:
-        Just the series of the booster coverage needed by the model
+        Separate dataframe containing the coverage values
     """
-    data = vacc_df[column].dropna()
-    data.index += timedelta(days=IMMUNITY_LAG)
-    return data[~data.index.duplicated(keep='first')]
+    full_df = pd.DataFrame()
+    for full_vacc_mask in masks:
+        age_str = full_vacc_mask.replace('Age group - ', '').replace('- Number of people fully vaccinated', '').replace(' ', '')
+        full_df[full_vacc_mask] = vacc_df[full_vacc_mask] / vacc_df[f'Age group - {age_str} - Population']
+    return full_df
 
 
 def get_rate_from_prop(
@@ -200,7 +128,7 @@ def get_rate_from_prop(
     duration: float,
 ) -> float:
     """
-    Calculate the transition rate needed to achieve a requested end proportion
+    Calculate the transition rate needed to achieve a requested end proportion,
     given a specific starting proportion and duration for two model strata.
     Equation solves the expression:
         (1 - prop2) / (1 - prop1) = exp(-rate * duration)
@@ -216,16 +144,34 @@ def get_rate_from_prop(
     return (np.log(1.0 - prop1) - np.log(1.0 - prop2)) / duration
 
 
+def piecewise_constant(
+    time: Time, 
+    breakpoints: Data, 
+    values: Data,
+) -> float:
+    """Get the required value from an array according to the time point
+    at which to index it.
+
+    Args:
+        time: Time point of interest
+        breakpoints: Series of breakpoints in time
+        values: The values for each time interval
+
+    Returns:
+        The value corresponding to the time point of interest
+    """
+    return values[sum(time >= breakpoints)]
+
+
 def calc_vacc_funcs_from_props(
     data: pd.Series, 
-    epoch,
+    epoch: Epoch,
 ) -> Function:
-    """
-    Get transition function for moving population between immune and non-immune categories.
+    """Get transition function for moving population between immune and non-immune categories.
 
     Args:
         data: Vaccination coverage values over time index
-        epoch: Model's epoch
+        epoch: Epidemiological model's epoch
 
     Returns:
         Piecewise constant function for implementation as flow between strata
