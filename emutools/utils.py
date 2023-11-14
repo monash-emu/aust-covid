@@ -4,9 +4,6 @@ import numpy as np
 
 from summer2.parameters import Function, Data, DerivedOutput
 
-from emutools.tex import StandardTexDoc
-from inputs.constants import SUPPLEMENT_PATH
-
 
 def triangle_wave_func(
     time: float, 
@@ -14,8 +11,7 @@ def triangle_wave_func(
     duration: float, 
     peak: float,
 ) -> float:
-    """
-    Generate a peaked triangular wave function
+    """Generate a peaked triangular wave function
     that starts from and returns to zero.
 
     Args:
@@ -37,8 +33,7 @@ def convolve_probability(
     source_output: DerivedOutput, 
     density_kernel: Function,
 ) -> jnp.array:
-    """
-    Create function to convolve two processes,
+    """Create function to convolve two processes,
     currently always a modelled derived output and some empirically based distribution.
 
     Args:
@@ -56,8 +51,7 @@ def gamma_cdf(
     mean: float, 
     x: jnp.array,
 ) -> jnp.array:
-    """
-    The regularised gamma function is the CDF of the gamma distribution
+    """The regularised gamma function is the CDF of the gamma distribution
     (which is referred to by scipy as "gammainc").
 
     Args:
@@ -76,8 +70,7 @@ def build_gamma_dens_interval_func(
     mean: float, 
     model_times: np.ndarray,
 ) -> Function:
-    """
-    Create a function to return the density of the gamma distribution.
+    """Create a function to return the density of the gamma distribution.
 
     Args:
         shape: Shape parameter to gamma distribution
