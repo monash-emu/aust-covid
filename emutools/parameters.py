@@ -3,10 +3,6 @@ import yaml as yml
 from inputs.constants import INPUTS_PATH
 
 
-def capture_kwargs(*args, **kwargs):
-    return kwargs
-
-
 def load_param_info() -> pd.DataFrame:
     """
     Load specific parameter information from a ridigly formatted yaml file, and crash otherwise.

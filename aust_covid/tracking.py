@@ -10,8 +10,8 @@ from summer2.functions.derived import get_rolling_reduction
 from summer2.parameters import Parameter, DerivedOutput, Function
 
 from inputs.constants import TARGETS_AVERAGE_WINDOW, SUPPLEMENT_PATH
-from aust_covid.utils import convolve_probability, build_gamma_dens_interval_func, add_image_to_doc
 from aust_covid.inputs import load_household_impacts_data
+from emutools.utils import convolve_probability, build_gamma_dens_interval_func, add_image_to_doc
 from emutools.tex import get_tex_formatted_date, StandardTexDoc
 from inputs.constants import INFECTION_PROCESSES
 

@@ -11,10 +11,10 @@ from summer2 import CompartmentalModel, Stratification, StrainStratification, Mu
 from summer2.parameters import Parameter, Function, Time
 
 from emutools.tex import StandardTexDoc, get_tex_formatted_date
-from emutools.parameters import capture_kwargs
+from emutools.utils import capture_kwargs
+from emutools.utils import triangle_wave_func, add_image_to_doc
 from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
 from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES, DATA_PATH
-from aust_covid.utils import triangle_wave_func, add_image_to_doc
 from aust_covid.inputs import load_pop_data, load_uk_pop_data, get_base_vacc_data
 from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number, track_immune_prop
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
