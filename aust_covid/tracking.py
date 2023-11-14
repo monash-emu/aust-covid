@@ -11,8 +11,8 @@ from summer2.parameters import Parameter, DerivedOutput, Function
 
 from inputs.constants import TARGETS_AVERAGE_WINDOW
 from aust_covid.inputs import load_household_impacts_data
-from emutools.utils import convolve_probability, build_gamma_dens_interval_func, add_image_to_doc
-from emutools.tex import get_tex_formatted_date, StandardTexDoc
+from emutools.utils import convolve_probability, build_gamma_dens_interval_func
+from emutools.tex import get_tex_formatted_date, StandardTexDoc, add_image_to_doc
 from inputs.constants import INFECTION_PROCESSES
 
 

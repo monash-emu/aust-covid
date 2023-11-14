@@ -1,7 +1,11 @@
+from typing import Union
 from pathlib import Path
 import pandas as pd
 import yaml as yml
 from abc import abstractmethod, ABC
+from matplotlib.figure import Figure as MplFig
+from plotly.graph_objects import Figure as PlotlyFig
+from inputs.constants import SUPPLEMENT_PATH
 
 
 def get_tex_formatted_date(date):
@@ -336,4 +340,41 @@ class StandardTexDoc(ConcreteTexDoc):
             self.add_line('\\tableofcontents', 'preamble')        
         self.add_line('\\printbibliography', 'endings')
         self.add_line('\\end{document}', 'endings')
-            
+
+
+def add_image_to_doc(
+    fig: Union[MplFig, PlotlyFig], 
+    filename: str, 
+    filetype: str,
+    title: str, 
+    tex_doc: StandardTexDoc, 
+    section: str,
+    subsection: str='',
+    caption: str='',
+    fig_width: float=0.85,
+):
+    """
+    Save a figure image to a local directory and include in TeX doc.
+
+    Args:
+        fig: The figure object
+        filename: A string for the filenam to save the figure as
+        caption: Figure caption for the document
+        tex_doc: The working document
+        section: Section of the document to include the figure in
+
+    Raises:
+        TypeError: If the figure is not one of the two supported formats
+    """
+    fig_folder = 'figures'
+    fig_path = SUPPLEMENT_PATH / fig_folder
+    Path(fig_path).mkdir(exist_ok=True)
+    full_filename = f'{filename}.{filetype}'
+    if isinstance(fig, MplFig):
+        fig.savefig(fig_path / full_filename)
+    elif isinstance(fig, PlotlyFig):
+        fig.update_layout(margin={'t': 25})
+        fig.write_image(fig_path / full_filename)
+    else:
+        raise TypeError('Figure type not supported')
+    tex_doc.include_figure(title, filename, filetype, fig_folder, section, subsection=subsection, caption=caption, fig_width=fig_width)
