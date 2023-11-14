@@ -1,4 +1,3 @@
-from typing import Dict
 from datetime import datetime
 import numpy as np
 import pandas as pd
@@ -40,7 +39,7 @@ def get_all_priors() -> list:
     ]
 
 
-def get_priors(vacc_sens: bool, abbreviations: pd.Series, tex_doc: TexDoc) -> list:
+def get_priors(vacc_ext: bool, abbreviations: pd.Series, tex_doc: TexDoc) -> list:
     """Get the priors used for the analysis.
 
     Args:
@@ -63,7 +62,7 @@ def get_priors(vacc_sens: bool, abbreviations: pd.Series, tex_doc: TexDoc) -> li
     tex_doc.add_line(description, 'Calibration methods', subsection='Priors')
 
     all_priors = get_all_priors()
-    leave_out_prior = vacc_omit_prior if vacc_sens else default_omit_prior
+    leave_out_prior = vacc_omit_prior if vacc_ext else default_omit_prior
     return [p for p in all_priors if p.name != leave_out_prior]
 
 

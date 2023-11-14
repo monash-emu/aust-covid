@@ -3,17 +3,9 @@ import yaml as yml
 from inputs.constants import INPUTS_PATH
 
 
-def capture_kwargs(*args, **kwargs):
-    return kwargs
-
-
 def load_param_info() -> pd.DataFrame:
     """
     Load specific parameter information from a ridigly formatted yaml file, and crash otherwise.
-
-    Args:
-        data_path: Location of the source file
-        parameters: The parameters provided by the user (with their values)
 
     Returns:
         The parameters info DataFrame contains the following fields:
@@ -21,7 +13,7 @@ def load_param_info() -> pd.DataFrame:
             descriptions: A brief reader-digestible name/description for the parameter
             units: The unit of measurement for the quantity (empty string if dimensionless)
             evidence: TeX-formatted full description of the evidence underpinning the choice of value
-            abbreviations: Short name for parameters, e.g. for some plots
+            abbreviations: Short names for parameters, e.g. for some plots
     """
     with open(INPUTS_PATH / 'parameters.yml', 'r') as param_file:
         param_info = yml.safe_load(param_file)

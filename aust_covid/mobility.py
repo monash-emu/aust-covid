@@ -17,8 +17,7 @@ def get_non_wa_mob_averages(
     jurisdictions: set,
     tex_doc: StandardTexDoc,
 ) -> pd.DataFrame:
-    """
-    Calculate the weighted averages for the mobility estimates in the 
+    """Calculate the weighted averages for the mobility estimates in the 
     states other than Western Australia.
 
     Args:
@@ -55,8 +54,7 @@ def get_non_wa_mob_averages(
 def get_relative_mobility(
     mobility_df: pd.DataFrame,
 ) -> pd.DataFrame:
-    """
-    Google mobility values are provided as percentage change relative to baseline.
+    """Google mobility values are provided as percentage change relative to baseline.
     However, we need mobility value relative to baseline estimate.
 
     Args:
@@ -88,25 +86,23 @@ def map_mobility_locations(
         "from Google's reported `locations' to the contact locations of the model's mixing matrix. "
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
 
-    patch_data = {
-        'wa': wa_relmob,
-        'non_wa': non_wa_relmob,
-    }
+    patch_data = {'wa': wa_relmob, 'non_wa': non_wa_relmob}
     model_mob = pd.DataFrame(columns=pd.MultiIndex.from_product([patch_data.keys(), MOBILITY_MAP.keys()]))
-    for patch in patch_data.keys():
-        for mob_loc in MOBILITY_MAP.keys():
-            data = patch_data[patch].assign(**MOBILITY_MAP[mob_loc]).mul(patch_data[patch]).sum(1)
+    for patch, p_data in patch_data.items():
+        for mob_loc, mob_map in MOBILITY_MAP.items():
+            data = p_data.assign(**mob_map).mul(p_data).sum(1)
             model_mob.loc[:, (patch, mob_loc)] = data
     return model_mob
 
 
-def get_processed_mobility_data(
-    tex_doc: StandardTexDoc
-) -> pd.DataFrame:
-    """
-    Get the state-level Google mobility estimates.
-    Also return the names of the jurisdictions (states and territories),
-    and the Google mobility locations.
+def get_processed_mobility_data(tex_doc: StandardTexDoc) -> pd.DataFrame:
+    """Convert Google mobility data from raw form to form needed by model.
+
+    Args:
+        tex_doc: Documentation object
+
+    Returns:
+        The processed mobility data
     """
     state_data, jurisdictions, mob_locs = get_raw_state_mobility(tex_doc)
     wa_data = state_data.loc[state_data['sub_region_1'] == 'Western Australia', mob_locs]
@@ -116,18 +112,18 @@ def get_processed_mobility_data(
         'change from baseline to the proportional change relative to baseline, ' \
         'to obtain contact scaling factors. '
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
+
     non_wa_relmob = get_relative_mobility(state_averages)
     wa_relmob = get_relative_mobility(wa_data)
-
     for location in MOBILITY_MAP:
         if sum(MOBILITY_MAP[location].values()) != 1.0:
             raise ValueError(f'Mobility mapping does not sum to one for {location}')
-
     processed_mob = map_mobility_locations(wa_relmob, non_wa_relmob, tex_doc)
 
     description = f'Next, we took the {MOBILITY_AVERAGE_WINDOW}-day moving average to smooth the ' \
         'often abrupt shifts in mobility, including with weekend and public holidays. '
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
+
     smoothed_mob = processed_mob.rolling(MOBILITY_AVERAGE_WINDOW).mean().dropna()
 
     description = 'Last, we squared the relative variations in mobility to account for ' \
@@ -135,8 +131,8 @@ def get_processed_mobility_data(
         'and the infectee of the modelled social contacts. ' \
         'These sequentially processed functions of time are illustrated in Figure \\ref{processed_mobility}. '
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
-    squared_mob = smoothed_mob ** 2.0
 
+    squared_mob = smoothed_mob ** 2.0
     return squared_mob
 
 

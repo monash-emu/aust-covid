@@ -10,6 +10,7 @@ from summer2.parameters import Function, Data, DerivedOutput
 
 from inputs.constants import SUPPLEMENT_PATH
 
+
 def triangle_wave_func(
     time: float, 
     start: float, 
@@ -25,6 +26,7 @@ def triangle_wave_func(
         start: Time at which wave starts
         duration: Duration of wave
         peak: Peak flow rate for wave
+
     Returns:
         The wave function
     """
@@ -37,7 +39,7 @@ def triangle_wave_func(
 def convolve_probability(
     source_output: DerivedOutput, 
     density_kernel: Function,
-):
+) -> jnp.array:
     """
     Create function to convolve two processes,
     currently always a modelled derived output and some empirically based distribution.
@@ -105,7 +107,7 @@ def add_image_to_doc(
     fig_width: float=0.85,
 ):
     """
-    Save an figure image to a local directory and include in TeX doc.
+    Save a figure image to a local directory and include in TeX doc.
 
     Args:
         fig: The figure object
@@ -126,3 +128,7 @@ def add_image_to_doc(
     else:
         raise TypeError('Figure type not supported')
     tex_doc.include_figure(title, filename, filetype, section, subsection=subsection, caption=caption, fig_width=fig_width)
+
+
+def capture_kwargs(*args, **kwargs):
+    return kwargs

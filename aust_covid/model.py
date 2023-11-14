@@ -1,8 +1,7 @@
+from typing import List, Dict
 import numpy as np
 import pandas as pd
 import plotly.express as px
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
 pd.options.plotting.backend = 'plotly'
 from copy import copy
 from jax import numpy as jnp
@@ -11,16 +10,16 @@ from summer2.functions.time import get_linear_interpolation_function as linear_i
 from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply
 from summer2.parameters import Parameter, Function, Time
 
-from aust_covid.utils import triangle_wave_func, add_image_to_doc
+from emutools.tex import StandardTexDoc, get_tex_formatted_date
+from emutools.utils import capture_kwargs
+from emutools.utils import triangle_wave_func, add_image_to_doc
+from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
+from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES, DATA_PATH
 from aust_covid.inputs import load_pop_data, load_uk_pop_data, get_base_vacc_data
 from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number, track_immune_prop
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
 from aust_covid.vaccination import add_derived_data_to_vacc
 from aust_covid.plotting import plot_mixing_matrices
-from emutools.tex import StandardTexDoc, get_tex_formatted_date
-from emutools.parameters import capture_kwargs
-from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
-from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES, DATA_PATH
 
 
 """
@@ -35,9 +34,20 @@ REOPEN_PARAM_STR = 'wa_reopen_period'
 def build_model(
     tex_doc: StandardTexDoc,
     abbreviations: pd.Series,
-    mobility_sens: bool=False,
-    vacc_sens: bool=False,
-):
+    mobility_ext: bool=False,
+    vacc_ext: bool=False,
+) -> CompartmentalModel:
+    """Master function for the process of model construction.
+
+    Args:
+        tex_doc: Documentation object
+        abbreviations: Short names for parameters
+        mobility_ext: Whether to include the mobility extension
+        vacc_ext: Whether to include the vaccination extension
+
+    Returns:
+        The model object
+    """
     description = 'We used the \\href{summer}{https://summer2.readthedocs.io/en/latest/} framework ' \
         'to construct a compartmental model of COVID-19 dynamics. '
     tex_doc.add_line(description, 'Base compartmental structure')
@@ -51,7 +61,6 @@ def build_model(
     aust_model = build_base_model(compartments, infectious_compartments, tex_doc)
     epoch = aust_model.get_epoch()
     model_pops = load_pop_data(tex_doc)
-    set_starting_conditions(aust_model, model_pops, tex_doc)
     add_infection(aust_model, latent_compartments, tex_doc)
     add_latent_transition(aust_model, latent_compartments, infectious_compartments, tex_doc)
     add_infectious_transition(aust_model, infectious_compartments, tex_doc)
@@ -63,7 +72,7 @@ def build_model(
     adjusted_matrices = adapt_gb_matrices_to_aust(raw_matrices, model_pops, tex_doc)
 
     # Mobility effects
-    if mobility_sens:
+    if mobility_ext:
         state_props = model_pops.sum() / model_pops.sum().sum()
         model_mob = get_processed_mobility_data(tex_doc)
         interp_funcs = get_interp_funcs_from_mobility(model_mob, epoch)
@@ -89,8 +98,8 @@ def build_model(
     spatial_strat = get_spatial_stratification(compartments, model_pops, tex_doc, abbreviations, wa_reopen_func)
     aust_model.stratify_with(spatial_strat)
 
-    if vacc_sens:
-        imm_strat = get_vacc_imm_strat(compartments, tex_doc)
+    if vacc_ext:
+        imm_strat = get_vacc_imm_strat(compartments)
         aust_model.stratify_with(imm_strat)
 
         vacc_df = get_base_vacc_data()
@@ -145,16 +154,26 @@ def build_model(
         aust_model.request_output_for_compartments(comp, [comp])
 
     # Compartment initialisation
-    initialise_comps(model_pops, aust_model, vacc_sens)
+    initialise_comps(model_pops, aust_model, vacc_ext, tex_doc)
 
     return aust_model
 
 
 def build_base_model(
-    compartments: list,
-    infectious_compartments: list,
+    compartments: List[str],
+    infectious_compartments: List[str],
     tex_doc: StandardTexDoc,
-) -> tuple:
+) -> CompartmentalModel:
+    """Build base model object, see 'description' string.
+
+    Args:
+        compartments: Names of all unstratified model compartments
+        infectious_compartments: The (unstratified) model compartments to be infectious
+        tex_doc: Documentation object
+
+    Returns:
+        The base, unstratified, unextended model object with compartments but not flows
+    """
     compartment_names = ", ".join(compartments).replace("_", "\_")
     description = f'The base model consists of {len(compartments)} states, ' \
         'representing sequential epidemiological conditions with regards SARS-CoV-2 infection and COVID-19 disease ' \
@@ -176,24 +195,18 @@ def build_base_model(
     )
 
 
-def set_starting_conditions(
-    model: CompartmentalModel,
-    pop_data: pd.DataFrame,
-    tex_doc: StandardTexDoc,
-) -> str:
-    total_pop = pop_data.sum().sum()
-    description = f'The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, ' \
-        'with the infection process triggered through subsequent strain seeding as described below. '
-    tex_doc.add_line(description, 'Population')
-
-    model.set_initial_population({'susceptible': total_pop})
-
-
 def add_infection(
     model: CompartmentalModel,
-    latent_compartments: list,
+    latent_compartments: List[str],
     tex_doc: StandardTexDoc,
-) -> str:
+):
+    """See 'description' string.
+
+    Args:
+        model: The summer epidemiological model
+        latent_compartments: The names of the latent compartments
+        tex_doc: Documentation object
+    """
     process = 'infection'
     origin = 'susceptible'
     destination = latent_compartments[0]
@@ -209,10 +222,18 @@ def add_infection(
 
 def add_latent_transition(
     model: CompartmentalModel,
-    latent_compartments: list,
-    infectious_compartments: list,
+    latent_compartments: List[str],
+    infectious_compartments: List[str],
     tex_doc: StandardTexDoc,
 ):
+    """See 'description' string.
+
+    Args:
+        model: The summer epidemiological model
+        latent_compartments: The names of the latent compartments
+        infectious_compartments: The names of the infectious compartments
+        tex_doc: Documentation object
+    """
     parameter_name = 'latent_period'
     final_dest = infectious_compartments[0]
     description = f'Following infection, infected persons proceed to transition through ' \
@@ -236,9 +257,16 @@ def add_latent_transition(
 
 def add_infectious_transition(
     model: CompartmentalModel,
-    infectious_compartments: list,
+    infectious_compartments: List[str],
     tex_doc: StandardTexDoc,
 ):
+    """See 'description' string.
+
+    Args:
+        model: The summer epidemiological model
+        infectious_compartments: The names of the infectious compartments
+        tex_doc: Documentation object
+    """
     parameter_name = 'infectious_period'
     final_dest = 'recovered'
     n_inf_comps = len(infectious_compartments)
@@ -263,7 +291,13 @@ def add_infectious_transition(
 def add_waning(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
-) -> str:
+):
+    """See 'description' string.
+
+    Args:
+        model: The summer epidemiological model
+        tex_doc: Documentation object
+    """
     process = 'waning'
     origin = 'recovered'
     destination = 'waned'
@@ -280,10 +314,20 @@ def add_waning(
 
 
 def adapt_gb_matrices_to_aust(
-    unadjusted_matrices: dict, 
+    unadjusted_matrices: Dict[str, np.array], 
     pop_data: pd.DataFrame,
     tex_doc: StandardTexDoc,
-) -> tuple:
+) -> Dict[str, np.array]:
+    """See 'description' string.
+
+    Args:
+        unadjusted_matrices: The raw matrices
+        pop_data: The population data (from load_pop_data)
+        tex_doc: Documentation object
+
+    Returns:
+        The adjusted matrices
+    """
     description = 'Raw, location-specific social contact matrices from the POLYMOD study ' \
         'for Great Britain (Figure \\ref{raw_matrices}) ' \
         'were adjusted to account for the differences in the age distribution betweem the ' \
@@ -347,10 +391,20 @@ def adapt_gb_matrices_to_aust(
 
 
 def get_age_stratification(
-    compartments: list,
+    compartments: List[str],
     matrix: np.array,
     tex_doc: StandardTexDoc,
-) -> tuple:
+) -> Stratification:
+    """See 'description' string.
+
+    Args:
+        compartments: Names of all unstratified model compartments
+        matrix: The mixing matrix by age (static or dynamic)
+        tex_doc: Documentation object
+
+    Returns:
+        The summer stratification object for age groups
+    """
     description = 'We stratified all compartments of the base model described above ' \
         '(Section \\ref{base_compartmental_structure}) into sequential age brackets comprising 5-year ' \
         f'bands from age {AGE_STRATA[0]} to {AGE_STRATA[0] + 4} through to age {AGE_STRATA[-2]} to {AGE_STRATA[-2] + 4}, ' \
@@ -372,6 +426,15 @@ def get_strain_stratification(
     compartments: list,
     tex_doc: StandardTexDoc,
 ) -> tuple:
+    """See 'description' string.
+
+    Args:
+        compartments: Names of all unstratified model compartments
+        tex_doc: Documentation object
+
+    Returns:
+        The summer strain stratification object for subvariants
+    """
     strain_strings = [f'{strain.replace("ba", "BA.")}' for strain in STRAIN_STRATA]
     non_strat_comp = 'susceptible'
     compartments_to_stratify = [comp for comp in compartments if comp != non_strat_comp]
@@ -392,6 +455,16 @@ def get_default_imm_strat(
     tex_doc: StandardTexDoc,
     abbreviations: pd.Series,
 ) -> Stratification:
+    """See 'description' string.
+
+    Args:
+        compartments: Names of all unstratified model compartments
+        tex_doc: Documentation object
+        abbreviations: Short names for parameters
+
+    Returns:
+        The summer stratification object for immune classes
+    """
     imm_strata = ['imm', 'nonimm']
     protect_param = 'imm_infect_protect'
     description = 'All (multiply stratified) compartments introduced above were further ' \
@@ -418,10 +491,16 @@ def get_default_imm_strat(
 
 
 def get_vacc_imm_strat(
-    compartments: list, 
-    tex_doc: StandardTexDoc,
+    compartments: List[str], 
 ) -> Stratification:
+    """Get the immunity stratification if the vaccination extension is included.
 
+    Args:
+        compartments: Names of all unstratified model compartments
+
+    Returns:
+        The summer stratification object for immune classes under the vaccination model extension structure
+    """
     imm_strat = Stratification('immunity', ['unvacc', 'vacc', 'waned'], compartments)
     for infection_process in INFECTION_PROCESSES:
         heterogeneity = {'unvacc': None, 'vacc': Multiply(1.0 - Parameter('imm_infect_protect')), 'waned': None}
@@ -431,10 +510,18 @@ def get_vacc_imm_strat(
 
 def seed_vocs(
     model: CompartmentalModel,
-    latent_compartments: list,
+    latent_compartments: List[str],
     tex_doc: StandardTexDoc,
     abbreviations: pd.Series,
-) -> str:
+):
+    """Seed each sequentially emerging subvariant.
+
+    Args:
+        model: The summer epidemiological model
+        latent_compartments: The names of the latent compartments
+        tex_doc: Documentation object
+        abbreviations: Short names for parameters
+    """
     strains = model.stratifications['strain'].strata
     strains_str = [s.replace('ba', 'BA.') for s in strains]
     seed_comp = latent_compartments[0]
@@ -465,7 +552,14 @@ def add_reinfection(
     model: CompartmentalModel,
     latent_compartments: list,
     tex_doc: StandardTexDoc,
-) -> str:
+):
+    """See 'description' string.
+
+    Args:
+        model: The summer epidemiological model
+        latent_compartments: The names of the latent compartments
+        tex_doc: Documentation object
+    """
     destination = latent_compartments[0]
     description = 'We modelled reinfection from both the recovered ' \
         "and waned compartments, which we term `early' and `late' reinfection respectively. " \
@@ -509,6 +603,14 @@ def add_reinfection(
 def get_wa_infection_scaling(
     model: CompartmentalModel,
 ) -> Function:
+    """Get the simple linear interpolation function for WA reopening.
+
+    Args:
+        model: The summer epidemiological model
+
+    Returns:
+        The function
+    """
     reopen_index = model.get_epoch().dti_to_index(WA_REOPEN_DATE)
     reopen_times = [reopen_index, reopen_index + Parameter(REOPEN_PARAM_STR)]
     return linear_interp(reopen_times, np.array([0.0, 1.0]))
@@ -516,12 +618,24 @@ def get_wa_infection_scaling(
 
 def get_spatial_stratification(
     compartments: list, 
-    model_pops: pd.DataFrame, 
+    pop_data: pd.DataFrame, 
     tex_doc: StandardTexDoc,
     abbreviations: pd.Series,
     reopen_func: Function,
 ) -> Stratification:
-    strata = model_pops.columns
+    """See 'description' string.
+
+    Args:
+        compartments: Names of all unstratified model compartments
+        pop_data: The population data (from load_pop_data)
+        tex_doc: Documentation object
+        abbreviations: Short names for parameters
+        reopen_func: The WA reopening function, created in get_wa_infection_scaling
+
+    Returns:
+        The summer stratification object for the spatial patches
+    """
+    strata = pop_data.columns
     description = 'All model compartments previously described were further ' \
         f"stratified into strata to represent Western Australia ({strata[0].upper()}) and `{strata[1]}' " \
         'to represent the remaining major jurisdictions of Australia. ' \
@@ -533,7 +647,7 @@ def get_spatial_stratification(
         f"parameter (`{abbreviations['wa_reopen_period']}'). "
     tex_doc.add_line(description, 'Stratification', subsection='Spatial')
 
-    spatial_strat = Stratification('states', model_pops.columns, compartments)
+    spatial_strat = Stratification('states', pop_data.columns, compartments)
     infection_adj = {strata[0]: reopen_func, strata[1]: None}
     for infection_process in INFECTION_PROCESSES:
         spatial_strat.set_flow_adjustments(infection_process, infection_adj)
@@ -541,23 +655,29 @@ def get_spatial_stratification(
 
 
 def initialise_comps(
-    model_pops: pd.DataFrame, 
+    pop_data: pd.DataFrame, 
     model: CompartmentalModel, 
-    vacc_sens: bool, 
+    vacc_ext: bool, 
+    tex_doc: StandardTexDoc,
 ):
-    """
+    """Initialise all compartments.
+    
     Args:
-        model_pops: Patch and age-specific population
-        model: The epidemiological model
-        start_props: Starting proportions in the vaccination analysis
-        vacc_sens: Whether the vaccination analysis being run
+        pop_data: The population data (from load_pop_data)
+        model: The summer epidemiological model
+        vacc_ext: Whether to include the vaccination extension
         tex_doc: Documentation object
     """
+    total_pop = pop_data.sum().sum()
+    description = f'The simulation starts with {str(round(total_pop / 1e6, 3))} million fully susceptible persons, ' \
+        'with the infection process triggered through subsequent strain seeding as described below. '
+    tex_doc.add_line(description, 'Population')
+
     start_comp = 'susceptible'
     immunity_strata = model.stratifications['immunity'].strata
 
     def get_init_pop(imm_prop):
-        if vacc_sens:
+        if vacc_ext:
             imm_props = {
                 'unvacc': 1.0,
                 'vacc': 0.0,
@@ -571,8 +691,8 @@ def initialise_comps(
 
         init_pop = jnp.zeros(len(model.compartments), dtype=np.float64)
         for age in AGE_STRATA:
-            for state in model_pops:
-                pop = model_pops.loc[age, state]
+            for state in pop_data:
+                pop = pop_data.loc[age, state]
                 for imm_status in immunity_strata:
                     comp_filter = {'name': start_comp, 'agegroup': str(age), 'states': state, 'immunity': imm_status}
                     query = model.query_compartments(comp_filter, as_idx=True)
