@@ -1,14 +1,25 @@
-from typing import Union
+from typing import Union, List
 from pathlib import Path
 import pandas as pd
 import yaml as yml
+from datetime import datetime
 from abc import abstractmethod, ABC
 from matplotlib.figure import Figure as MplFig
 from plotly.graph_objects import Figure as PlotlyFig
 from inputs.constants import SUPPLEMENT_PATH
 
 
-def get_tex_formatted_date(date):
+def get_tex_formatted_date(
+    date: datetime,
+) -> str:
+    """Get TeX-formatted date from the date of a datetime object.
+
+    Args:
+        date: The date input
+
+    Returns:
+        Formatted string
+    """
     date_of_month = date.strftime('%d').lstrip('0')
     special_cases = {
         '1': 'st', 
@@ -27,7 +38,7 @@ def remove_underscore_multiindexcol(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
     """Remove underscores from multi-index columns
-    (particularly because TeX so often crashes with underscores in floats, such as tables).
+    (because TeX so often crashes with underscores in floats, such as tables).
 
     Args:
         df: Dataframe to modify
@@ -41,7 +52,23 @@ def remove_underscore_multiindexcol(
     return df
 
 
-def get_tex_longtable(table, col_format_str, caption_str, label_str):
+def get_tex_longtable(
+    table: pd.DataFrame, 
+    col_format_str: str, 
+    caption_str: str, 
+    label_str: str,
+) -> str:
+    """Get TeX longtable code from dataframe.
+
+    Args:
+        table: The pandas table
+        col_format_str: The previously created TeX column format request
+        caption_str: The previously formatted TeX caption request
+        label_str: The previously formatted TeX label request
+
+    Returns:
+        Completed TeX string for table
+    """
     start_str = '\\begin{longtable}\n'
     table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
     table_text = table_text.replace('\\begin{tabular}', '')
@@ -50,7 +77,23 @@ def get_tex_longtable(table, col_format_str, caption_str, label_str):
     return start_str + table_text + caption_str + label_str + end_str
 
 
-def get_tex_table(table, col_format_str, caption_str, label_str):
+def get_tex_table(
+    table: pd.DataFrame, 
+    col_format_str: str, 
+    caption_str: str, 
+    label_str: str,
+) -> str:
+    """Get TeX table code from dataframe.
+
+    Args:
+        table: The pandas table
+        col_format_str: The previously created TeX column format request
+        caption_str: The previously formatted TeX caption request
+        label_str: The previously formatted TeX label request
+
+    Returns:
+        Completed TeX string for table
+    """
     start_str = '\\begin{table}\n'
     table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
     end_str = '\\end{table}'
@@ -272,9 +315,9 @@ class ConcreteTexDoc:
         title: str,
         section: str, 
         subsection: str='', 
-        col_splits=None, 
-        table_width=14.0, 
-        longtable=False,
+        col_splits: Union[List[float], None]=None, 
+        table_width: float=14.0, 
+        longtable: bool=False,
     ):
         """Use a dataframe to add a table to the working document.
 
@@ -299,8 +342,8 @@ class ConcreteTexDoc:
         col_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
         label_str = f'\label{{{name}}}\n'
         caption_str = f'\caption{{\\textbf{{{title}}}}}\n'
-        table_line = get_tex_longtable(table, col_str, caption_str, label_str) if longtable else get_tex_table(table, col_str, caption_str, label_str)
-        self.add_line(table_line, section, subsection=subsection)
+        table_str = get_tex_longtable(table, col_str, caption_str, label_str) if longtable else get_tex_table(table, col_str, caption_str, label_str)
+        self.add_line(table_str, section, subsection=subsection)
 
     def save_content(self):
         """Save the current document information as a simple string.
