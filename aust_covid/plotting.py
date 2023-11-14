@@ -215,6 +215,7 @@ def plot_processed_mobility(mobility_types):
 
 
 def plot_example_model_matrices(model, parameters):
+    model.finalize()
     epoch = model.get_epoch()
     matrix_func = model.graph.filter('mixing_matrix').get_callable()
     dates = [datetime(2022, month, 1) for month in range(1, 13)]
