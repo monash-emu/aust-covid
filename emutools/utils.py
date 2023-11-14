@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Union
 from jax import numpy as jnp
 from jax import scipy as jsp
@@ -119,15 +120,17 @@ def add_image_to_doc(
     Raises:
         TypeError: If the figure is not one of the two supported formats
     """
+    fig_path = SUPPLEMENT_PATH / 'figures'
+    Path(fig_path).mkdir(exist_ok=True)
     full_filename = f'{filename}.{filetype}'
     if isinstance(fig, MplFig):
-        fig.savefig(SUPPLEMENT_PATH / full_filename)
+        fig.savefig(fig_path / full_filename)
     elif isinstance(fig, PlotlyFig):
         fig.update_layout(margin={'t': 25})
-        fig.write_image(SUPPLEMENT_PATH / full_filename)
+        fig.write_image(fig_path / full_filename)
     else:
         raise TypeError('Figure type not supported')
-    tex_doc.include_figure(title, filename, filetype, section, subsection=subsection, caption=caption, fig_width=fig_width)
+    tex_doc.include_figure(title, filename, filetype, fig_path, section, subsection=subsection, caption=caption, fig_width=fig_width)
 
 
 def capture_kwargs(*args, **kwargs):
