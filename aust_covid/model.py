@@ -10,9 +10,8 @@ from summer2.functions.time import get_linear_interpolation_function as linear_i
 from summer2 import CompartmentalModel, Stratification, StrainStratification, Multiply
 from summer2.parameters import Parameter, Function, Time
 
-from emutools.tex import StandardTexDoc, get_tex_formatted_date
-from emutools.utils import capture_kwargs
-from emutools.tex import triangle_wave_func, add_image_to_doc
+from emutools.tex import StandardTexDoc, get_tex_formatted_date, add_image_to_doc
+from emutools.utils import capture_kwargs, triangle_wave_func
 from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
 from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES, DATA_PATH
 from aust_covid.inputs import load_pop_data, load_uk_pop_data, get_base_vacc_data
