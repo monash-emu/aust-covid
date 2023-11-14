@@ -361,7 +361,10 @@ def add_image_to_doc(
         filename: A string for the filenam to save the figure as
         caption: Figure caption for the document
         tex_doc: The working document
-        section: Section of the document to include the figure in
+        section: Pass through to include_figure method to the document writing object
+        subsection: Pass through
+        caption: Pass through
+        fig_width: Pass through
 
     Raises:
         TypeError: If the figure is not one of the two supported formats
