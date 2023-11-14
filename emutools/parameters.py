@@ -11,10 +11,6 @@ def load_param_info() -> pd.DataFrame:
     """
     Load specific parameter information from a ridigly formatted yaml file, and crash otherwise.
 
-    Args:
-        data_path: Location of the source file
-        parameters: The parameters provided by the user (with their values)
-
     Returns:
         The parameters info DataFrame contains the following fields:
             value: Enough parameter values to ensure model runs, may be over-written in calibration
