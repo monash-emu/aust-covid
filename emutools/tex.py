@@ -78,7 +78,7 @@ class TexDoc(ABC):
         pass
 
     @abstractmethod
-    def include_figure(self, title: str, filename: str, filetype: str, fig_path: str, section: str, subsection: str='', caption: str=''):
+    def include_figure(self, title: str, filename: str, filetype: str, fig_path: str, section: str, subsection: str='', caption: str='', fig_width: float=1.0):
         pass
 
     @abstractmethod
@@ -95,6 +95,13 @@ class TexDoc(ABC):
 
 
 class DummyTexDoc(TexDoc):
+    """Minimal concrete object for use where 
+    functions require a document to write to,
+    but writing not desired.
+
+    Args:
+        TexDoc: Inherits from abstract class
+    """
     def add_line(self, line: str, section: str, subsection: str=''):
         pass
 
@@ -129,15 +136,14 @@ class ConcreteTexDoc:
         bib_filename: str,
         table_of_contents: bool=False,
     ):
-        """
-        Object that can do the basic collation and emitting of a TeX-formatted
-        string, including basic features for figures and tables.
+        """Object for collating document elements and emitting of a TeX-formatted string.
 
         Args:
             path: Path for writing the output document
             doc_name: Filename for the document produced
             title: Title to go in the document
             bib_filename: Name of the bibliography file
+            table_of_contents: Whether to include a table of contents
         """
         self.content = {}
         self.path = path
@@ -154,9 +160,9 @@ class ConcreteTexDoc:
         section: str, 
         subsection: str='',
     ):
-        """
-        Add a single line string to the appropriate section and subsection 
-        of the working document.
+        """Add a single line string to the appropriate section/subsection of the document
+        (adding to the start/intro of the section before sub-sections start 
+        if no subsection is requested).
 
         Args:
             line: The TeX line to write
@@ -175,27 +181,25 @@ class ConcreteTexDoc:
             self.content[section][subsection].append(line)
         
     def prepare_doc(self):
-        """
-        Essentially blank method for overwriting in parent class.
+        """Placeholder method for overwriting in parent class.
         """
         self.prepared = True
 
     def write_doc(self, order: list=[]):
-        """
-        Write the compiled document string to disc.
+        """Write the compiled document string to disc.
+
+        Args:
+            order: Section order to pass through to emit_doc method
         """
         with open(self.path / f'{self.doc_name}.tex', 'w') as doc_file:
             doc_file.write(self.emit_doc(section_order=order))
     
-    def emit_doc(
-        self, 
-        section_order: list=[],
-    ) -> str:
-        """
-        Collate all the sections together into the big string to be outputted.
+    def emit_doc(self, section_order: list=[]) -> str:
+        """Collate all the sections together into the big string to be outputted.
 
         Arguments:
             section_order: The order to write the document sections in
+
         Returns:
             The final text to write into the document
         """
@@ -203,7 +207,6 @@ class ConcreteTexDoc:
         if section_order and sorted(section_order) != content_sections:
             msg = 'Sections requested are not those in the current contents'
             raise ValueError(msg)
-
         order = section_order if section_order else self.content.keys()
 
         if not self.prepared:
@@ -235,14 +238,17 @@ class ConcreteTexDoc:
         caption: str='',
         fig_width: float=0.85,
     ):
-        """
-        Add a figure with standard formatting to the document.
+        """Add a figure with standard formatting to the document.
 
         Args:
-            caption: Figure caption
+            title: Figure title
             filename: Filename for finding the image file
+            filetype: File extension (determines TeX command to use to include the figure)
+            fig_path: Path where the figure file can be found
             section: The heading of the section for the figure to go into
             subsection: The heading of the subsection for the figure to go into
+            caption: Figure caption
+            fig_width: Figure width relative to document width
         """
         if filetype == 'jpg':
             command = 'includegraphics'
@@ -270,8 +276,7 @@ class ConcreteTexDoc:
         table_width=14.0, 
         longtable=False,
     ):
-        """
-        Use a dataframe to add a table to the working document.
+        """Use a dataframe to add a table to the working document.
 
         Args:
             table: The table to be written
@@ -298,18 +303,21 @@ class ConcreteTexDoc:
         self.add_line(table_line, section, subsection=subsection)
 
     def save_content(self):
+        """Save the current document information as a simple string.
+        """
         with open(self.path / f'{self.doc_name}.yml', 'w') as file:
             yml.dump(self.content, file)
 
     def load_content(self):
+        """Read saved document information. 
+        """
         with open(self.path / f'{self.doc_name}.yml', 'r') as file:
             self.content = yml.load(file, Loader=yml.FullLoader)
 
 
 class StandardTexDoc(ConcreteTexDoc):
     def prepare_doc(self):
-        """
-        Add packages and text that standard documents need to include the other features.
+        """Add packages and text that standard documents need to include the other features.
         """
         self.prepared = True
         self.add_line('\\documentclass{article}', 'preamble')
