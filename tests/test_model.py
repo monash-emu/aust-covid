@@ -1,5 +1,5 @@
 from emutools.tex import DummyTexDoc
-from emutools.parameters import load_param_info
+from emutools.utils import load_param_info
 from aust_covid.model import build_model
 from aust_covid.inputs import get_ifrs
 
