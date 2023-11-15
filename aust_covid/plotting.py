@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List, Dict
+from typing import List, Dict, Set
 import pandas as pd
 pd.options.plotting.backend = 'plotly'
 import numpy as np
@@ -53,7 +53,7 @@ def format_output_figure(
         The adjusted figure
     """
     rows = get_n_rows_plotly_fig(fig)
-    height = [320, 600, 900]
+    height = [320, 600, 900, 900]
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig.update_layout(height=height[rows - 1])
 
@@ -222,16 +222,30 @@ def plot_dispersion_examples(
     return fig.update_xaxes(tickangle=45)
 
 
-def plot_state_mobility(state_data, jurisdictions, mob_locs):
+def plot_state_mobility(
+    state_data: pd.DataFrame, 
+    jurisdictions: Set[str], 
+    mob_locs: List[str],
+) -> go.Figure:
+    """Plot the raw Australian Google mobility data by state/jurisdiction.
+
+    Args:
+        state_data: Google mobility data for jurisdictions of Australia
+        jurisdictions: The names of the states/jurisdictions
+        mob_locs: Names identifying the locations for mobility measurement
+
+    Returns:
+        The figure
+    """
     fig = make_subplots(rows=4, cols=2, subplot_titles=list(jurisdictions), vertical_spacing=0.06)
     for j, juris in enumerate(jurisdictions):
         for l, mob_loc in enumerate(mob_locs):
             estimates = state_data[state_data['sub_region_1'] == juris][mob_loc]
-            legend_str = mob_loc.replace(CHANGE_STR, "").replace("_", " ")
+            legend_str = mob_loc.replace(CHANGE_STR, '').replace('_', ' ')
             trace = go.Scatter(x=estimates.index, y=estimates, name=legend_str, line=dict(color=COLOURS[l]))
             fig.add_trace(trace, row=j % 4 + 1, col=round(j / 7) + 1)
     fig.update_yaxes(range=(-90, 70))
-    return fig.update_layout(height=800)
+    return format_output_figure(fig)
 
 
 def plot_processed_mobility(mobility_types):
