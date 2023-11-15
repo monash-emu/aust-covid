@@ -53,7 +53,7 @@ def format_output_figure(
         The adjusted figure
     """
     rows = get_n_rows_plotly_fig(fig)
-    height = [320, 500, 700]
+    height = [320, 600, 900]
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig.update_layout(height=height[rows - 1])
 
@@ -172,10 +172,10 @@ def plot_cdr_examples(
 def plot_dispersion_examples(
     idata: az.InferenceData,
     model: CompartmentalModel,
-    base_params: list,
-    prior_names: list,
+    base_params: Dict[str, float],
+    prior_names: List[str],
     all_targets: list,
-    output_colours: dict, 
+    output_colours: Dict[str, str], 
     req_centiles: np.ndarray, 
     n_samples: int=3, 
     base_alpha: float=0.2, 
@@ -196,10 +196,9 @@ def plot_dispersion_examples(
         n_samples: Number of samples (rows of panels)
         base_alpha: Minimum alpha/transparency for area plots
     """
-    fig = go.Figure(layout=go.Layout(width=1000, height=900))
     targets = [t for t in all_targets if hasattr(t, 'dispersion_param')]
     outputs = [t.name for t in targets]
-    fig = make_subplots(rows=n_samples, cols=len(outputs), figure=fig, subplot_titles=[' '] * n_samples * len(outputs), vertical_spacing=0.13)
+    fig = make_subplots(rows=n_samples, cols=len(outputs), subplot_titles=[' '] * n_samples * len(outputs), vertical_spacing=0.13)
     up_back_list = get_count_up_back_list(len(req_centiles) - 1)
     alphas = [(a / max(up_back_list)) * (1.0 - base_alpha) + base_alpha for a in up_back_list]
     for i_sample in range(n_samples):
@@ -219,6 +218,7 @@ def plot_dispersion_examples(
             target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {out}', mode='markers', marker={'color': f'rgb({output_colours[o]})', 'size': 4})
             fig.add_trace(target_trace, row=row, col=col)
             fig.layout.annotations[i_sample * len(outputs) + i_out].update(text=f'{out}, dispersion param: {round(float(disps.data), 1)}')
+    fig = format_output_figure(fig)
     return fig.update_xaxes(tickangle=45)
 
 
