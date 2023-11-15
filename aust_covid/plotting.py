@@ -117,7 +117,7 @@ def plot_single_run_outputs(
         'daily deaths by age',
         'daily deaths by age (log scale)',
     ]
-    fig = make_subplots(rows=3, cols=2, subplot_titles=panels)
+    fig = get_standard_subplot_fig(3, 2, panels)
     derived_outputs = model.get_derived_outputs_df()
     x_vals = derived_outputs.index
     output_map = {
@@ -135,7 +135,7 @@ def plot_single_run_outputs(
         for col in range(1, 3):
             fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[f'deathsXagegroup_{agegroup}'], name=f'{agegroup} deaths'), row=3, col=col)
     fig['layout']['yaxis6'].update(type='log', range=[-2.0, 2.0])
-    fig.update_xaxes(tickangle=45)
+    fig.update_xaxes(tickangle=30)
     return format_output_figure(fig)
 
 
@@ -227,7 +227,7 @@ def plot_dispersion_examples(
     """
     targets = [t for t in all_targets if hasattr(t, 'dispersion_param')]
     outputs = [t.name for t in targets]
-    fig = make_subplots(rows=n_samples, cols=len(outputs), subplot_titles=[' '] * n_samples * len(outputs), vertical_spacing=0.13)
+    fig = get_standard_subplot_fig(n_samples, len(outputs), [' '] * n_samples * len(outputs))
     up_back_list = get_count_up_back_list(len(req_centiles) - 1)
     alphas = [(a / max(up_back_list)) * (1.0 - base_alpha) + base_alpha for a in up_back_list]
     for i_sample in range(n_samples):
@@ -248,7 +248,7 @@ def plot_dispersion_examples(
             fig.add_trace(target_trace, row=row, col=col)
             fig.layout.annotations[i_sample * len(outputs) + i_out].update(text=f'{out}, dispersion param: {round(float(disps.data), 1)}')
     fig = format_output_figure(fig)
-    return fig.update_xaxes(tickangle=45)
+    return fig.update_xaxes(tickangle=30)
 
 
 def plot_state_mobility(
@@ -266,7 +266,7 @@ def plot_state_mobility(
     Returns:
         The figure
     """
-    fig = make_subplots(rows=4, cols=2, subplot_titles=list(jurisdictions), vertical_spacing=0.06)
+    fig = get_standard_subplot_fig(4, 2, list(jurisdictions))
     for j, juris in enumerate(jurisdictions):
         for l, mob_loc in enumerate(mob_locs):
             estimates = state_data[state_data['sub_region_1'] == juris][mob_loc]
@@ -293,7 +293,7 @@ def plot_processed_mobility(
         'wa': 'Western Australia',
         'non wa': 'rest of Australia',
     }
-    fig = make_subplots(rows=1, cols=2, subplot_titles=list(patch_map.values()))
+    fig = get_standard_subplot_fig(1, 2, list(patch_map.values()))
     for m, mob_type in enumerate(mobility_types):
         mob_data = mobility_types[mob_type]
         for p, patch in enumerate(set(mob_data.columns.get_level_values(0))):
@@ -324,14 +324,14 @@ def plot_example_model_matrices(
     dates = [datetime(2022, month, 1) for month in range(1, 13)]
     agegroups = model.stratifications['agegroup'].strata
     n_cols = 4
-    fig = make_subplots(cols=n_cols, rows=3, subplot_titles=[i.strftime('%B') for i in dates], vertical_spacing=0.1)
+    fig = get_standard_subplot_fig(3, n_cols, [i.strftime('%B') for i in dates])
     for i_date, date in enumerate(dates):
         index = epoch.datetime_to_number(date)
         matrix = matrix_func(model_variables={'time': index}, parameters=parameters)['mixing_matrix']
         heatmap = go.Heatmap(x=agegroups, y=agegroups, z=matrix, zmin=0.0, zmax=6.4)
         row, col = get_row_col_for_subplots(i_date, n_cols)
         fig.add_trace(heatmap, row=row, col=col)
-    return format_output_figure(fig)
+    return fig
 
 
 def plot_full_vacc(
