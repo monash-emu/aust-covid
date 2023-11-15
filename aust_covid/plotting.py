@@ -13,11 +13,48 @@ from summer2 import CompartmentalModel
 from aust_covid.inputs import load_national_case_data, load_owid_case_data, load_case_targets, load_who_death_data, load_serosurvey_data
 from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, AGE_STRATA
 from emutools.tex import DummyTexDoc
-from aust_covid.inputs import load_household_impacts_data
+from aust_covid.inputs import load_household_impacts_data, get_subvariant_prop_dates
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
 from emutools.calibration import get_negbinom_target_widths, get_target_from_name
 from emutools.plotting import get_row_col_for_subplots
 from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, CHANGE_STR, COLOURS, RUN_IDS
+
+
+def get_n_rows_plotly_fig(
+    fig: go.Figure,
+) -> int:
+    """Get the number of rows in a plotly figure,
+    whether or not multi-panel.
+
+    Args:
+        fig: The figure to consider
+
+    Returns:
+        The number of rows
+    """
+    try:
+        rows = fig._get_subplot_rows_columns()[0].stop - 1
+    except:
+        rows = 1
+    return rows
+
+
+def format_output_figure(
+    fig: go.Figure, 
+) -> go.Figure:
+    """Standard formatting for a figure of a model output
+    or outputs over time (multi-panel or otherwise).
+
+    Args:
+        fig: The figure
+
+    Returns:
+        The adjusted figure
+    """
+    rows = get_n_rows_plotly_fig(fig)
+    height = [320, 500, 700]
+    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
+    return fig.update_layout(height=height[rows - 1])
 
 
 def plot_single_run_outputs(
@@ -54,13 +91,13 @@ def plot_single_run_outputs(
         fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[out], name=f'modelled {out}'.replace('_', ' ')), row=output_map[out][0], col=output_map[out][1])
         if out != 'reproduction_number':
             target = get_target_from_name(targets, out)
-            fig.add_trace(go.Scatter(x=target.index, y=target, name=f'target {out}'), row=output_map[out][0], col=output_map[out][1])
+            fig.add_trace(go.Scatter(x=target.index, y=target, name=f'target {out}'.replace('_', ' ')), row=output_map[out][0], col=output_map[out][1])
     for agegroup in model.stratifications['agegroup'].strata:
         for col in range(1, 3):
             fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[f'deathsXagegroup_{agegroup}'], name=f'{agegroup} deaths'), row=3, col=col)
     fig['layout']['yaxis6'].update(type='log', range=[-2.0, 2.0])
-    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE), tickangle=45)
-    return fig.update_layout(height=600)
+    fig.update_xaxes(tickangle=45)
+    return format_output_figure(fig)
 
 
 def plot_subvariant_props(
@@ -81,26 +118,17 @@ def plot_subvariant_props(
     for c in flattened_cols:
         fig.add_trace(go.Scatter(x=ba1_results.index, y=ba1_results[c]))
         fig.add_trace(go.Scatter(x=ba5_results.index, y=ba5_results[c], line={'dash': 'dot'}))
-
-    voc_emerge_df = pd.DataFrame(
-        {
-            'ba1': [datetime(2021, 11, 22), datetime(2021, 11, 29), datetime(2021, 12, 20), 'blue'],
-            'ba2': [datetime(2021, 11, 29), datetime(2022, 1, 10), datetime(2022, 3, 7), 'red'], 
-            'ba5': [datetime(2022, 3, 28), datetime(2022, 5, 16), datetime(2022, 6, 27), 'green'],
-        },
-        index=['any', '>1%', '>50%', 'colour']
-    )
-    lag = timedelta(days=3.5)  # Dates are given as first day of week in which VoC was first detected
+    voc_emerge_df = get_subvariant_prop_dates()
+    lag = timedelta(days=3.5)  # Because dates are given as first day of week in which VoC was first detected
     for voc in voc_emerge_df:
         voc_info = voc_emerge_df[voc]
         colour = voc_info['colour']
         fig.add_vline(voc_info['any'] + lag, line_dash='dot', line_color=colour)
         fig.add_vline(voc_info['>1%'] + lag, line_dash='dash', line_color=colour)
         fig.add_vline(voc_info['>50%'] + lag, line_color=colour)
-    
-    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     fig.update_yaxes(range=(0.0, 1.0))
-    return fig.update_layout(showlegend=False, height=320)
+    fig.update_layout(showlegend=False)
+    return format_output_figure(fig)
 
 
 def plot_cdr_examples(samples):

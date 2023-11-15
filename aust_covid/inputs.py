@@ -395,3 +395,21 @@ def get_base_vacc_data() -> pd.DataFrame:
     vacc_df = pd.read_csv(DATA_PATH / 'aus_vax_data.csv', index_col=424)
     vacc_df.index = pd.to_datetime(vacc_df.index, infer_datetime_format=True)
     return vacc_df.sort_index()
+
+
+def get_subvariant_prop_dates() -> pd.DataFrame:
+    """Get the earliest dates at which a certain proportion of 
+    genotyped variants were reported as attributable to each of the three modelled subvariants.
+
+    Returns:
+        The dataframe containing the dates
+    """
+    voc_emerge_df = pd.DataFrame(
+        {
+            'ba1': [datetime(2021, 11, 22), datetime(2021, 11, 29), datetime(2021, 12, 20), 'blue'],
+            'ba2': [datetime(2021, 11, 29), datetime(2022, 1, 10), datetime(2022, 3, 7), 'red'], 
+            'ba5': [datetime(2022, 3, 28), datetime(2022, 5, 16), datetime(2022, 6, 27), 'green'],
+        },
+        index=['any', '>1%', '>50%', 'colour']
+    )
+    return voc_emerge_df
