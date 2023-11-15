@@ -53,9 +53,9 @@ def format_output_figure(
         The adjusted figure
     """
     rows = get_n_rows_plotly_fig(fig)
-    height = [320, 600, 900, 900]
+    heights = [320, 600, 900, 900]
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
-    return fig.update_layout(height=height[rows - 1])
+    return fig.update_layout(height=heights[rows - 1])
 
 
 def get_count_up_back_list(
@@ -319,9 +319,8 @@ def plot_full_vacc(
     df: pd.DataFrame,
     prop_df: pd.DataFrame,
 ) -> go.Figure:
-    """
-    Plot full (2) dose vaccination coverage by age group over time
-    as absolute number and proportion.
+    """Plot full (two) dose vaccination coverage by age group
+    over time as absolute number and proportion.
 
     Args:
         full_vacc_masks: Strings identifying the needed columns
@@ -329,7 +328,7 @@ def plot_full_vacc(
         prop_df: The adjusted dataframe with proportions instead of numbers (from get_full_vacc_props)
 
     Returns:
-        The plotly figure object
+        The figure
     """
     fig = make_subplots(2, 1, vertical_spacing=0.1, subplot_titles=['number', 'proportion'])
     for a, age in enumerate(full_vacc_masks):
@@ -340,7 +339,7 @@ def plot_full_vacc(
         prop_data = prop_df[age].dropna()
         fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}), row=1, col=1)
         fig.add_trace(go.Scatter(x=prop_data.index, y=prop_data, name=trace_name, line={'color': colour}), row=2, col=1)
-    return fig.update_layout(height=600)
+    return fig.update_layout(height=600, legend_title='age group')
 
 
 def plot_program_coverage(
