@@ -127,6 +127,9 @@ def plot_subvariant_props(
 
     Args:
         spaghetti: The values from the sampled runs
+    
+    Returns:
+        The figure
     """
     fig = go.Figure()
     ba1_results = spaghetti['ba1_prop']
@@ -157,6 +160,9 @@ def plot_cdr_examples(
 
     Args:
         samples: Case detection values
+
+    Returns:
+        The figure
     """
     hh_impact = load_household_impacts_data()
     hh_test_ratio = hh_impact['testing'] / hh_impact['symptomatic']
@@ -195,6 +201,9 @@ def plot_dispersion_examples(
         req_centiles: Centiles to plot
         n_samples: Number of samples (rows of panels)
         base_alpha: Minimum alpha/transparency for area plots
+
+    Returns:
+        The figure
     """
     targets = [t for t in all_targets if hasattr(t, 'dispersion_param')]
     outputs = [t.name for t in targets]
@@ -276,22 +285,33 @@ def plot_processed_mobility(
     return format_output_figure(fig)
 
 
-def plot_example_model_matrices(model, parameters):
+def plot_example_model_matrices(
+    model: CompartmentalModel,
+    parameters: Dict[str, float],
+) -> go.Figure:
+    """Plot example mixing matrices at each month in 2022.
+
+    Args:
+        model: The epidemiological model
+        parameters: Parameter values (presumably optimised for likelihood)
+
+    Returns:
+        The figure
+    """
     model.finalize()
     epoch = model.get_epoch()
     matrix_func = model.graph.filter('mixing_matrix').get_callable()
     dates = [datetime(2022, month, 1) for month in range(1, 13)]
     agegroups = model.stratifications['agegroup'].strata
-    fig = make_subplots(cols=4, rows=3, subplot_titles=[i.strftime('%B') for i in dates], vertical_spacing=0.1)
+    n_cols = 4
+    fig = make_subplots(cols=n_cols, rows=3, subplot_titles=[i.strftime('%B') for i in dates], vertical_spacing=0.1)
     for i_date, date in enumerate(dates):
         index = epoch.datetime_to_number(date)
-        matrix = matrix_func(model_variables={'time': index}, parameters=parameters)['mixing_matrix']    
-        fig.add_trace(
-            go.Heatmap(x=agegroups, y=agegroups, z=matrix, zmin=0.0, zmax=6.4), 
-            row=int(np.floor(i_date /4) + 1), 
-            col=i_date % 4 + 1,
-        )
-    return fig.update_layout(height=570, width=800)
+        matrix = matrix_func(model_variables={'time': index}, parameters=parameters)['mixing_matrix']
+        heatmap = go.Heatmap(x=agegroups, y=agegroups, z=matrix, zmin=0.0, zmax=6.4)
+        row, col = get_row_col_for_subplots(i_date, n_cols)
+        fig.add_trace(heatmap, row=row, col=col)
+    return format_output_figure(fig)
 
 
 def plot_full_vacc(
