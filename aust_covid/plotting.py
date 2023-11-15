@@ -58,6 +58,26 @@ def format_output_figure(
     return fig.update_layout(height=heights[rows - 1])
 
 
+def get_standard_subplot_fig(
+    n_rows: int, 
+    n_cols: int, 
+    titles: List[str],
+) -> go.Figure:
+    """Start a plotly figure with subplots off from standard formatting.
+
+    Args:
+        n_rows: Argument to pass through to make_subplots
+        n_cols: Pass through
+        titles: Pass through
+
+    Returns:
+        Figure with nothing plotted
+    """
+    heights = [320, 600, 900, 900]
+    fig = make_subplots(n_rows, n_cols, subplot_titles=titles, vertical_spacing=0.08)
+    return fig.update_layout(margin={i: 25 for i in ['t', 'b', 'l', 'r']}, height=heights[n_rows - 1])
+
+
 def get_count_up_back_list(
     req_length: int
 ) -> list:
@@ -330,7 +350,7 @@ def plot_full_vacc(
     Returns:
         The figure
     """
-    fig = make_subplots(2, 1, vertical_spacing=0.1, subplot_titles=['number', 'proportion'])
+    fig = get_standard_subplot_fig(2, 1, ['number', 'proportion'])
     for a, age in enumerate(full_vacc_masks):
         prop_age = int(np.round(a / len(full_vacc_masks) * 250.0))
         colour = f'rgb({prop_age},{250 - prop_age},250)'
@@ -339,7 +359,7 @@ def plot_full_vacc(
         prop_data = prop_df[age].dropna()
         fig.add_trace(go.Scatter(x=data.index, y=data, name=trace_name, line={'color': colour}), row=1, col=1)
         fig.add_trace(go.Scatter(x=prop_data.index, y=prop_data, name=trace_name, line={'color': colour}), row=2, col=1)
-    return fig.update_layout(height=600, legend_title='age group')
+    return fig.update_layout(legend_title='age group')
 
 
 def plot_program_coverage(
@@ -355,27 +375,56 @@ def plot_program_coverage(
     Returns:
         The plotly figure object
     """
-    fig = make_subplots(rows=4, cols=1, subplot_titles=list(program_masks.keys()), vertical_spacing=0.1)
+    fig = get_standard_subplot_fig(4, 1, list(program_masks.keys()))
     for m, mask in enumerate(program_masks):
         fig.add_traces(px.line(df[program_masks[mask]]).data, rows=m + 1, cols=1)
-    return fig.update_layout(height=900, showlegend=False)
+    return fig.update_layout(showlegend=False)
+
+
+def plot_vacc_implementation(
+    df: pd.DataFrame,
+) -> go.Figure:
+    """Illustrate the process of calculating between stratum transitions.
+
+    Args:
+        df: Augmented vaccination data
+
+    Returns:
+        Plot in three vertical panels
+    """
+    fig = get_standard_subplot_fig(3, 1, ['persons vaccinated', 'coverage', 'rates implemented'])
+    fig.add_traces(df[['primary full', 'adult booster']].plot().data, rows=1, cols=1)
+    fig.add_traces(df[['prop primary full', 'prop adult booster']].plot().data, rows=2, cols=1)
+    fig.add_traces(df[['rate primary full', 'rate adult booster']].plot().data, rows=3, cols=1)
+    return fig.update_layout(showlegend=False)
 
 
 def plot_immune_props(
     model: CompartmentalModel,
     vacc_df: pd.DataFrame,
-    lag_vacc_df: pd.DataFrame,
+    lagged_df: pd.DataFrame,
 ) -> go.Figure:
+    """Plot comparison of intended population distribution by stratum 
+    against that realised in the model.
+
+    Args:
+        model: The summer epidemiological model
+        vacc_df: Vaccination data included inferred fields
+        lag_vacc_df: Same data with lag
+
+    Returns:
+        _description_
+    """
     epoch = model.get_epoch()
     age_breaks = ['5', '15']
     titles = ['Modelled 5 to 9 age group', 'Modelled 15 and above age groups']
-    fig = make_subplots(2, 1, subplot_titles=titles, vertical_spacing=0.1)
+    fig = get_standard_subplot_fig(2, 1, titles)
     for i_plot, age in enumerate(age_breaks):
         cols = [f'prop_{age}_{imm}' for imm in model.stratifications['immunity'].strata][::-1]
         model_vacc_df = model.get_derived_outputs_df()[cols]
         model_vacc_df.columns = model_vacc_df.columns.str.replace('_', ' ')
         fig.add_traces(model_vacc_df.plot.area().data, i_plot + 1, 1)
-    dfs = {'raw': vacc_df, 'lagged': lag_vacc_df}
+    dfs = {'raw': vacc_df, 'lagged': lagged_df}
     for data_type in dfs:
         for i, pop in enumerate(['primary full', 'adult booster']):
             pop_str = 'National - Population 5-11' if pop == 'primary full' else 'National - Population 16 and over'
@@ -385,8 +434,7 @@ def plot_immune_props(
             y_vals = dfs[data_type][pop] / dfs[data_type][pop_str]
             fig.add_trace(go.Scatter(x=x_vals, y=y_vals, line=line_style, name='coverage'), row=i + 1, col=1)
     fig.update_xaxes(range=epoch.index_to_dti([model.times[0], model.times[-1]]))
-    fig.update_yaxes(range=[0.0, 1.0])
-    return fig.update_layout(height=600)
+    return fig.update_yaxes(range=[0.0, 1.0])
 
 
 def plot_targets(targets, for_plotly: bool=True):
@@ -437,24 +485,6 @@ def plot_multi_spaghetti(
         fig.add_trace(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker={'color': 'black', 'size': 12}), row=row, col=col)
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig.update_layout(height=600, margin={i: 30 for i in ['t', 'b', 'l', 'r']})
-
-
-def plot_vacc_implementation(
-    df: pd.DataFrame,
-) -> go.Figure:
-    """Illustrate the process of calculating between stratum transitions.
-
-    Args:
-        df: Augmented vaccination data
-
-    Returns:
-        Plot in three vertical panels
-    """
-    fig = make_subplots(3, 1, subplot_titles=['persons vaccinated', 'coverage', 'rates implemented'], vertical_spacing=0.08)
-    fig.add_traces(df[['primary full', 'adult booster']].plot().data, rows=1, cols=1)
-    fig.add_traces(df[['prop primary full', 'prop adult booster']].plot().data, rows=2, cols=1)
-    fig.add_traces(df[['rate primary full', 'rate adult booster']].plot().data, rows=3, cols=1)
-    return fig.update_layout(height=800, showlegend=False, margin={'t': 40})
 
 
 def plot_mixing_matrices(
