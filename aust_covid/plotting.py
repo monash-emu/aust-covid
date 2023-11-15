@@ -248,23 +248,32 @@ def plot_state_mobility(
     return format_output_figure(fig)
 
 
-def plot_processed_mobility(mobility_types):
-    locations = {
+def plot_processed_mobility(
+    mobility_types: Dict[str, pd.DataFrame]
+)-> go.Figure:
+    """Illustrate the process of converting from raw data 
+    to mobility functions fed into the model.
+
+    Args:
+        mobility_types: Dataframes for the data at each stage of processing
+
+    Returns:
+        The output figure
+    """
+    patch_map = {
         'wa': 'Western Australia',
-        'non_wa': 'rest of Australia',
+        'non wa': 'rest of Australia',
     }
-    style = ['solid', 'dash', 'dot']
-    fig = make_subplots(rows=1, cols=2, subplot_titles=list(locations.values()))
+    fig = make_subplots(rows=1, cols=2, subplot_titles=list(patch_map.values()))
     for m, mob_type in enumerate(mobility_types):
-        model_mob = mobility_types[mob_type]
-        for p, patch in enumerate(set(model_mob.columns.get_level_values(0))):
-            for l, mob_loc in enumerate(set(model_mob.columns.get_level_values(1))):
-                values = model_mob.loc[:, (patch, mob_loc)]
-                patch_name = patch.replace(' ', '_')
-                trace_name = f'{mob_loc}, {locations[patch_name]}, {mob_type}'
+        mob_data = mobility_types[mob_type]
+        for p, patch in enumerate(set(mob_data.columns.get_level_values(0))):
+            for l, mob_loc in enumerate(set(mob_data.columns.get_level_values(1))):
+                values = mob_data.loc[:, (patch, mob_loc)]
+                trace_name = f'{mob_loc}, {patch_map[patch]}, {mob_type}'
                 mob_trace = go.Scatter(x=values.index, y=values, name=trace_name, line=dict(color=COLOURS[m + l * 3]))
                 fig.add_trace(mob_trace, row=1, col=p + 1)
-    return fig.update_layout(height=350)
+    return format_output_figure(fig)
 
 
 def plot_example_model_matrices(model, parameters):
