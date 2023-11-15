@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List, Dict
 import pandas as pd
+pd.options.plotting.backend = 'plotly'
 import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -18,51 +19,60 @@ from emutools.calibration import get_negbinom_target_widths, get_target_from_nam
 from emutools.plotting import get_row_col_for_subplots
 from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, CHANGE_STR, COLOURS, RUN_IDS
 
-pd.options.plotting.backend = 'plotly'
 
+def plot_single_run_outputs(
+    model: CompartmentalModel, 
+    targets: list,
+) -> go.Figure:
+    """Produce standard plot of selected model outputs.
 
-def plot_single_run_outputs(model, targets):
-    case_targets = get_target_from_name(targets, 'notifications_ma')
-    death_targets = get_target_from_name(targets, 'deaths_ma')
-    serosurvey_targets = get_target_from_name(targets, 'adult_seropos_prop')
+    Args:
+        model: The summer epidemiological model
+        targets: All the targets being used for calibration/optimisation
+
+    Returns:
+        The figure
+    """
     panels = [
-        'cases target',
-        'deaths target',
-        'seropositive target',
+        'cases',
+        'deaths',
+        'seropositive',
         'reproduction number',
         'daily deaths by age',
-        'death rates by age',
+        'daily deaths by age (log scale)',
     ]
     fig = make_subplots(rows=3, cols=2, subplot_titles=panels)
     derived_outputs = model.get_derived_outputs_df()
     x_vals = derived_outputs.index
-    fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['notifications_ma'], name='modelled cases'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=case_targets.index, y=case_targets, name='reported cases'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['deaths_ma'], name='deaths ma'), row=1, col=2)
-    fig.add_trace(go.Scatter(x=death_targets.index, y=death_targets, name='reported deaths ma'), row=1, col=2)
-    fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['adult_seropos_prop'], name='adult seropos'), row=2, col=1)
-    fig.add_trace(go.Scatter(x=serosurvey_targets.index, y=serosurvey_targets, name='seropos estimates'), row=2, col=1)
-    fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs['reproduction_number'], name='reproduction number'), row=2, col=2)
+    output_map = {
+        'notifications_ma': [1, 1],
+        'deaths_ma': [1, 2],
+        'adult_seropos_prop': [2, 1],
+        'reproduction_number': [2, 2],
+    }
+    for out in output_map:
+        fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[out], name=f'modelled {out}'.replace('_', ' ')), row=output_map[out][0], col=output_map[out][1])
+        if out != 'reproduction_number':
+            target = get_target_from_name(targets, out)
+            fig.add_trace(go.Scatter(x=target.index, y=target, name=f'target {out}'), row=output_map[out][0], col=output_map[out][1])
     for agegroup in model.stratifications['agegroup'].strata:
-        fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[f'deathsXagegroup_{agegroup}'], name=f'{agegroup} deaths'), row=3, col=1)
-        fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[f'deathsXagegroup_{agegroup}'], name=f'{agegroup} deaths'), row=3, col=2)
+        for col in range(1, 3):
+            fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[f'deathsXagegroup_{agegroup}'], name=f'{agegroup} deaths'), row=3, col=col)
     fig['layout']['yaxis6'].update(type='log', range=[-2.0, 2.0])
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE), tickangle=45)
-    return fig.update_layout(height=600, width=1200)
+    return fig.update_layout(height=600)
 
 
 def plot_subvariant_props(
     spaghetti: pd.DataFrame, 
-):
-    """
-    Plot the proportion of the epidemic attributable to each sub-variant over time.
+) -> go.Figure:
+    """Plot the proportion of the epidemic attributable to each sub-variant over time.
     Compare against hard-coded key dates of sequencing proportions for each subvariant.
 
     Args:
         spaghetti: The values from the sampled runs
     """
     fig = go.Figure()
-
     ba1_results = spaghetti['ba1_prop']
     ba5_results = 1.0 - spaghetti['ba5_prop']
     flattened_cols = [f'chain:{col[0]}, draw:{col[1]}' for col in ba1_results.columns]
