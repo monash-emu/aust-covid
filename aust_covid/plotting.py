@@ -343,11 +343,10 @@ def plot_full_vacc(
 
 
 def plot_program_coverage(
-    program_masks: List[str], 
+    program_masks: Dict[str, List[str]], 
     df: pd.DataFrame,
 ) -> go.Figure:
-    """
-    Plot vaccination coverage by program across four panels to represent the main programs.
+    """Plot vaccination coverage by program across four panels to represent the main programs.
 
     Args:
         program_masks: Strings identifying the needed columns
@@ -356,10 +355,10 @@ def plot_program_coverage(
     Returns:
         The plotly figure object
     """
-    fig = make_subplots(rows=4, cols=1, subplot_titles=list(program_masks.keys()), vertical_spacing=0.12)
+    fig = make_subplots(rows=4, cols=1, subplot_titles=list(program_masks.keys()), vertical_spacing=0.1)
     for m, mask in enumerate(program_masks):
         fig.add_traces(px.line(df[program_masks[mask]]).data, rows=m + 1, cols=1)
-    return fig.update_layout(height=600, showlegend=False)
+    return fig.update_layout(height=900, showlegend=False)
 
 
 def plot_immune_props(
