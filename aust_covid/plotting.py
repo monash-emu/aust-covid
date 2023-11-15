@@ -7,6 +7,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import plotly.express as px
 import arviz as az
+from xarray.core.variable import Variable
 
 from summer2 import CompartmentalModel
 
@@ -55,6 +56,24 @@ def format_output_figure(
     height = [320, 500, 700]
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig.update_layout(height=height[rows - 1])
+
+
+def get_count_up_back_list(
+    req_length: int
+) -> list:
+    """Get a list that counts sequentially up from zero and back down again,
+    with the total length of the list being that requested.
+
+    Args:
+        req_length: Length of requested list
+
+    Returns:
+        List containing the sequential integer values
+    """
+    counting = list(range(req_length))
+    count_down = range(round(req_length / 2))[::-1]
+    counting[-len(count_down):] = count_down
+    return counting
 
 
 def plot_single_run_outputs(
@@ -131,10 +150,10 @@ def plot_subvariant_props(
     return format_output_figure(fig)
 
 
-def plot_cdr_examples(samples):
-    """
-    Plot examples of the variation in the case detection rate over time,
-    display and include in documentation.
+def plot_cdr_examples(
+    samples: Variable,
+) -> go.Figure:
+    """Plot examples of the variation in the case detection rate over time.
 
     Args:
         samples: Case detection values
@@ -146,26 +165,8 @@ def plot_cdr_examples(samples):
         start_cdr = float(start_cdr)
         exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
         cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
-    return cdr_values.plot(markers=True, labels={'value': 'case detection ratio', 'index': ''}).update_layout(legend_title='starting value', height=400)
-
-
-def get_count_up_back_list(
-    req_length: int
-) -> list:
-    """
-    Get a list that counts sequentially up from zero and back down again,
-    with the total length of the list being that requested.
-
-    Args:
-        req_length: Length of requested list
-
-    Returns:
-        List containing the sequential integer values
-    """
-    counting = list(range(req_length))
-    count_down = range(round(req_length / 2))[::-1]
-    counting[-len(count_down):] = count_down
-    return counting
+    fig = cdr_values.plot(markers=True, labels={'value': 'case detection ratio', 'index': ''}).update_layout(legend_title='starting value')
+    return format_output_figure(fig)
 
 
 def plot_dispersion_examples(
