@@ -12,6 +12,7 @@ def get_standard_subplot_fig(
     n_rows: int, 
     n_cols: int, 
     titles: List[str],
+    share_y: bool=False,
 ) -> go.Figure:
     """Start a plotly figure with subplots off from standard formatting.
 
@@ -24,5 +25,5 @@ def get_standard_subplot_fig(
         Figure with nothing plotted
     """
     heights = [320, 600, 900, 900]
-    fig = make_subplots(n_rows, n_cols, subplot_titles=titles, vertical_spacing=0.08, horizontal_spacing=0.05)
+    fig = make_subplots(n_rows, n_cols, subplot_titles=titles, vertical_spacing=0.08, horizontal_spacing=0.05, shared_yaxes=share_y)
     return fig.update_layout(margin={i: 25 for i in ['t', 'b', 'l', 'r']}, height=heights[n_rows - 1])
