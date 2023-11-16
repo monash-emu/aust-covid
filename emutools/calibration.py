@@ -287,23 +287,22 @@ def plot_output_ranges(
         The interactive figure
     """
     n_cols = 2
-    target_names = [t.name for t in targets]
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=[o.replace('_ma', '').replace('_', ' ') for o in outputs], vertical_spacing=0.1, horizontal_spacing=0.04)
-    analysis_data = quantile_outputs[analysis]
+    titles = [o.replace('_ma', '').replace('_', ' ') for o in outputs]
+    fig = get_standard_subplot_fig(2, n_cols, titles)
     for i, output in enumerate(outputs):
         row, col = get_row_col_for_subplots(i, n_cols)
-        data = analysis_data[output]
+        data = quantile_outputs[analysis][output]
         for q, quant in enumerate(quantiles):
             alpha = min((q, len(quantiles) - q)) / np.floor(len(quantiles) / 2) * max_alpha
             fill_colour = f'rgba(0,30,180,{str(alpha)})'
             fig.add_traces(go.Scatter(x=data.index, y=data[quant], fill='tonexty', fillcolor=fill_colour, line={'width': 0}, name=quant), rows=row, cols=col)
         fig.add_traces(go.Scatter(x=data.index, y=data[0.5], line={'color': 'black'}, name='median'), rows=row, cols=col)
-        if output in target_names:
+        if output in [t.name for t in targets]:
             target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
-    return fig.update_layout(yaxis4={'range': [0.0, 2.5]}, height=800, showlegend=False, margin={'t': 40, 'b': 40, 'l': 40, 'r': 40})
+    return fig.update_layout(yaxis4={'range': [0.0, 2.5]}, showlegend=False)
 
 
 def plot_output_ranges_by_analysis(
