@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import arviz as az
 from xarray.core.variable import Variable
+from scipy import stats
 
 from summer2 import CompartmentalModel
 
@@ -16,8 +17,9 @@ from inputs.constants import PLOT_START_DATE, AGE_STRATA, ANALYSIS_END_DATE, CHA
 from emutools.tex import DummyTexDoc
 from aust_covid.inputs import load_household_impacts_data, get_subvariant_prop_dates
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
-from emutools.calibration import get_negbinom_target_widths, get_target_from_name
-from emutools.plotting import get_row_col_for_subplots
+from emutools.utils import get_target_from_name
+
+from emutools.plotting import get_row_col_for_subplots, get_standard_subplot_fig
 
 
 def get_n_rows_plotly_fig(
@@ -55,26 +57,6 @@ def format_output_figure(
     heights = [320, 600, 900, 900]
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
     return fig.update_layout(height=heights[rows - 1])
-
-
-def get_standard_subplot_fig(
-    n_rows: int, 
-    n_cols: int, 
-    titles: List[str],
-) -> go.Figure:
-    """Start a plotly figure with subplots off from standard formatting.
-
-    Args:
-        n_rows: Argument to pass through to make_subplots
-        n_cols: Pass through
-        titles: Pass through
-
-    Returns:
-        Figure with nothing plotted
-    """
-    heights = [320, 600, 900, 900]
-    fig = make_subplots(n_rows, n_cols, subplot_titles=titles, vertical_spacing=0.08)
-    return fig.update_layout(margin={i: 25 for i in ['t', 'b', 'l', 'r']}, height=heights[n_rows - 1])
 
 
 def get_count_up_back_list(
@@ -194,6 +176,43 @@ def plot_cdr_examples(
     return format_output_figure(fig)
 
 
+def get_negbinom_target_widths(
+    target: pd.Series, 
+    idata: az.InferenceData,
+    model: CompartmentalModel, 
+    base_params: Dict[str, float],
+    output_name: str, 
+    centiles: np.array, 
+    prior_names: list,
+) -> tuple:
+    """Get the negative binomial centiles for a given model output and dispersion parameter.
+
+    Args:
+        targets: Target time series
+        idata: Full inference data
+        model: The summer epidemiological model
+        base_params: Default values for all parameters to run through model
+        output_name: Name of derived output
+        centiles: Centiles to calculate
+        prior_names: String names for each priors
+
+    Returns:
+        Dataframe with the centiles for the output of interest
+        Dispersion parameter used in calculations
+    """
+    sample_params = az.extract(idata, num_samples=1)
+    updated_parameters = base_params | {k: sample_params.variables[k].data[0] for k in prior_names}
+    dispersion = sample_params.variables[f'{output_name}_dispersion']
+    model.run(parameters=updated_parameters)
+    modelled_cases = model.get_derived_outputs_df()[output_name]
+    cis = pd.DataFrame(columns=centiles, index=target.index)
+    for time in target.index:
+        mu = modelled_cases.loc[time]
+        p = mu / (mu + dispersion)
+        cis.loc[time, :] = stats.nbinom.ppf(centiles, dispersion, 1.0 - p)
+    return cis, dispersion
+
+
 def plot_dispersion_examples(
     idata: az.InferenceData,
     model: CompartmentalModel,
@@ -201,7 +220,7 @@ def plot_dispersion_examples(
     prior_names: List[str],
     all_targets: list,
     output_colours: Dict[str, str], 
-    req_centiles: np.ndarray, 
+    req_centiles: np.array, 
     n_samples: int=3, 
     base_alpha: float=0.2, 
 ) -> go.Figure:

@@ -159,3 +159,19 @@ def param_table_to_tex(
     table = table[['Value', 'Units', 'Evidence']]  # Reorder columns
     table['Units'] = table['Units'].str.capitalize()
     return table
+
+
+def get_target_from_name(
+    targets: list, 
+    name: str,
+) -> pd.Series:
+    """Get the data for a specific target from a set of targets from its name.
+
+    Args:
+        targets: All the targets
+        name: The name of the desired target
+
+    Returns:
+        Single target to identify
+    """
+    return next((t.data for t in targets if t.name == name), None)
