@@ -241,8 +241,7 @@ def plot_param_hover_spaghetti(
     indicator_spaghetti: pd.DataFrame, 
     idata: az.InferenceData,
 ) -> go.Figure:
-    """
-    Generate a spaghetti plot with all parameters displayed on hover.
+    """Generate a spaghetti plot with all parameters displayed on hover.
 
     Args:
         indicator_spaghetti: The values from the sampled runs for one indicator only
@@ -261,8 +260,8 @@ def plot_param_hover_spaghetti(
             working_data[param] = int(info[param]) if param in ['chain', 'draw'] else round_sigfig(info[param], 3)
         lines = px.line(working_data, y='values', hover_data=working_data.columns)
         fig.add_traces(lines.data)
-    fig.update_layout(showlegend=False, height=600)
-    return fig
+    fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
+    return fig.update_layout(showlegend=False, height=500)
 
 
 def plot_output_ranges(
