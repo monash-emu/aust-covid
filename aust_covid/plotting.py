@@ -572,22 +572,14 @@ def plot_matrices_3d(
     Returns:
         The 4-panel plot
     """
-    fig_type = {'type': 'surface'}
     n_cols = 2
-    fig = make_subplots(
-        rows=2, 
-        cols=2, 
-        specs=[[fig_type, fig_type], [fig_type, fig_type]], 
-        horizontal_spacing=0.02, 
-        vertical_spacing=0.05,
-        subplot_titles=[k.replace('_', ' ') for k in matrices.keys()],
-    )
+    titles = [k.replace('_', ' ') for k in matrices.keys()]
+    fig_type = {'type': 'surface'}
+    fig_specs = [[fig_type, fig_type], [fig_type, fig_type]]
+    fig = make_subplots(rows=2, cols=n_cols, specs=fig_specs, horizontal_spacing=0.02, vertical_spacing=0.05, subplot_titles=titles)
     for l, location in enumerate(matrices):
         row, col = get_row_col_for_subplots(l, n_cols)
         fig.add_trace(go.Surface(x=AGE_STRATA, y=AGE_STRATA, z=matrices[location], showscale=False), row=row, col=col)
-    scene_req = {'zaxis': {'range': (0.0, 3.0), 'title': 'contacts', 'dtick': 1.0}, 'xaxis': {'title': ''}, 'yaxis': {'title': ''}}
-    return fig.update_layout(
-        scene1=scene_req, scene2=scene_req, scene3=scene_req, scene4=scene_req, 
-        height=800, 
-        margin={'t': 25, 'b': 25, 'l': 25, 'r': 25},
-    )
+    panel_scene = {'xaxis': {'title': ''}, 'yaxis': {'title': ''}, 'zaxis': {'range': (0.0, 3.0), 'title': 'contacts', 'dtick': 1.0}}
+    margins = {i: 25 for i in ['t', 'b', 'l', 'r']}
+    return fig.update_layout(scene1=panel_scene, scene2=panel_scene, scene3=panel_scene, scene4=panel_scene, height=900, margin=margins)
