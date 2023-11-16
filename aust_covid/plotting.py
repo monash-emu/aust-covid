@@ -12,13 +12,12 @@ from xarray.core.variable import Variable
 from summer2 import CompartmentalModel
 
 from aust_covid.inputs import load_national_case_data, load_owid_case_data, load_case_targets, load_who_death_data, load_serosurvey_data
-from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, AGE_STRATA
+from inputs.constants import PLOT_START_DATE, AGE_STRATA, ANALYSIS_END_DATE, CHANGE_STR, COLOURS, RUN_IDS
 from emutools.tex import DummyTexDoc
 from aust_covid.inputs import load_household_impacts_data, get_subvariant_prop_dates
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
 from emutools.calibration import get_negbinom_target_widths, get_target_from_name
 from emutools.plotting import get_row_col_for_subplots
-from inputs.constants import ANALYSIS_END_DATE, PLOT_START_DATE, CHANGE_STR, COLOURS, RUN_IDS
 
 
 def get_n_rows_plotly_fig(
@@ -536,7 +535,7 @@ def plot_3d_spaghetti(
     targets: list, 
     target_freq=5,
 ) -> go.Figure:
-    """Create interactive plotly figure for comparing outputs against targets.
+    """Plot 3-D comparison of outputs against targets.
 
     Args:
         indicator_name: Name of indicator to consider
@@ -547,18 +546,19 @@ def plot_3d_spaghetti(
     Returns:
         The interactive figure
     """
-    fig = go.Figure()
-    sample = spaghetti.loc[spaghetti.index > PLOT_START_DATE, indicator_name]
+    fig = get_standard_subplot_fig(1, 1, [''])
+    sample = spaghetti[indicator_name]
     sample.columns = sample.columns.map(lambda x: ', '.join([*map(str, x)]))
     target = get_target_from_name(targets, indicator_name)
     for i_col, col in enumerate(sample.columns):
         ypos = [i_col] * len(sample.index)
         fig.add_trace(go.Scatter3d(x=sample.index, y=ypos, z=sample[col], name=col, mode='lines', line={'width': 5.0}))
         if target is not None and i_col % target_freq == 0:
-            target = target[target.index < ANALYSIS_END_DATE]
             fig.add_trace(go.Scatter3d(x=target.index, y=ypos, z=target, name='target', mode='markers', marker={'size': 1.0}, line={'color': 'black'}))
-    fig.update_yaxes(showticklabels=False)
-    return fig.update_layout(height=800, scene=dict(xaxis_title='', yaxis_title='run', zaxis_title=indicator_name, yaxis={'showticklabels': False}))
+    xaxis_format = {'range': [PLOT_START_DATE, ANALYSIS_END_DATE], 'title': ''}
+    yaxis_format = {'title': 'run', 'showticklabels': False}
+    zaxis_format = {'title': indicator_name}
+    return fig.update_layout(scene={'xaxis': xaxis_format, 'yaxis': yaxis_format, 'zaxis': zaxis_format}, height=800)
 
 
 def plot_matrices_3d(
