@@ -1,10 +1,25 @@
+from typing import Union, List
 from pathlib import Path
 import pandas as pd
 import yaml as yml
+from datetime import datetime
 from abc import abstractmethod, ABC
+from matplotlib.figure import Figure as MplFig
+from plotly.graph_objects import Figure as PlotlyFig
+from inputs.constants import SUPPLEMENT_PATH
 
 
-def get_tex_formatted_date(date):
+def get_tex_formatted_date(
+    date: datetime,
+) -> str:
+    """Get TeX-formatted date from the date of a datetime object.
+
+    Args:
+        date: The date input
+
+    Returns:
+        Formatted string
+    """
     date_of_month = date.strftime('%d').lstrip('0')
     special_cases = {
         '1': 'st', 
@@ -23,7 +38,7 @@ def remove_underscore_multiindexcol(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
     """Remove underscores from multi-index columns
-    (particularly because TeX so often crashes with underscores in floats, such as tables).
+    (because TeX so often crashes with underscores in floats, such as tables).
 
     Args:
         df: Dataframe to modify
@@ -37,7 +52,23 @@ def remove_underscore_multiindexcol(
     return df
 
 
-def get_tex_longtable(table, col_format_str, caption_str, label_str):
+def get_tex_longtable(
+    table: pd.DataFrame, 
+    col_format_str: str, 
+    caption_str: str, 
+    label_str: str,
+) -> str:
+    """Get TeX longtable code from dataframe.
+
+    Args:
+        table: The pandas table
+        col_format_str: The previously created TeX column format request
+        caption_str: The previously formatted TeX caption request
+        label_str: The previously formatted TeX label request
+
+    Returns:
+        Completed TeX string for table
+    """
     start_str = '\\begin{longtable}\n'
     table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
     table_text = table_text.replace('\\begin{tabular}', '')
@@ -46,7 +77,23 @@ def get_tex_longtable(table, col_format_str, caption_str, label_str):
     return start_str + table_text + caption_str + label_str + end_str
 
 
-def get_tex_table(table, col_format_str, caption_str, label_str):
+def get_tex_table(
+    table: pd.DataFrame, 
+    col_format_str: str, 
+    caption_str: str, 
+    label_str: str,
+) -> str:
+    """Get TeX table code from dataframe.
+
+    Args:
+        table: The pandas table
+        col_format_str: The previously created TeX column format request
+        caption_str: The previously formatted TeX caption request
+        label_str: The previously formatted TeX label request
+
+    Returns:
+        Completed TeX string for table
+    """
     start_str = '\\begin{table}\n'
     table_text = table.style.to_latex(column_format=col_format_str, hrules=True)
     end_str = '\\end{table}'
@@ -74,7 +121,7 @@ class TexDoc(ABC):
         pass
 
     @abstractmethod
-    def include_figure(self, title: str, filename: str, filetype: str, fig_path: str, section: str, subsection: str='', caption: str=''):
+    def include_figure(self, title: str, filename: str, filetype: str, fig_path: str, section: str, subsection: str='', caption: str='', fig_width: float=1.0):
         pass
 
     @abstractmethod
@@ -91,6 +138,13 @@ class TexDoc(ABC):
 
 
 class DummyTexDoc(TexDoc):
+    """Minimal concrete object for use where 
+    functions require a document to write to,
+    but writing not desired.
+
+    Args:
+        TexDoc: Inherits from abstract class
+    """
     def add_line(self, line: str, section: str, subsection: str=''):
         pass
 
@@ -125,15 +179,14 @@ class ConcreteTexDoc:
         bib_filename: str,
         table_of_contents: bool=False,
     ):
-        """
-        Object that can do the basic collation and emitting of a TeX-formatted
-        string, including basic features for figures and tables.
+        """Object for collating document elements and emitting of a TeX-formatted string.
 
         Args:
             path: Path for writing the output document
             doc_name: Filename for the document produced
             title: Title to go in the document
             bib_filename: Name of the bibliography file
+            table_of_contents: Whether to include a table of contents
         """
         self.content = {}
         self.path = path
@@ -150,9 +203,9 @@ class ConcreteTexDoc:
         section: str, 
         subsection: str='',
     ):
-        """
-        Add a single line string to the appropriate section and subsection 
-        of the working document.
+        """Add a single line string to the appropriate section/subsection of the document
+        (adding to the start/intro of the section before sub-sections start 
+        if no subsection is requested).
 
         Args:
             line: The TeX line to write
@@ -171,27 +224,25 @@ class ConcreteTexDoc:
             self.content[section][subsection].append(line)
         
     def prepare_doc(self):
-        """
-        Essentially blank method for overwriting in parent class.
+        """Placeholder method for overwriting in parent class.
         """
         self.prepared = True
 
     def write_doc(self, order: list=[]):
-        """
-        Write the compiled document string to disc.
+        """Write the compiled document string to disc.
+
+        Args:
+            order: Section order to pass through to emit_doc method
         """
         with open(self.path / f'{self.doc_name}.tex', 'w') as doc_file:
             doc_file.write(self.emit_doc(section_order=order))
     
-    def emit_doc(
-        self, 
-        section_order: list=[],
-    ) -> str:
-        """
-        Collate all the sections together into the big string to be outputted.
+    def emit_doc(self, section_order: list=[]) -> str:
+        """Collate all the sections together into the big string to be outputted.
 
         Arguments:
             section_order: The order to write the document sections in
+
         Returns:
             The final text to write into the document
         """
@@ -199,7 +250,6 @@ class ConcreteTexDoc:
         if section_order and sorted(section_order) != content_sections:
             msg = 'Sections requested are not those in the current contents'
             raise ValueError(msg)
-
         order = section_order if section_order else self.content.keys()
 
         if not self.prepared:
@@ -231,14 +281,17 @@ class ConcreteTexDoc:
         caption: str='',
         fig_width: float=0.85,
     ):
-        """
-        Add a figure with standard formatting to the document.
+        """Add a figure with standard formatting to the document.
 
         Args:
-            caption: Figure caption
+            title: Figure title
             filename: Filename for finding the image file
+            filetype: File extension (determines TeX command to use to include the figure)
+            fig_path: Path where the figure file can be found
             section: The heading of the section for the figure to go into
             subsection: The heading of the subsection for the figure to go into
+            caption: Figure caption
+            fig_width: Figure width relative to document width
         """
         if filetype == 'jpg':
             command = 'includegraphics'
@@ -262,12 +315,11 @@ class ConcreteTexDoc:
         title: str,
         section: str, 
         subsection: str='', 
-        col_splits=None, 
-        table_width=14.0, 
-        longtable=False,
+        col_splits: Union[List[float], None]=None, 
+        table_width: float=14.0, 
+        longtable: bool=False,
     ):
-        """
-        Use a dataframe to add a table to the working document.
+        """Use a dataframe to add a table to the working document.
 
         Args:
             table: The table to be written
@@ -290,22 +342,25 @@ class ConcreteTexDoc:
         col_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
         label_str = f'\label{{{name}}}\n'
         caption_str = f'\caption{{\\textbf{{{title}}}}}\n'
-        table_line = get_tex_longtable(table, col_str, caption_str, label_str) if longtable else get_tex_table(table, col_str, caption_str, label_str)
-        self.add_line(table_line, section, subsection=subsection)
+        table_str = get_tex_longtable(table, col_str, caption_str, label_str) if longtable else get_tex_table(table, col_str, caption_str, label_str)
+        self.add_line(table_str, section, subsection=subsection)
 
     def save_content(self):
+        """Save the current document information as a simple string.
+        """
         with open(self.path / f'{self.doc_name}.yml', 'w') as file:
             yml.dump(self.content, file)
 
     def load_content(self):
+        """Read saved document information. 
+        """
         with open(self.path / f'{self.doc_name}.yml', 'r') as file:
             self.content = yml.load(file, Loader=yml.FullLoader)
 
 
 class StandardTexDoc(ConcreteTexDoc):
     def prepare_doc(self):
-        """
-        Add packages and text that standard documents need to include the other features.
+        """Add packages and text that standard documents need to include the other features.
         """
         self.prepared = True
         self.add_line('\\documentclass{article}', 'preamble')
@@ -336,4 +391,44 @@ class StandardTexDoc(ConcreteTexDoc):
             self.add_line('\\tableofcontents', 'preamble')        
         self.add_line('\\printbibliography', 'endings')
         self.add_line('\\end{document}', 'endings')
-            
+
+
+def add_image_to_doc(
+    fig: Union[MplFig, PlotlyFig], 
+    filename: str, 
+    filetype: str,
+    title: str, 
+    tex_doc: StandardTexDoc, 
+    section: str,
+    subsection: str='',
+    caption: str='',
+    fig_width: float=0.85,
+):
+    """
+    Save a figure image to a local directory and include in TeX doc.
+
+    Args:
+        fig: The figure object
+        filename: A string for the filenam to save the figure as
+        caption: Figure caption for the document
+        tex_doc: The working document
+        section: Pass through to include_figure method to the document writing object
+        subsection: Pass through
+        caption: Pass through
+        fig_width: Pass through
+
+    Raises:
+        TypeError: If the figure is not one of the two supported formats
+    """
+    fig_folder = 'figures'
+    fig_path = SUPPLEMENT_PATH / fig_folder
+    Path(fig_path).mkdir(exist_ok=True)
+    full_filename = f'{filename}.{filetype}'
+    if isinstance(fig, MplFig):
+        fig.savefig(fig_path / full_filename)
+    elif isinstance(fig, PlotlyFig):
+        fig.update_layout(margin={'t': 25})
+        fig.write_image(fig_path / full_filename)
+    else:
+        raise TypeError('Figure type not supported')
+    tex_doc.include_figure(title, filename, filetype, fig_folder, section, subsection=subsection, caption=caption, fig_width=fig_width)

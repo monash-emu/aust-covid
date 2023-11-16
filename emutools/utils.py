@@ -1,15 +1,30 @@
-from pathlib import Path
-from typing import Union
 from jax import numpy as jnp
 from jax import scipy as jsp
 import numpy as np
-from matplotlib.figure import Figure as MplFig
-from plotly.graph_objects import Figure as PlotlyFig
+import pandas as pd
+import yaml as yml
 
-from emutools.tex import StandardTexDoc
 from summer2.parameters import Function, Data, DerivedOutput
 
-from inputs.constants import SUPPLEMENT_PATH
+from inputs.constants import INPUTS_PATH
+
+
+def round_sigfig(
+    value: float, 
+    sig_figs: int
+) -> float:
+    """
+    Round a number to a certain number of significant figures, 
+    rather than decimal places.
+    
+    Args:
+        value: Number to round
+        sig_figs: Number of significant figures to round to
+    """
+    if np.isinf(value):
+        return 'infinity'
+    else:
+        return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1)) if value != 0.0 else 0.0
 
 
 def triangle_wave_func(
@@ -18,8 +33,7 @@ def triangle_wave_func(
     duration: float, 
     peak: float,
 ) -> float:
-    """
-    Generate a peaked triangular wave function
+    """Generate a peaked triangular wave function
     that starts from and returns to zero.
 
     Args:
@@ -41,8 +55,7 @@ def convolve_probability(
     source_output: DerivedOutput, 
     density_kernel: Function,
 ) -> jnp.array:
-    """
-    Create function to convolve two processes,
+    """Create function to convolve two processes,
     currently always a modelled derived output and some empirically based distribution.
 
     Args:
@@ -60,8 +73,7 @@ def gamma_cdf(
     mean: float, 
     x: jnp.array,
 ) -> jnp.array:
-    """
-    The regularised gamma function is the CDF of the gamma distribution
+    """The regularised gamma function is the CDF of the gamma distribution
     (which is referred to by scipy as "gammainc").
 
     Args:
@@ -80,8 +92,7 @@ def build_gamma_dens_interval_func(
     mean: float, 
     model_times: np.ndarray,
 ) -> Function:
-    """
-    Create a function to return the density of the gamma distribution.
+    """Create a function to return the density of the gamma distribution.
 
     Args:
         shape: Shape parameter to gamma distribution
@@ -96,43 +107,31 @@ def build_gamma_dens_interval_func(
     return Function(jnp.gradient, [cdf_values])
 
 
-def add_image_to_doc(
-    fig: Union[MplFig, PlotlyFig], 
-    filename: str, 
-    filetype: str,
-    title: str, 
-    tex_doc: StandardTexDoc, 
-    section: str,
-    subsection: str='',
-    caption: str='',
-    fig_width: float=0.85,
-):
-    """
-    Save a figure image to a local directory and include in TeX doc.
-
-    Args:
-        fig: The figure object
-        filename: A string for the filenam to save the figure as
-        caption: Figure caption for the document
-        tex_doc: The working document
-        section: Section of the document to include the figure in
-
-    Raises:
-        TypeError: If the figure is not one of the two supported formats
-    """
-    fig_folder = 'figures'
-    fig_path = SUPPLEMENT_PATH / fig_folder
-    Path(fig_path).mkdir(exist_ok=True)
-    full_filename = f'{filename}.{filetype}'
-    if isinstance(fig, MplFig):
-        fig.savefig(fig_path / full_filename)
-    elif isinstance(fig, PlotlyFig):
-        fig.update_layout(margin={'t': 25})
-        fig.write_image(fig_path / full_filename)
-    else:
-        raise TypeError('Figure type not supported')
-    tex_doc.include_figure(title, filename, filetype, fig_folder, section, subsection=subsection, caption=caption, fig_width=fig_width)
-
-
 def capture_kwargs(*args, **kwargs):
     return kwargs
+
+
+def load_param_info() -> pd.DataFrame:
+    """
+    Load specific parameter information from a ridigly formatted yaml file, and crash otherwise.
+
+    Returns:
+        The parameters info DataFrame contains the following fields:
+            value: Enough parameter values to ensure model runs, may be over-written in calibration
+            descriptions: A brief reader-digestible name/description for the parameter
+            units: The unit of measurement for the quantity (empty string if dimensionless)
+            evidence: TeX-formatted full description of the evidence underpinning the choice of value
+            abbreviations: Short names for parameters, e.g. for some plots
+    """
+    with open(INPUTS_PATH / 'parameters.yml', 'r') as param_file:
+        param_info = yml.safe_load(param_file)
+
+    # Check each loaded set of keys (parameter names) are the same as the arbitrarily chosen first key
+    first_key_set = param_info[list(param_info.keys())[0]].keys()
+    for cat in param_info:
+        working_keys = param_info[cat].keys()
+        if working_keys != first_key_set:
+            msg = f'Keys to {cat} category: {working_keys} - do not match first category {first_key_set}'
+            raise ValueError(msg)
+    
+    return pd.DataFrame(param_info)
