@@ -373,7 +373,7 @@ def plot_program_coverage(
         df: The vaccination dataframe
 
     Returns:
-        The plotly figure object
+        The interactive figure
     """
     fig = get_standard_subplot_fig(4, 1, list(program_masks.keys()))
     for m, mask in enumerate(program_masks):
@@ -413,7 +413,7 @@ def plot_immune_props(
         lag_vacc_df: Same data with lag
 
     Returns:
-        _description_
+        The interactive figure
     """
     epoch = model.get_epoch()
     age_breaks = ['5', '15']
@@ -437,7 +437,22 @@ def plot_immune_props(
     return fig.update_yaxes(range=[0.0, 1.0])
 
 
-def plot_targets(targets, for_plotly: bool=True):
+def plot_targets(
+    targets: list, 
+    for_plotly: bool=True
+) -> go.Figure:
+    """Illustrate the targets being used in the model 
+    along with the data they were derived from.
+    Whether the figure is interactive determines how many 
+    overlapping traces can reasonably be included.
+
+    Args:
+        targets: All the targets
+        for_plotly: Whether the figure will be used in plotly
+
+    Returns:
+        The targets illustration figure
+    """
     dummy_doc = DummyTexDoc()
     subplot_specs = [
         [{'colspan': 2}, None], 
@@ -473,18 +488,27 @@ def plot_multi_spaghetti(
     spaghettis: Dict[str, pd.DataFrame], 
     output: str, 
     targets: list,
-):
-    target = next(i for i in targets if i.name == output)
+) -> go.Figure:
+    """Plot spaghetti for single output from multiple models.
+
+    Args:
+        spaghettis: Spaghetti data
+        output: Name of the output to 
+        targets: All the calibration targets
+
+    Returns:
+        The interactive figure
+    """
+    target = get_target_from_name(targets, output)
     n_cols = 2
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True, horizontal_spacing=0.04, vertical_spacing=0.08)
+    fig = get_standard_subplot_fig(2, n_cols, list(RUN_IDS.keys()))
     for i, analysis in enumerate(RUN_IDS.keys()):
         row, col = get_row_col_for_subplots(i, n_cols)
         spaghetti = spaghettis[analysis][output]
         spaghetti.columns = [f'{str(chain)}, {str(draw)}' for chain, draw in spaghetti.columns]    
         fig.add_traces(spaghetti.plot().data, rows=row, cols=col)
-        fig.add_trace(go.Scatter(x=target.data.index, y=target.data, mode='markers', marker={'color': 'black', 'size': 12}), row=row, col=col)
-    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
-    return fig.update_layout(height=600, margin={i: 30 for i in ['t', 'b', 'l', 'r']})
+        fig.add_trace(go.Scatter(x=target.index, y=target, mode='markers', marker={'color': 'black', 'size': 12}), row=row, col=col)
+    return fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
 
 
 def plot_mixing_matrices(
@@ -496,14 +520,14 @@ def plot_mixing_matrices(
         matrices: The matrices
 
     Returns:
-        Interactive figure
+        The interactive figure
     """
     n_cols = 2
-    fig = make_subplots(2, n_cols, vertical_spacing=0.08, horizontal_spacing=0.07, subplot_titles=[k.replace('_', ' ') for k in matrices])
+    fig = get_standard_subplot_fig(2, n_cols, [k.replace('_', ' ') for k in matrices])
     for i, matrix in enumerate(matrices):
         row, col = get_row_col_for_subplots(i, n_cols)
         fig.add_traces(px.imshow(matrices[matrix], x=AGE_STRATA, y=AGE_STRATA).data, rows=row, cols=col)
-    return fig.update_layout(height=800, width=850, margin={'t': 40})
+    return fig
 
 
 def plot_3d_spaghetti(
