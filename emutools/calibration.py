@@ -1,4 +1,4 @@
-from typing import List, Union, Dict
+from typing import List, Dict, Optional
 import arviz as az
 from arviz.labels import MapLabeller
 import plotly.graph_objects as go
@@ -10,64 +10,22 @@ import matplotlib as mpl
 import seaborn as sns
 from matplotlib import pyplot as plt
 pd.options.plotting.backend = 'plotly'
-from scipy import stats
 
-from summer2 import CompartmentalModel
 import estival.priors as esp
 
 from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_PATH, BURN_IN
 from emutools.plotting import get_row_col_for_subplots
-from emutools.utils import round_sigfig
+from emutools.utils import get_target_from_name, round_sigfig
+
+from aust_covid.plotting import get_standard_subplot_fig
 
 
-def get_target_from_name(
-    targets: list, 
-    name: str,
-) -> pd.Series:
-    """Get the data for a specific target from a set of targets from its name.
-
-    Args:
-        targets: All the targets
-        name: The name of the desired target
-
-    Returns:
-        Single target to identify
-    """
-    return next((t.data for t in targets if t.name == name), None)
-
-
-def param_table_to_tex(
-    param_info: pd.DataFrame,
-    prior_names: list,
-) -> pd.DataFrame:
-    """Process aesthetics of the parameter info dataframe into 
-    readable information that can be output to TeX.
-
-    Args:
-        param_info: Dataframe with raw parameter information
-
-    Returns:
-        table: Ready to write version of the table
-    """
-    table = param_info[[c for c in param_info.columns if c != 'description']]
-    table['value'] = table['value'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))  # Round
-    table.loc[[i for i in table.index if i in prior_names], 'value'] = 'Calibrated'  # Suppress value if calibrated
-    table.index = param_info['descriptions']  # Readable description for row names
-    table.columns = table.columns.str.replace('_', ' ').str.capitalize()
-    table.index.name = None
-    table = table[['Value', 'Units', 'Evidence']]  # Reorder columns
-    table['Units'] = table['Units'].str.capitalize()
-    return table
-
-
-def get_prior_dist_type(
-    prior,
-) -> str:
-    """
-    Clunky way to extract the type of distribution used for a prior.
+def get_prior_dist_type(prior) -> str:
+    """Find the type of distribution used for a prior.
     
     Args:
-        The prior object
+        The prior
+
     Returns:
         Description of the distribution
     """
@@ -75,15 +33,12 @@ def get_prior_dist_type(
     return f'{dist_type} distribution'
 
 
-def get_prior_dist_param_str(
-    prior,
-) -> str:
-    """
-    Extract the parameters to the distribution used for a prior.
-    Note rounding to three decimal places.
+def get_prior_dist_param_str(prior) -> str:
+    """Extract the parameters to the distribution used for a prior,
+    rounding to three decimal places.
     
     Args:
-        prior: The prior objectx
+        prior: The prior
 
     Returns:
         The parameters to the prior's distribution joined together
@@ -94,14 +49,11 @@ def get_prior_dist_param_str(
         return ' '.join([f'{param}: {round(prior.distri_params[param], 3)}' for param in prior.distri_params])
 
 
-def get_prior_dist_support(
-    prior,
-) -> str:
-    """
-    Extract the bounds to the distribution used for a prior.
+def get_prior_dist_support(prior) -> str:
+    """Extract the bounds to the distribution used for a prior.
     
     Args:
-        prior: The prior object
+        prior: The prior
 
     Returns:        
         The bounds to the prior's distribution joined together
@@ -112,23 +64,21 @@ def get_prior_dist_support(
 def plot_param_progression(
     idata: az.InferenceData, 
     descriptions: pd.Series, 
-    request_vars: Union[None, List[str]]=None,
+    req_vars: Optional[List[str]]=None,
 ) -> mpl.figure.Figure:
-    """
-    Plot progression of parameters over model iterations with posterior density plots.
+    """Plot progression of parameters over model iterations with posterior density plots.
     
     Args:
         idata: Formatted outputs from calibration
         descriptions: Short parameter names
-        request_vars: The parameter names to plot
+        req_vars: The parameter names to plot
     
     Returns:
-        Formatted figure object created from arviz plotting command
+        The figure
     """
     labeller = MapLabeller(var_name_map=descriptions)
-    trace_plot = az.plot_trace(idata, figsize=(16, 21), compact=False, legend=False, labeller=labeller, var_names=request_vars)
+    trace_plot = az.plot_trace(idata, figsize=(15, 21), compact=False, legend=False, labeller=labeller, var_names=req_vars)
     trace_fig = trace_plot[0, 0].figure
-    trace_fig.set_figheight(15)
     trace_fig.tight_layout()
     plt.close()
     return trace_fig
@@ -137,32 +87,26 @@ def plot_param_progression(
 def plot_posterior_comparison(
     idata: az.InferenceData, 
     priors: list, 
-    request_vars: list, 
+    req_vars: list, 
     display_names: dict,
-    dens_interval_req: float,
-    grid: tuple=None,
-):
-    """
-    Area plot posteriors against prior distributions.
+    span: float,
+) -> plt.Figure:
+    """Area plot posteriors against prior distributions.
 
     Args:
         idata: Formatted outputs from calibration
         priors: The prior objects
-        request_vars: The names of the priors to plot
+        req_vars: The names of the priors to plot
         display_names: Translation of names to names for display
-        dens_interval_req: How much of the central density to plot
+        span: How much of the central density to plot
+    
+    Returns:
+        The figure
     """
-    comparison_plot = az.plot_density(
-        idata, 
-        var_names=request_vars, 
-        shade=0.5, 
-        labeller=MapLabeller(var_name_map=display_names), 
-        point_estimate=None,
-        hdi_prob=dens_interval_req,
-        grid=grid,
-    )
-    req_priors = [p for p in priors if p.name in request_vars]
-    for i_ax, ax in enumerate(comparison_plot.ravel()[:len(request_vars)]):
+    labeller = MapLabeller(var_name_map=display_names)
+    comparison_plot = az.plot_density(idata, var_names=req_vars, shade=0.5, labeller=labeller, point_estimate=None, hdi_prob=span, grid=grid)
+    req_priors = [p for p in priors if p.name in req_vars]
+    for i_ax, ax in enumerate(comparison_plot.ravel()[:len(req_vars)]):
         ax_limits = ax.get_xlim()
         x_vals = np.linspace(ax_limits[0], ax_limits[1], 100)
         y_vals = req_priors[i_ax].pdf(x_vals)
@@ -175,8 +119,7 @@ def tabulate_priors(
     priors: list, 
     param_info: pd.DataFrame, 
 ) -> pd.DataFrame:
-    """
-    Create table of all priors used in calibration algorithm,
+    """Create table of all priors used in calibration algorithm,
     including distribution names, distribution parameters and support.
 
     Args:
@@ -184,7 +127,7 @@ def tabulate_priors(
         param_info: Collated information on the parameter values (excluding calibration/priors-related)
 
     Returns:
-        Formatted table combining the information listed above
+        Formatted table explaining the priors used
     """
     names = [param_info['descriptions'][i.name] for i in priors]
     distributions = [get_prior_dist_type(i) for i in priors]
@@ -193,13 +136,14 @@ def tabulate_priors(
     return pd.DataFrame({'Distribution': distributions, 'Parameters': parameters, 'Support': support}, index=names)
 
 
-def tabulate_param_results(
+def tabulate_calib_results(
     idata: az.data.inference_data.InferenceData, 
     priors: list, 
     param_info: pd.DataFrame, 
 ) -> pd.DataFrame:
     """
-    Get tabular outputs from calibration inference object and standardise formatting.
+    Get tabular outputs from calibration inference object, 
+    except for the dispersion parameters, and standardise formatting.
 
     Args:
         uncertainty_outputs: Outputs from calibration
@@ -220,55 +164,15 @@ def tabulate_param_results(
     return table
 
 
-def get_negbinom_target_widths(
-    targets: pd.Series, 
-    idata: az.InferenceData,
-    model: CompartmentalModel, 
-    base_params: dict, 
-    output_name: str, 
-    centiles: np.array, 
-    prior_names: list,
-) -> tuple:
-    """
-    Get the negative binomial centiles for a given model output 
-    and dispersion parameter.
-
-    Args:
-        targets: Target time series
-        idata: Full inference data
-        model: Epidemiological model
-        base_params: Default values for all parameters to run through model
-        output_name: Name of derived output
-        centiles: Centiles to calculate
-        prior_names: String names for each priors
-
-    Returns:
-        Dataframe with the centiles for the output of interest
-        Dispersion parameter used in calculations
-    """
-    sample_params = az.extract(idata, num_samples=1)
-    updated_parameters = base_params | {k: sample_params.variables[k].data[0] for k in prior_names}
-    dispersion = sample_params.variables[f'{output_name}_dispersion']
-    model.run(parameters=updated_parameters)
-    modelled_cases = model.get_derived_outputs_df()[output_name]
-    cis = pd.DataFrame(columns=centiles, index=targets.index)
-    for time in targets.index:
-        mu = modelled_cases.loc[time]
-        p = mu / (mu + dispersion)
-        cis.loc[time, :] = stats.nbinom.ppf(centiles, dispersion, 1.0 - p)
-    return cis, dispersion
-
-
 def plot_priors(
     priors: list, 
-    titles: dict, 
+    titles: pd.Series, 
     n_cols: int, 
     n_points: int, 
     rel_overhang: float, 
     prior_cover: float,
 ) -> go.Figure:
-    """
-    Plot the PDF of each of a set of priors.
+    """Plot the PDF of each of a set of priors.
 
     Args:
         priors: The list of estival prior objects
@@ -280,7 +184,7 @@ def plot_priors(
         prior_cover: How much of the posterior density to cover (before overhanging)
 
     Returns:
-        Multi-panel figure with one panel per prior
+        The figure
     """
     n_rows = int(np.ceil(len(priors) / n_cols))
     titles = [titles[p.name] for p in priors]
@@ -293,8 +197,7 @@ def plot_priors(
         row = int(np.floor(p / n_cols)) + 1
         col = p % n_cols + 1
         fig.add_trace(go.Scatter(x=x_values, y=y_values, fill='tozeroy'), row=row, col=col)
-    fig.update_layout(height=800, showlegend=False)
-    return fig
+    return fig.update_layout(height=800, showlegend=False)
 
 
 def plot_spaghetti(
@@ -303,8 +206,7 @@ def plot_spaghetti(
     n_cols: int, 
     targets: list,
 ) -> go.Figure:
-    """
-    Generate a spaghetti plot to compare any number of requested outputs to targets.
+    """Generate a spaghetti plot to compare any number of requested outputs to targets.
 
     Args:
         spaghetti: The values from the sampled runs
@@ -316,35 +218,30 @@ def plot_spaghetti(
         The spaghetti plot figure object
     """
     rows = int(np.ceil(len(indicators) / n_cols))
-    titles = [i.replace('_', ' ') for i in indicators]
-    fig = make_subplots(rows=rows, cols=n_cols, subplot_titles=titles, horizontal_spacing=0.04, vertical_spacing=0.08)
+    fig = get_standard_subplot_fig(rows, n_cols, [i.replace('_', ' ') for i in indicators])
     for i, ind in enumerate(indicators):
-        row = int(np.floor(i / n_cols)) + 1
-        col = i % n_cols + 1
+        row, col = get_row_col_for_subplots(i, n_cols)
 
         # Model outputs
         ind_spagh = spaghetti[ind]
         ind_spagh.columns = ind_spagh.columns.map(lambda col: f'{col[0]}, {col[1]}')
-        ind_spagh = ind_spagh[(PLOT_START_DATE < ind_spagh.index) & (ind_spagh.index < ANALYSIS_END_DATE)]
         fig.add_traces(px.line(ind_spagh).data, rows=row, cols=col)
 
         # Targets
         if ind != 'reproduction_number':
             target = get_target_from_name(targets, ind)
-            target = target[(PLOT_START_DATE < target.index) & (target.index < ANALYSIS_END_DATE)]
             target_marker_config = dict(size=15.0, line=dict(width=1.0, color='DarkSlateGrey'))
             lines = go.Scatter(x=target.index, y=target, marker=target_marker_config, name='targets', mode='markers')
             fig.add_trace(lines, row=row, col=col)
-    fig.update_layout(height=600, margin={i: 30 for i in ['t', 'b', 'l', 'r']})
-    return fig
+            fig.update_layout(yaxis4=dict(range=[0, 2.2]))
+    return fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
 
 
 def plot_param_hover_spaghetti(
     indicator_spaghetti: pd.DataFrame, 
     idata: az.InferenceData,
 ) -> go.Figure:
-    """
-    Generate a spaghetti plot with all parameters displayed on hover.
+    """Generate a spaghetti plot with all parameters displayed on hover.
 
     Args:
         indicator_spaghetti: The values from the sampled runs for one indicator only
@@ -363,8 +260,8 @@ def plot_param_hover_spaghetti(
             working_data[param] = int(info[param]) if param in ['chain', 'draw'] else round_sigfig(info[param], 3)
         lines = px.line(working_data, y='values', hover_data=working_data.columns)
         fig.add_traces(lines.data)
-    fig.update_layout(showlegend=False, height=600)
-    return fig
+    fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
+    return fig.update_layout(showlegend=False, height=500)
 
 
 def plot_output_ranges(
@@ -390,23 +287,22 @@ def plot_output_ranges(
         The interactive figure
     """
     n_cols = 2
-    target_names = [t.name for t in targets]
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=[o.replace('_ma', '').replace('_', ' ') for o in outputs], vertical_spacing=0.1, horizontal_spacing=0.04)
-    analysis_data = quantile_outputs[analysis]
+    titles = [o.replace('_ma', '').replace('_', ' ') for o in outputs]
+    fig = get_standard_subplot_fig(2, n_cols, titles)
     for i, output in enumerate(outputs):
         row, col = get_row_col_for_subplots(i, n_cols)
-        data = analysis_data[output]
+        data = quantile_outputs[analysis][output]
         for q, quant in enumerate(quantiles):
             alpha = min((q, len(quantiles) - q)) / np.floor(len(quantiles) / 2) * max_alpha
             fill_colour = f'rgba(0,30,180,{str(alpha)})'
             fig.add_traces(go.Scatter(x=data.index, y=data[quant], fill='tonexty', fillcolor=fill_colour, line={'width': 0}, name=quant), rows=row, cols=col)
         fig.add_traces(go.Scatter(x=data.index, y=data[0.5], line={'color': 'black'}, name='median'), rows=row, cols=col)
-        if output in target_names:
+        if output in [t.name for t in targets]:
             target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
-    return fig.update_layout(yaxis4={'range': [0.0, 2.5]}, height=800, showlegend=False, margin={'t': 40, 'b': 40, 'l': 40, 'r': 40})
+    return fig.update_layout(yaxis4={'range': [0.0, 2.5]}, showlegend=False)
 
 
 def plot_output_ranges_by_analysis(
@@ -430,8 +326,7 @@ def plot_output_ranges_by_analysis(
         The interactive figure
     """
     n_cols = 2
-    target_names = [t.name for t in targets]
-    fig = make_subplots(rows=2, cols=n_cols, subplot_titles=list(RUN_IDS.keys()), shared_yaxes=True, vertical_spacing=0.1)
+    fig = get_standard_subplot_fig(2, n_cols, list(RUN_IDS.keys()), share_y=True)
     for a, analysis in enumerate(RUN_IDS):
         row, col = get_row_col_for_subplots(a, n_cols)
         analysis_data = quantile_outputs[analysis]
@@ -441,23 +336,26 @@ def plot_output_ranges_by_analysis(
             fill_colour = f'rgba(0,30,180,{str(alpha)})'
             fig.add_traces(go.Scatter(x=data.index, y=data[quant], fill='tonexty', fillcolor=fill_colour, line={'width': 0}, name=quant), rows=row, cols=col)
         fig.add_traces(go.Scatter(x=data.index, y=data[0.5], line={'color': 'black'}, name='median'), rows=row, cols=col)
-        if output in target_names:
+        if output in [t.name for t in targets]:
             target = get_target_from_name(targets, output)
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
-    return fig.update_layout(height=500, showlegend=False)
+    return fig.update_layout(showlegend=False)
 
 
 def get_like_components(
     components: List[str]
-) -> List[pd.DataFrame]:
+) -> Dict[str, pd.DataFrame]:
     """Get dictionary containing one dataframe 
     for each requested contribution to the likelihood,
     with columns for each analysis type and integer index.
     
     Args:
         User requested likelihood components
+    
+    Returns:
+        The likelihood data by component
     """
     like_outputs = {}
     for comp in components:
@@ -471,7 +369,7 @@ def get_like_components(
 def plot_like_components_by_analysis(
     like_outputs: Dict[str, pd.DataFrame], 
     plot_type: str, 
-    clips: Dict[str, tuple]={},
+    plot_requests: Dict[str, list]={},
     alpha: float=0.2,
     linewidth: float=1.0,
 ) -> plt.figure:
@@ -489,38 +387,15 @@ def plot_like_components_by_analysis(
     axes = axes.reshape(-1)
     plotter = getattr(sns, plot_type)
     legend_plot_types = ['kdeplot', 'histplot']
-    title_map = {
-        'loglikelihood': 'total likelihood',
-        'll_adult_seropos_prop': 'seroprevalence contribution',
-        'll_deaths_ma': 'deaths contribution',
-        'll_notifications_ma': 'cases contribution',
-    }
     for m, comp in enumerate(like_outputs.keys()):
-        clip = clips[comp] if clips else None
+        clip = plot_requests[comp][:2] if plot_requests else None
         kwargs = {'common_norm': False, 'clip': clip, 'fill': True, 'alpha': alpha, 'linewidth': linewidth} if plot_type == 'kdeplot' else {}        
         ax = axes[m]
         plotter(like_outputs[comp].loc[:, BURN_IN:, :], ax=ax, **kwargs)
-        ax.set_title(title_map[comp])
+        ax.set_title(plot_requests[comp][2])
         if m == 0 and plot_type in legend_plot_types:
             sns.move_legend(ax, loc='upper left')
         elif plot_type in legend_plot_types:
             ax.legend_.set_visible(False)
     fig.tight_layout()
     return fig
-
-
-def get_outcome_df_by_chain() -> Dict[str, pd.DataFrame]:
-    """Compile dictionary of dataframes for each analysis type,
-    each with column multi-index for likelihood component
-    and chain number.
-
-    Returns:
-        Compiled data structure
-    """
-    like_dfs = {}
-    for analysis, run_id in RUN_IDS.items():
-        like_df = pd.read_hdf(RUNS_PATH / run_id / 'output/results.hdf', 'likelihood')
-        like_df['chain'] = like_df.index.get_level_values(0)
-        like_df['index'] = like_df.index.get_level_values(1)
-        like_dfs[analysis] = like_df.pivot(index='index', columns=['chain'])
-    return like_dfs
