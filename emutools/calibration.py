@@ -36,38 +36,12 @@ def get_target_from_name(
     return next((t.data for t in targets if t.name == name), None)
 
 
-def param_table_to_tex(
-    param_info: pd.DataFrame,
-    prior_names: list,
-) -> pd.DataFrame:
-    """Process aesthetics of the parameter info dataframe into 
-    readable information that can be output to TeX.
-
-    Args:
-        param_info: Dataframe with raw parameter information
-
-    Returns:
-        table: Ready to write version of the table
-    """
-    table = param_info[[c for c in param_info.columns if c != 'description']]
-    table['value'] = table['value'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))  # Round
-    table.loc[[i for i in table.index if i in prior_names], 'value'] = 'Calibrated'  # Suppress value if calibrated
-    table.index = param_info['descriptions']  # Readable description for row names
-    table.columns = table.columns.str.replace('_', ' ').str.capitalize()
-    table.index.name = None
-    table = table[['Value', 'Units', 'Evidence']]  # Reorder columns
-    table['Units'] = table['Units'].str.capitalize()
-    return table
-
-
-def get_prior_dist_type(
-    prior,
-) -> str:
-    """
-    Clunky way to extract the type of distribution used for a prior.
+def get_prior_dist_type(prior) -> str:
+    """Find the type of distribution used for a prior.
     
     Args:
-        The prior object
+        The prior
+
     Returns:
         Description of the distribution
     """
@@ -75,15 +49,12 @@ def get_prior_dist_type(
     return f'{dist_type} distribution'
 
 
-def get_prior_dist_param_str(
-    prior,
-) -> str:
-    """
-    Extract the parameters to the distribution used for a prior.
-    Note rounding to three decimal places.
+def get_prior_dist_param_str(prior) -> str:
+    """Extract the parameters to the distribution used for a prior,
+    rounding to three decimal places.
     
     Args:
-        prior: The prior objectx
+        prior: The prior
 
     Returns:
         The parameters to the prior's distribution joined together
@@ -94,14 +65,11 @@ def get_prior_dist_param_str(
         return ' '.join([f'{param}: {round(prior.distri_params[param], 3)}' for param in prior.distri_params])
 
 
-def get_prior_dist_support(
-    prior,
-) -> str:
-    """
-    Extract the bounds to the distribution used for a prior.
+def get_prior_dist_support(prior) -> str:
+    """Extract the bounds to the distribution used for a prior.
     
     Args:
-        prior: The prior object
+        prior: The prior
 
     Returns:        
         The bounds to the prior's distribution joined together

@@ -135,3 +135,27 @@ def load_param_info() -> pd.DataFrame:
             raise ValueError(msg)
     
     return pd.DataFrame(param_info)
+
+
+def param_table_to_tex(
+    param_info: pd.DataFrame,
+    prior_names: list,
+) -> pd.DataFrame:
+    """Process aesthetics of the parameter info dataframe into 
+    readable information that can be output to TeX.
+
+    Args:
+        param_info: Dataframe with raw parameter information
+
+    Returns:
+        table: Ready to write version of the table
+    """
+    table = param_info[[c for c in param_info.columns if c != 'description']]
+    table['value'] = table['value'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))  # Round
+    table.loc[[i for i in table.index if i in prior_names], 'value'] = 'Calibrated'  # Suppress value if calibrated
+    table.index = param_info['descriptions']  # Readable description for row names
+    table.columns = table.columns.str.replace('_', ' ').str.capitalize()
+    table.index.name = None
+    table = table[['Value', 'Units', 'Evidence']]  # Reorder columns
+    table['Units'] = table['Units'].str.capitalize()
+    return table
