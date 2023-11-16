@@ -10,7 +10,6 @@ import matplotlib as mpl
 import seaborn as sns
 from matplotlib import pyplot as plt
 pd.options.plotting.backend = 'plotly'
-
 from scipy import stats
 
 from summer2 import CompartmentalModel
@@ -18,9 +17,13 @@ import estival.priors as esp
 
 from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_PATH, BURN_IN
 from emutools.plotting import get_row_col_for_subplots
+from emutools.utils import round_sigfig
 
 
-def get_target_from_name(targets: list, name: str) -> pd.Series:
+def get_target_from_name(
+    targets: list, 
+    name: str,
+) -> pd.Series:
     """Get the data for a specific target from a set of targets from its name.
 
     Args:
@@ -31,24 +34,6 @@ def get_target_from_name(targets: list, name: str) -> pd.Series:
         Single target to identify
     """
     return next((t.data for t in targets if t.name == name), None)
-
-
-def round_sigfig(
-    value: float, 
-    sig_figs: int
-) -> float:
-    """
-    Round a number to a certain number of significant figures, 
-    rather than decimal places.
-    
-    Args:
-        value: Number to round
-        sig_figs: Number of significant figures to round to
-    """
-    if np.isinf(value):
-        return 'infinity'
-    else:
-        return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1)) if value != 0.0 else 0.0
 
 
 def param_table_to_tex(
