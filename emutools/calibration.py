@@ -399,20 +399,3 @@ def plot_like_components_by_analysis(
             ax.legend_.set_visible(False)
     fig.tight_layout()
     return fig
-
-
-def get_outcome_df_by_chain() -> Dict[str, pd.DataFrame]:
-    """Compile dictionary of dataframes for each analysis type,
-    each with column multi-index for likelihood component
-    and chain number.
-
-    Returns:
-        Compiled data structure
-    """
-    like_dfs = {}
-    for analysis, run_id in RUN_IDS.items():
-        like_df = pd.read_hdf(RUNS_PATH / run_id / 'output/results.hdf', 'likelihood')
-        like_df['chain'] = like_df.index.get_level_values(0)
-        like_df['index'] = like_df.index.get_level_values(1)
-        like_dfs[analysis] = like_df.pivot(index='index', columns=['chain'])
-    return like_dfs
