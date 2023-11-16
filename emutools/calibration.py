@@ -347,13 +347,16 @@ def plot_output_ranges_by_analysis(
 
 def get_like_components(
     components: List[str]
-) -> List[pd.DataFrame]:
+) -> Dict[str, pd.DataFrame]:
     """Get dictionary containing one dataframe 
     for each requested contribution to the likelihood,
     with columns for each analysis type and integer index.
     
     Args:
         User requested likelihood components
+    
+    Returns:
+        The likelihood data by component
     """
     like_outputs = {}
     for comp in components:
