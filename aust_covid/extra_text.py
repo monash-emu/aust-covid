@@ -52,16 +52,16 @@ def add_parameters_blurb_to_tex(tex_doc: TexDoc):
     tex_doc.add_line(description, 'Parameters')
 
 
-def add_likelihood_blurb_to_tex(tex_doc: TexDoc, cross_ref: bool=True):
+def add_likelihood_blurb_to_tex(tex_doc: TexDoc, cross_ref: bool=True, fig_ref: bool=True):
     target_ref = 'Section \\ref{targets})' if cross_ref else 'the Targets section'
-    fig_ref = '\\ref{case_ranges}, \\ref{death_ranges} and \\ref{seropos_ranges}' if cross_ref else 'elsewhere'
+    fig_ref = '\\ref{case_ranges}, \\ref{death_ranges} and \\ref{seropos_ranges}' if fig_ref else 'presented elsewhere'
+    like_ref = ' (See Figure \\ref{like_comparison})' if cross_ref else ''
     description = 'We compared our four candidate analyses according to their goodness ' \
         f'of fit to the targets data (described under {target_ref}. ' \
         'The fit of all four of the models to the target data was considered adequate, ' \
         f"but the likelihood of the `{PRIMARY_ANALYSIS}' analysis was slightly higher than " \
         'that of the other three approaches, with the inclusion of the mobility structure ' \
-        "appearing to improve the calibration algorithm's fit to targets " \
-        '(See Figure \\ref{like_comparison}). ' \
+        f"appearing to improve the calibration algorithm's fit to targets{like_ref}. " \
         f"For this reason, the `{PRIMARY_ANALYSIS}' analysis was considered as the primary analysis " \
         'throughout the remaining sections. ' \
         f'Figures {fig_ref} illustrate ' \
