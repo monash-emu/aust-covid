@@ -77,7 +77,7 @@ def plot_param_progression(
         The figure
     """
     labeller = MapLabeller(var_name_map=descriptions)
-    trace_plot = az.plot_trace(idata, figsize=(15, 21), compact=False, legend=False, labeller=labeller, var_names=req_vars)
+    trace_plot = az.plot_trace(idata, figsize=(15, 16), compact=False, legend=False, labeller=labeller, var_names=req_vars)
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
     plt.close()
