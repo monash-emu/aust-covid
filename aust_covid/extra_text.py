@@ -62,7 +62,7 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc, cross_ref: bool=True):
         'that of the other three approaches, with the inclusion of the mobility structure ' \
         "appearing to improve the calibration algorithm's fit to targets " \
         '(See Figure \\ref{like_comparison}). ' \
-        f"For this reason, the `{PRIMARY_ANALYSIS}' was considered as the primary analysis " \
+        f"For this reason, the `{PRIMARY_ANALYSIS}' analysis was considered as the primary analysis " \
         'throughout the remaining sections. ' \
         f'Figures {fig_ref} illustrate ' \
         'the fit of each candidate model to the target data for ' \
