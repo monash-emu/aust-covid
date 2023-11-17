@@ -52,9 +52,11 @@ def add_parameters_blurb_to_tex(tex_doc: TexDoc):
     tex_doc.add_line(description, 'Parameters')
 
 
-def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
+def add_likelihood_blurb_to_tex(tex_doc: TexDoc, cross_ref: bool=True):
+    target_ref = 'Section \\ref{targets})' if cross_ref else 'the Targets section'
+    fig_ref = '\\ref{case_ranges}, \\ref{death_ranges} and \\ref{seropos_ranges}' if cross_ref else 'elsewhere'
     description = 'We compared our four candidate analyses according to their goodness ' \
-        'of fit to the targets data (described under Section \\ref{targets}). ' \
+        f'of fit to the targets data (described under {target_ref}. ' \
         'The fit of all four of the models to the target data was considered adequate, ' \
         f"but the likelihood of the `{PRIMARY_ANALYSIS}' analysis was slightly higher than " \
         'that of the other three approaches, with the inclusion of the mobility structure ' \
@@ -62,7 +64,7 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
         '(See Figure \\ref{like_comparison}). ' \
         f"For this reason, the `{PRIMARY_ANALYSIS}' was considered as the primary analysis " \
         'throughout the remaining sections. ' \
-        'Figures \\ref{case_ranges}, \\ref{death_ranges} and \\ref{seropos_ranges} illustrate ' \
+        f'Figures {fig_ref} illustrate ' \
         'the fit of each candidate model to the target data for ' \
         'the notification, death and seropositive proportion respectively. '
     tex_doc.add_line(description, 'Analysis comparison')
