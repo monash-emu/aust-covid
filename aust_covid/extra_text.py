@@ -38,17 +38,18 @@ def add_model_structure_blurb_to_tex(tex_doc: TexDoc):
     tex_doc.add_line(description, 'Base compartmental structure')
 
 
-def add_parameters_blurb_to_tex(tex_doc: TexDoc):
+def add_parameters_blurb_to_tex(tex_doc: TexDoc, cross_ref: bool=True):
+    calib_ref = ' (See Section \\ref{calibrated_dispersion_parameters})' if cross_ref else ''
+    prior_ref = 'Calibration priors are identified in the parameters table and illustrated in detail in Section \\ref{priors}. ' if cross_ref else ''
     description = 'All epidemiologial parameters, including those used in the calibration algorithm ' \
         'are presented in Table \\ref{params}. In addition to these epidemiological parameters, ' \
         'the dispersion parameter for the negative binomial distribution used when calculating ' \
         'the case time-series and death time-series contributions to the likelihood ' \
-        'were included in our calibration algorithm (See Section \\ref{calibrated_dispersion_parameters}). ' \
+        f'were included in our calibration algorithm {calib_ref}. ' \
         'The approach to estimating the age-specific infection fatality rate for each ' \
         'modelled age group is described in \\ref{infection_fatality_rates}. ' \
         'All epidemiologically significant model parameters were included as priors ' \
-        'in our calibration algorithm. Calibration priors are identified in the parameters table ' \
-        'and illustrated in detail in  Section \\ref{priors}. '
+        f'in our calibration algorithm.{prior_ref} '
     tex_doc.add_line(description, 'Parameters')
 
 
