@@ -219,7 +219,7 @@ def plot_dispersion_examples(
     base_params: Dict[str, float],
     prior_names: List[str],
     all_targets: list,
-    output_colours: Dict[str, str], 
+    output_colours: List[str], 
     req_centiles: np.array, 
     n_samples: int=3, 
     base_alpha: float=0.2, 
@@ -257,12 +257,12 @@ def plot_dispersion_examples(
             bottom_trace = go.Scatter(x=cis.index, y=cis.iloc[:, 0], line=dict(width=0.0), name='')
             fig.add_traces(bottom_trace, rows=row, cols=col)
             for i_cent, centile in enumerate(cis.columns[1:]):
-                colour = f'rgba({output_colours[o]}, {alphas[i_cent]})'
+                colour = f'rgba({output_colours[i_out]}, {alphas[i_cent]})'
                 label = f'{round(cis.columns[i_cent] * 100)} to {round(centile * 100)} centile, {o}'
                 mid_trace = go.Scatter(x=cis.index, y=cis[centile], fill='tonexty', line=dict(width=0.0), fillcolor=colour, name=label)
                 fig.add_traces(mid_trace, rows=row, cols=col)
             out = o.replace('_ma', '')
-            target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {out}', mode='markers', marker={'color': f'rgb({output_colours[o]})', 'size': 4})
+            target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {out}', mode='markers', marker={'color': f'rgb({output_colours[i_out]})', 'size': 4})
             fig.add_trace(target_trace, row=row, col=col)
             fig.layout.annotations[i_sample * len(outputs) + i_out].update(text=f'{out}, dispersion param: {round(float(disps.data), 1)}')
     fig = format_output_figure(fig)

@@ -114,7 +114,7 @@ def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
         'We obtained estimates of the seroprevalence of antibodies to ' \
         'nucleocapsid antigen from Australian blood donors from Kirby Institute serosurveillance reports. ' \
         'Data are available from \href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf}' \
-        '{the round 4 serosurvey}, with ' \
+        'the round 4 {serosurvey}, with ' \
         '\href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf}' \
         '{information on assay sensitivity also reported}. ' \
         f'The raw values reported in the serosurvey were inflated by the reported assay sensitivity (i.e. {NUCLEOCAPS_SENS}), ' \
