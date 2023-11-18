@@ -24,6 +24,7 @@ def get_standard_subplot_fig(
     Returns:
         Figure with nothing plotted
     """
-    heights = [320, 600, 750, 900]
+    heights = [320, 600, 700]
+    height = 780 if n_rows > 3 else heights[n_rows - 1]
     fig = make_subplots(n_rows, n_cols, subplot_titles=titles, vertical_spacing=0.08, horizontal_spacing=0.05, shared_yaxes=share_y)
-    return fig.update_layout(margin={i: 25 for i in ['t', 'b', 'l', 'r']}, height=heights[n_rows - 1])
+    return fig.update_layout(margin={i: 25 for i in ['t', 'b', 'l', 'r']}, height=height)
