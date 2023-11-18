@@ -72,18 +72,19 @@ def truncation_ceiling(modelled, obs, parameters, time_weights):
     return jnp.where(modelled > obs, -1e11, 0.0)
 
 
-def get_targets(tex_doc: TexDoc) -> list:
+def get_targets(tex_doc: TexDoc, cross_ref: bool=True) -> list:
     """
     Get the standard targets used for the analysis.
 
     Args:
         tex_doc: Supplement documentation object
+        cross_ref: Whether to include cross references in the document
 
     Returns:
         Final targets
     """
-    description = 'Calibration targets were constructed as described throughout the following subsections, ' \
-        'and summarised in Figure \\ref{target_fig}. '
+    fig_ref = ' and summarised in Figure \\ref{target_fig}' if cross_ref else ''
+    description = f'Calibration targets were constructed as described throughout the following subsections{fig_ref}. '
     tex_doc.add_line(description, 'Targets')
 
     case_targets = load_case_targets(tex_doc).rolling(window=TARGETS_AVERAGE_WINDOW).mean().dropna()
@@ -95,22 +96,25 @@ def get_targets(tex_doc: TexDoc) -> list:
         'The notifications value for each date of the analysis were compared against the modelled estimate ' \
         'from a given parameter set using a negative binomial distribution. The dispersion parameter ' \
         'of this negative binomial distribution was calibrated from an uninformative prior distribution ' \
-        'along with the epidemiological parameters through the calibration algorithm. ' \
-        'The effect of the dispersion parameter on the comparison between modelled and empiric values ' \
-        'is illustrated in Figure \\ref{dispersion_examples}.'
+        'along with the epidemiological parameters through the calibration algorithm. '
     tex_doc.add_line(description, 'Targets', 'Notifications')
+    if cross_ref:
+        description = 'The effect of the dispersion parameter on the comparison between modelled and empiric values ' \
+            'is illustrated in Figure \\ref{dispersion_examples}.'
+        tex_doc.add_line(description, 'Targets', 'Notifications')
     description = f'These data were also smoothed using a {TARGETS_AVERAGE_WINDOW}-day moving average. ' \
         'As for case notifications, the comparison distribution used to obtain the likelihood of a given parameter set ' \
         'was negative binomial with calibrated dispersion parameter. '
     tex_doc.add_line(description, 'Targets', 'Deaths')
     seropos_ceiling = 0.04
     ceiling_date = datetime(2021, 12, 1)
+    fig_ref = ', which is illustrated in Figure \\ref{target_fig}' if cross_ref else ''
     description = 'The proportion of the population seropositive was compared against ' \
         'the modelled proportion of the population ever infected using a binomial distribution. \n\n' \
         'We added a further recovered proportion target to avoid accepting runs with higher likelihood values ' \
         'in which the acceptable fit to data was a result of an implausibly high initial epidemic wave ' \
         'that occurred prior to the availability of target data (i.e. in late 2021 during the model run-in period). ' \
-        "This is indicated as the `seroprevalence ceiling' in Figure \\ref{target_fig}" \
+        "We term this the `seroprevalence ceiling'. " \
         'This was achieved by adding a large negative number to the likelihood estimate for any runs with a ' \
         f'proportion ever infected greater than {int(seropos_ceiling * 100)}\% on {get_tex_formatted_date(ceiling_date)}. '
     tex_doc.add_line(description, 'Targets', 'Seroprevalence')
