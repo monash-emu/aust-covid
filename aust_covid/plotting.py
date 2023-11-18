@@ -499,7 +499,7 @@ def plot_targets(
     serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')
     fig.add_trace(go.Scatter(x=serosurvey_ceiling.index, y=serosurvey_ceiling, name='seroprevalence ceiling'), row=2, col=2)
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
-    return fig.update_layout(height=420)
+    return fig.update_layout(margin={i: 25 for i in ['t', 'b', 'l', 'r']}, height=420)
 
 
 def plot_multi_spaghetti(

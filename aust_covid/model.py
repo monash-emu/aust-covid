@@ -91,7 +91,7 @@ def build_model(
     # Other stratifications and reinfection
     strain_strat = get_strain_stratification(compartments, tex_doc)
     aust_model.stratify_with(strain_strat)
-    seed_vocs(aust_model, latent_compartments, tex_doc, abbreviations)
+    seed_vocs(aust_model, latent_compartments, tex_doc, abbreviations, cross_ref)
 
     add_reinfection(aust_model, latent_compartments, tex_doc)
 
