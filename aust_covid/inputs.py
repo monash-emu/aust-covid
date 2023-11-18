@@ -365,7 +365,8 @@ def get_raw_state_mobility(
 
     Args:
         tex_doc: Documentation object
-            
+        cross_ref: Whether to include cross references in the document
+        
     Returns:
         State-level mobility data, names of jurisdictions and locations
     """

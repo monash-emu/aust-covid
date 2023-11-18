@@ -16,6 +16,7 @@ def get_non_wa_mob_averages(
     mob_locs: set, 
     jurisdictions: set,
     tex_doc: StandardTexDoc,
+    cross_ref: bool=True,
 ) -> pd.DataFrame:
     """Calculate the weighted averages for the mobility estimates in the 
     states other than Western Australia.
@@ -24,13 +25,15 @@ def get_non_wa_mob_averages(
         state_data: Google data for all states
         mob_locs: Google mobility locations
         jurisdictions: Australian jurisdictions (states and territories)
+        cross_ref: Whether to include cross references in the document
 
     Returns:
         Weighted averages for non-WA jurisdictions
     """
+    fig_ref = ' (Figure \\ref{input_population})' if cross_ref else ''
     description = 'Values for Western Australia were extracted separately from the pooled data, ' \
         'while the data for the remaining states were linked to the same population size ' \
-        'data as used to set the compartment sizes for the model (Figure \\ref{input_population}). ' \
+        f'data as used to set the compartment sizes for the model{fig_ref}. ' \
         'These population values were then used as weights to calculate weighted national averages ' \
         "for population mobility by each Google `location' " \
         f'({", ".join([i.replace("_percent_change_from_baseline", "").replace("_", " ") for i in mob_locs])}).\n\n'
@@ -112,7 +115,7 @@ def get_processed_mobility_data(
     """
     state_data, jurisdictions, mob_locs = get_raw_state_mobility(tex_doc, cross_ref)
     wa_data = state_data.loc[state_data['sub_region_1'] == 'Western Australia', mob_locs]
-    state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions, tex_doc)
+    state_averages = get_non_wa_mob_averages(state_data, mob_locs, jurisdictions, tex_doc, cross_ref)
 
     description = 'Values were then converted from the reported percentage ' \
         'change from baseline to the proportional change relative to baseline, ' \
