@@ -53,10 +53,11 @@ def format_output_figure(
     Returns:
         The adjusted figure
     """
-    rows = get_n_rows_plotly_fig(fig)
-    heights = [320, 600, 900, 900]
+    n_rows = get_n_rows_plotly_fig(fig)
+    heights = [320, 600, 700, 760]
+    height = 760 if n_rows > 3 else heights[n_rows - 1]
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
-    return fig.update_layout(height=heights[rows - 1])
+    return fig.update_layout(height=height, margin={i: 25 for i in ['t', 'b', 'l', 'r']})
 
 
 def get_count_up_back_list(
@@ -349,7 +350,7 @@ def plot_example_model_matrices(
         heatmap = go.Heatmap(x=agegroups, y=agegroups, z=matrix, zmin=0.0, zmax=6.4)
         row, col = get_row_col_for_subplots(i_date, n_cols)
         fig.add_trace(heatmap, row=row, col=col)
-    return fig
+    return fig.update_layout(height=650)
 
 
 def plot_full_vacc(
