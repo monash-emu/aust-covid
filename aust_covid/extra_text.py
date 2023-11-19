@@ -38,42 +38,45 @@ def add_model_structure_blurb_to_tex(tex_doc: TexDoc):
     tex_doc.add_line(description, 'Base compartmental structure')
 
 
-def add_parameters_blurb_to_tex(tex_doc: TexDoc):
+def add_parameters_blurb_to_tex(tex_doc: TexDoc, cross_ref: bool=True):
+    calib_ref = ' (See Section \\ref{calibrated_dispersion_parameters})' if cross_ref else ''
+    prior_ref = 'Calibration priors are identified in the parameters table and illustrated in detail in Section \\ref{priors}. ' if cross_ref else ''
     description = 'All epidemiologial parameters, including those used in the calibration algorithm ' \
         'are presented in Table \\ref{params}. In addition to these epidemiological parameters, ' \
         'the dispersion parameter for the negative binomial distribution used when calculating ' \
         'the case time-series and death time-series contributions to the likelihood ' \
-        'were included in our calibration algorithm (See Section \\ref{calibrated_dispersion_parameters}). ' \
+        f'were included in our calibration algorithm {calib_ref}. ' \
         'The approach to estimating the age-specific infection fatality rate for each ' \
         'modelled age group is described in \\ref{infection_fatality_rates}. ' \
         'All epidemiologically significant model parameters were included as priors ' \
-        'in our calibration algorithm. Calibration priors are identified in the parameters table ' \
-        'and illustrated in detail in  Section \\ref{priors}. '
+        f'in our calibration algorithm.{prior_ref} '
     tex_doc.add_line(description, 'Parameters')
 
 
-def add_likelihood_blurb_to_tex(tex_doc: TexDoc):
+def add_likelihood_blurb_to_tex(tex_doc: TexDoc, cross_ref: bool=True, fig_ref: bool=True):
+    target_ref = 'Section \\ref{targets})' if cross_ref else 'the Targets section'
+    fig_ref = '\\ref{case_ranges}, \\ref{death_ranges} and \\ref{seropos_ranges}' if fig_ref else 'presented elsewhere'
+    like_ref = ' (See Figure \\ref{like_comparison})' if cross_ref else ''
     description = 'We compared our four candidate analyses according to their goodness ' \
-        'of fit to the targets data (described under Section \\ref{targets}). ' \
+        f'of fit to the targets data (described under {target_ref}. ' \
         'The fit of all four of the models to the target data was considered adequate, ' \
         f"but the likelihood of the `{PRIMARY_ANALYSIS}' analysis was slightly higher than " \
         'that of the other three approaches, with the inclusion of the mobility structure ' \
-        "appearing to improve the calibration algorithm's fit to targets " \
-        '(See Figure \\ref{like_comparison}). ' \
-        f"For this reason, the `{PRIMARY_ANALYSIS}' was considered as the primary analysis " \
+        f"appearing to improve the calibration algorithm's fit to targets{like_ref}. " \
+        f"For this reason, the `{PRIMARY_ANALYSIS}' analysis was considered as the primary analysis " \
         'throughout the remaining sections. ' \
-        'Figures \\ref{case_ranges}, \\ref{death_ranges} and \\ref{seropos_ranges} illustrate ' \
+        f'Figures {fig_ref} illustrate ' \
         'the fit of each candidate model to the target data for ' \
         'the notification, death and seropositive proportion respectively. '
     tex_doc.add_line(description, 'Analysis comparison')
 
 
 def add_calibration_blurb_to_tex(tex_doc: TexDoc):
-    description = "We calibrated the model using the `DE Metropolis Z' method " \
+    description = "We calibrated our epidemiological model using the `DE Metropolis Z' method " \
         'provided in the \\href{https://www.pymc.io/welcome.html}{PyMC} package for Bayesian inference.\n\n' \
         'First, we used Latin hypercube sampling to select parameter values from across the ' \
         f'multi-dimensional parameter space. Next, we ran a short optimisation algorithm of {OPTI_DRAWS} draws ' \
-        "using Facebook Research's \\href{https://facebookresearch.github.io/nevergrad/}{nevergrad}" \
+        "using Facebook Research's \\href{https://facebookresearch.github.io/nevergrad/}{nevergrad} " \
         'to move the parameter sets from these dispersed starting positions towards ' \
         'values that were associated with a greater likelihood, ' \
         'but remained substantially dispersed from one-another. ' \

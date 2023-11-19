@@ -161,6 +161,7 @@ def track_notifications(
 def track_deaths(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
+    cross_ref: bool=True,
 ):
     """See 'description' string.
 
@@ -170,10 +171,11 @@ def track_deaths(
     """
     ba2_adj_name = 'ba2_rel_ifr'
     ba2_adj_str = ba2_adj_name.replace('_', '\_')
+    ifr_ref = ' (as described in Section \\ref{infection_fatality_rates})' if cross_ref else ''
     description = 'Calculation of the COVID-19-specific deaths followed an analogous ' \
         'approach to that described for notifications, ' \
         'except that there is no assumption of partial observation and ' \
-        'age-specific infection fatality rates are used (as described in Section \\ref{infection_fatality_rates}). ' \
+        f'age-specific infection fatality rates are used{ifr_ref}. ' \
         'For each age group, we first multiplied the age-specific incidence ' \
         'by the infection fatality rate for that group, ' \
         'and then adjusted this rate according to the relative infectiousness of the BA.2 ' \

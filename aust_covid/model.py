@@ -35,6 +35,7 @@ def build_model(
     abbreviations: pd.Series,
     mobility_ext: bool=False,
     vacc_ext: bool=False,
+    cross_ref: bool=True,
 ) -> CompartmentalModel:
     """Master function for the process of model construction.
 
@@ -47,7 +48,7 @@ def build_model(
     Returns:
         The model object
     """
-    description = 'We used the \\href{summer}{https://summer2.readthedocs.io/en/latest/} framework ' \
+    description = 'We used the \\href{https://summer2.readthedocs.io/en/latest/}{summer} framework ' \
         'to construct a compartmental model of COVID-19 dynamics. '
     tex_doc.add_line(description, 'Base compartmental structure')
 
@@ -63,7 +64,7 @@ def build_model(
     add_infection(aust_model, latent_compartments, tex_doc)
     add_latent_transition(aust_model, latent_compartments, infectious_compartments, tex_doc)
     add_infectious_transition(aust_model, infectious_compartments, tex_doc)
-    add_waning(aust_model, tex_doc)
+    add_waning(aust_model, tex_doc, cross_ref)
 
     # Age and heterogeneous mixing
     wa_reopen_func = get_wa_infection_scaling(aust_model)
@@ -73,7 +74,7 @@ def build_model(
     # Mobility effects
     if mobility_ext:
         state_props = model_pops.sum() / model_pops.sum().sum()
-        model_mob = get_processed_mobility_data(tex_doc)
+        model_mob = get_processed_mobility_data(tex_doc, cross_ref)
         interp_funcs = get_interp_funcs_from_mobility(model_mob, epoch)
         wa_reopen_func = get_wa_infection_scaling(aust_model)
         wa_prop_func = wa_reopen_func * state_props['wa']
@@ -90,7 +91,7 @@ def build_model(
     # Other stratifications and reinfection
     strain_strat = get_strain_stratification(compartments, tex_doc)
     aust_model.stratify_with(strain_strat)
-    seed_vocs(aust_model, latent_compartments, tex_doc, abbreviations)
+    seed_vocs(aust_model, latent_compartments, tex_doc, abbreviations, cross_ref)
 
     add_reinfection(aust_model, latent_compartments, tex_doc)
 
@@ -143,7 +144,7 @@ def build_model(
     # Outputs
     track_incidence(aust_model, tex_doc)
     track_notifications(aust_model, tex_doc)
-    track_deaths(aust_model, tex_doc)
+    track_deaths(aust_model, tex_doc, cross_ref)
     track_adult_seroprev(compartments, aust_model, 15, tex_doc)
     track_strain_prop(aust_model, infectious_compartments, tex_doc)
     track_immune_prop(aust_model)
@@ -290,6 +291,7 @@ def add_infectious_transition(
 def add_waning(
     model: CompartmentalModel,
     tex_doc: StandardTexDoc,
+    cross_ref: bool=True,
 ):
     """See 'description' string.
 
@@ -301,12 +303,13 @@ def add_waning(
     origin = 'recovered'
     destination = 'waned'
     parameter_name = 'natural_immunity_period'
+    param_ref = '(See Table \\ref{params})' if cross_ref else ''
     description = 'A waned compartment is included in the model ' \
         'to represent persons who no longer have natural immunity from past SARS-CoV-2 infection. ' \
         f'As these persons lose their infection-induced immunity, they transition from the ' \
         f'{origin.replace("_", "")} compartment to the {destination.replace("_", "")} compartment ' \
-        f'at a rate equal to the reciprocal of the {parameter_name.replace("_", " ")} parameter ' \
-        '(See Table \\ref{params})'
+        f'at a rate equal to the reciprocal of the {parameter_name.replace("_", " ")} parameter {param_ref}.' \
+        
     tex_doc.add_line(description, 'Base compartmental structure')
 
     model.add_transition_flow(process, 1.0 / Parameter(parameter_name), origin, destination)
@@ -512,6 +515,7 @@ def seed_vocs(
     latent_compartments: List[str],
     tex_doc: StandardTexDoc,
     abbreviations: pd.Series,
+    cross_ref: bool=True,
 ):
     """Seed each sequentially emerging subvariant.
 
@@ -527,6 +531,7 @@ def seed_vocs(
     seed_comp_str = seed_comp.replace('_', '\_')
     seed_duration = 'seed_duration'
     seed_rate = 'seed_rate'
+    seq_ref = ' (see Figure \\ref{variant_prop_spaghetti})' if cross_ref else ''
     description = 'In Australia, three sequential but overlapping epidemic waves were observed, ' \
         f'which were attributable to the subvariants: {", ".join(strains_str)}. ' \
         f'Each strain (including the starting {strains_str[0]} strain) was seeded through ' \
@@ -538,7 +543,7 @@ def seed_vocs(
         'The time of first emergence of each strain into the system was defined by ' \
         'a separate emergence time parameter for each modelled subvariant strain. ' \
         'This emergence time was varied across credible intervals, ' \
-        'with model outputs then compared against available Australian sequencing data (see Figure \\ref{variant_prop_spaghetti}). '
+        f'with model outputs then compared against available Australian sequencing data{seq_ref}. '
     tex_doc.add_line(description, 'Stratification', subsection='Omicron Sub-variants')
 
     for strain in strains:

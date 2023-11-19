@@ -77,7 +77,7 @@ def plot_param_progression(
         The figure
     """
     labeller = MapLabeller(var_name_map=descriptions)
-    trace_plot = az.plot_trace(idata, figsize=(15, 21), compact=False, legend=False, labeller=labeller, var_names=req_vars)
+    trace_plot = az.plot_trace(idata, figsize=(15, 16), compact=False, legend=False, labeller=labeller, var_names=req_vars)
     trace_fig = trace_plot[0, 0].figure
     trace_fig.tight_layout()
     plt.close()
@@ -104,7 +104,7 @@ def plot_posterior_comparison(
         The figure
     """
     labeller = MapLabeller(var_name_map=display_names)
-    comparison_plot = az.plot_density(idata, var_names=req_vars, shade=0.5, labeller=labeller, point_estimate=None, hdi_prob=span, grid=grid)
+    comparison_plot = az.plot_density(idata, var_names=req_vars, shade=0.5, labeller=labeller, point_estimate=None, hdi_prob=span)
     req_priors = [p for p in priors if p.name in req_vars]
     for i_ax, ax in enumerate(comparison_plot.ravel()[:len(req_vars)]):
         ax_limits = ax.get_xlim()

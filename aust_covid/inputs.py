@@ -114,9 +114,9 @@ def load_serosurvey_data(tex_doc: StandardTexDoc) -> pd.Series:
         'We obtained estimates of the seroprevalence of antibodies to ' \
         'nucleocapsid antigen from Australian blood donors from Kirby Institute serosurveillance reports. ' \
         'Data are available from \href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round4-Nov-Dec-2022_supplementary%5B1%5D.pdf}' \
-        '{the round 4 serosurvey}, with ' \
+        'the round 4 {serosurvey}, with ' \
         '\href{https://www.kirby.unsw.edu.au/sites/default/files/documents/COVID19-Blood-Donor-Report-Round1-Feb-Mar-2022%5B1%5D.pdf}' \
-        '{information on assay sensitivity also reported}. ' \
+        '{information on assay sensitivity} also reported. ' \
         f'The raw values reported in the serosurvey were inflated by the reported assay sensitivity (i.e. {NUCLEOCAPS_SENS}), ' \
         'with no adjustment made for the (assumed very high) specificity of the assay. ' \
         f'We lagged these empiric estimates by {int(IMMUNITY_LAG)} days to account for the delay between infection and seroconversion. ' \
@@ -356,21 +356,26 @@ def get_ifrs(tex_doc: StandardTexDoc) -> dict:
     return model_breakpoint_values.to_dict()
 
 
-def get_raw_state_mobility(tex_doc: StandardTexDoc) -> pd.DataFrame:
+def get_raw_state_mobility(
+    tex_doc: StandardTexDoc,
+    cross_ref: bool=True,
+) -> pd.DataFrame:
     """Get raw Google mobility data, concatenating 2021 and 2022 data,
     retaining only state-level data and converting to date index.
 
     Args:
         tex_doc: Documentation object
-            
+        cross_ref: Whether to include cross references in the document
+        
     Returns:
         State-level mobility data, names of jurisdictions and locations
     """
+    fig_ref = ' (Figure \\ref{state_mobility})' if cross_ref else ''
     description = 'We undertook an alternative analysis in which estimates of population mobility ' \
         'were used to scale transmission rates.\n\n ' \
-        'Raw estimates of Australian population mobility were obtained, ' \
+        'Raw estimates of Australian population mobility were obtained ' \
         '\\href{https://www.google.com/covid19/mobility/}{from Google} ' \
-        'with 2021 and 2022 data concatenated together (Figure \\ref{state_mobility}). '
+        f'with 2021 and 2022 data concatenated together{fig_ref}. '
     tex_doc.add_line(description, section='Mobility extension', subsection='Data processing')
 
     raw_data_2021 = pd.read_csv(DATA_PATH / '2021_AU_Region_Mobility_Report.csv', index_col=8)

@@ -53,10 +53,11 @@ def format_output_figure(
     Returns:
         The adjusted figure
     """
-    rows = get_n_rows_plotly_fig(fig)
-    heights = [320, 600, 900, 900]
+    n_rows = get_n_rows_plotly_fig(fig)
+    heights = [320, 600, 700, 760]
+    height = 760 if n_rows > 3 else heights[n_rows - 1]
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
-    return fig.update_layout(height=heights[rows - 1])
+    return fig.update_layout(height=height, margin={i: 25 for i in ['t', 'b', 'l', 'r']})
 
 
 def get_count_up_back_list(
@@ -219,7 +220,7 @@ def plot_dispersion_examples(
     base_params: Dict[str, float],
     prior_names: List[str],
     all_targets: list,
-    output_colours: Dict[str, str], 
+    output_colours: List[str], 
     req_centiles: np.array, 
     n_samples: int=3, 
     base_alpha: float=0.2, 
@@ -257,12 +258,12 @@ def plot_dispersion_examples(
             bottom_trace = go.Scatter(x=cis.index, y=cis.iloc[:, 0], line=dict(width=0.0), name='')
             fig.add_traces(bottom_trace, rows=row, cols=col)
             for i_cent, centile in enumerate(cis.columns[1:]):
-                colour = f'rgba({output_colours[o]}, {alphas[i_cent]})'
+                colour = f'rgba({output_colours[i_out]}, {alphas[i_cent]})'
                 label = f'{round(cis.columns[i_cent] * 100)} to {round(centile * 100)} centile, {o}'
                 mid_trace = go.Scatter(x=cis.index, y=cis[centile], fill='tonexty', line=dict(width=0.0), fillcolor=colour, name=label)
                 fig.add_traces(mid_trace, rows=row, cols=col)
             out = o.replace('_ma', '')
-            target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {out}', mode='markers', marker={'color': f'rgb({output_colours[o]})', 'size': 4})
+            target_trace = go.Scatter(x=target_extract.index, y=target_extract, name=f'reported {out}', mode='markers', marker={'color': f'rgb({output_colours[i_out]})', 'size': 4})
             fig.add_trace(target_trace, row=row, col=col)
             fig.layout.annotations[i_sample * len(outputs) + i_out].update(text=f'{out}, dispersion param: {round(float(disps.data), 1)}')
     fig = format_output_figure(fig)
@@ -349,7 +350,7 @@ def plot_example_model_matrices(
         heatmap = go.Heatmap(x=agegroups, y=agegroups, z=matrix, zmin=0.0, zmax=6.4)
         row, col = get_row_col_for_subplots(i_date, n_cols)
         fig.add_trace(heatmap, row=row, col=col)
-    return fig
+    return fig.update_layout(height=650)
 
 
 def plot_full_vacc(
@@ -499,7 +500,7 @@ def plot_targets(
     serosurvey_ceiling = get_target_from_name(targets, 'seropos_ceiling')
     fig.add_trace(go.Scatter(x=serosurvey_ceiling.index, y=serosurvey_ceiling, name='seroprevalence ceiling'), row=2, col=2)
     fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
-    return fig.update_layout(height=420)
+    return fig.update_layout(margin={i: 25 for i in ['t', 'b', 'l', 'r']}, height=420)
 
 
 def plot_multi_spaghetti(
