@@ -460,7 +460,7 @@ def plot_3d_param_hist(
         The figure
     """
     hist_df = get_hist_df_from_params(idata, param_1, param_2, n_bins)
-    fig = go.Figure(data=[go.Surface(z=hist_df)])
+    fig = go.Figure(data=[go.Surface(x=hist_df.index, y=hist_df.columns, z=hist_df)])
     xaxis_spec = {'title': abbreviations[param_1] if param_1 in abbreviations else param_1}
     yaxis_spec = {'title': abbreviations[param_2] if param_2 in abbreviations else param_2}
     zaxis_spec = {'title': 'density'}
