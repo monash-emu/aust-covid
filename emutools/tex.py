@@ -1,10 +1,12 @@
 from typing import Union, List
 from pathlib import Path
 import pandas as pd
+import numpy as np
 import yaml as yml
 from datetime import datetime
 from abc import abstractmethod, ABC
 from matplotlib.figure import Figure as MplFig
+from matplotlib import pyplot as plt
 from plotly.graph_objects import Figure as PlotlyFig
 from inputs.constants import SUPPLEMENT_PATH
 
@@ -424,7 +426,9 @@ def add_image_to_doc(
     fig_path = SUPPLEMENT_PATH / fig_folder
     Path(fig_path).mkdir(exist_ok=True)
     full_filename = f'{filename}.{filetype}'
-    if isinstance(fig, MplFig):
+    if isinstance(fig, np.ndarray):
+        plt.savefig(fig_path / full_filename)
+    elif isinstance(fig, MplFig):
         fig.savefig(fig_path / full_filename)
     elif isinstance(fig, PlotlyFig):
         fig.write_image(fig_path / full_filename)

@@ -399,3 +399,72 @@ def plot_like_components_by_analysis(
             ax.legend_.set_visible(False)
     fig.tight_layout()
     return fig
+
+
+def get_bin_centres(
+    bins: np.array,
+) -> np.array:
+    """Find the centre values of the histogram bins created by histogram2d below
+
+    Args:
+        bins: The limits of all individual bins (n_bins + 1 in number)
+
+    Returns:
+        The centre values of the bins (n_bins in number)
+    """
+    return (bins + (bins[1] - bins[0]) / 2)[:-1]    
+
+
+def get_hist_df_from_params(
+    idata: az.InferenceData, 
+    param_1: str, 
+    param_2: str, 
+    n_bins: int,
+) -> pd.DataFrame:
+    """Get the histogram values for the density values 
+    over the two-dimension parameter distribution.
+
+    Args:
+        idata: The arviz calibration data
+        param_1: Name of the first parameter
+        param_2: Name of the second parameter
+        n_bins: Number of histogram bins
+
+    Returns:
+        The values
+    """
+    post_df = idata.posterior.to_dataframe()
+    hist_data = np.histogram2d(post_df[param_1], post_df[param_2], bins=n_bins)
+    x_bins_centres = get_bin_centres(hist_data[2])
+    y_bins_centres = get_bin_centres(hist_data[1])
+    return pd.DataFrame(hist_data[0], index=x_bins_centres, columns=y_bins_centres)
+
+
+def plot_3d_param_hist(
+    idata: az.InferenceData, 
+    param_1: str, 
+    param_2: str, 
+    abbreviations: pd.Series={}, 
+    n_bins: int=50,
+) -> go.Figure:
+    """Plot interactive 3-D histogram for the correlation of two parameters.
+
+    Args:
+        idata: The arviz calibration data
+        param_1: Name of the first parameter
+        param_2: Name of the second parameter
+        abbreviations: Short names for displaying the parameters
+        n_bins: Number of bins request
+
+    Returns:
+        The figure
+    """
+    hist_df = get_hist_df_from_params(idata, param_1, param_2, n_bins)
+    fig = go.Figure(data=[go.Surface(x=hist_df.index, y=hist_df.columns, z=hist_df)])
+    xaxis_spec = {'title': abbreviations[param_2] if param_2 in abbreviations else param_2}
+    yaxis_spec = {'title': abbreviations[param_1] if param_1 in abbreviations else param_1}
+    zaxis_spec = {'title': 'density'}
+    all_specs = {'xaxis': xaxis_spec, 'yaxis': yaxis_spec, 'zaxis': zaxis_spec}
+    aspect_ratio = {'x': 2, 'y': 2, 'z': 1}
+    margins = {i: 25 for i in ['t', 'b', 'l', 'r']}
+    return fig.update_layout(height=800, scene=all_specs, margin=margins, scene1_aspectratio=aspect_ratio)
