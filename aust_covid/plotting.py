@@ -117,7 +117,7 @@ def plot_single_run_outputs(
         for col in range(1, 3):
             fig.add_trace(go.Scatter(x=x_vals, y=derived_outputs[f'deathsXagegroup_{agegroup}'], name=f'{agegroup} deaths'), row=3, col=col)
     fig['layout']['yaxis6'].update(type='log', range=[-2.0, 2.0])
-    fig.update_xaxes(tickangle=30)
+    fig.update_xaxes(tickangle=20)
     return format_output_figure(fig)
 
 
