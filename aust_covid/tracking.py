@@ -13,7 +13,7 @@ from inputs.constants import TARGETS_AVERAGE_WINDOW
 from aust_covid.inputs import load_household_impacts_data
 from emutools.utils import convolve_probability, build_gamma_dens_interval_func
 from emutools.tex import get_tex_formatted_date, StandardTexDoc, add_image_to_doc
-from inputs.constants import INFECTION_PROCESSES
+from inputs.constants import INFECTION_PROCESSES, STRAIN_STRATA
 
 
 def get_cdr_values(
@@ -309,3 +309,16 @@ def track_reproduction_number(
         model.request_output_for_flow(process, process, save_results=False)
     model.request_function_output('all_infection', sum([DerivedOutput(process) for process in INFECTION_PROCESSES]), save_results=False)
     model.request_function_output('reproduction_number', DerivedOutput('all_infection') / DerivedOutput('n_infectious') * Parameter('infectious_period'))
+
+
+def track_infection_processes(model: CompartmentalModel):
+    """Track all the different types of infection flow,
+    by strain and whether de novo infection, or early or late reinfection.
+
+    Args:
+        model: The summer epidemiological model
+    """
+    for strain in STRAIN_STRATA:
+        for process in INFECTION_PROCESSES:
+            model.request_output_for_flow(f'{strain}X{process}', process, dest_strata={'strain': strain})
+            model.request_function_output(f'process_{strain}X{process}', DerivedOutput(f'{strain}X{process}') / DerivedOutput('all_infection'))

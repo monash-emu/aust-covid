@@ -13,7 +13,7 @@ from scipy import stats
 from summer2 import CompartmentalModel
 
 from aust_covid.inputs import load_national_case_data, load_owid_case_data, load_case_targets, load_who_death_data, load_serosurvey_data
-from inputs.constants import PLOT_START_DATE, AGE_STRATA, ANALYSIS_END_DATE, CHANGE_STR, COLOURS, RUN_IDS
+from inputs.constants import PLOT_START_DATE, AGE_STRATA, ANALYSIS_END_DATE, CHANGE_STR, COLOURS, RUN_IDS, INFECTION_PROCESSES, STRAIN_STRATA
 from emutools.tex import DummyTexDoc
 from aust_covid.inputs import load_household_impacts_data, get_subvariant_prop_dates
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values
@@ -603,3 +603,39 @@ def plot_matrices_3d(
     panel_scene = {'xaxis': {'title': ''}, 'yaxis': {'title': ''}, 'zaxis': {'range': (0.0, 3.0), 'title': 'contacts', 'dtick': 1.0}}
     margins = {i: 25 for i in ['t', 'b', 'l', 'r']}
     return fig.update_layout(scene1=panel_scene, scene2=panel_scene, scene3=panel_scene, scene4=panel_scene, height=900, margin=margins)
+
+
+def plot_infection_processes(
+    derived_df: pd.DataFrame,
+    targets: list,
+    req_target: str,
+) -> go.Figure:
+    """Plot the contribution to infection from each strain,
+    and from each infection process,
+    with comparison against the background epidemic.
+
+    Args:
+        derived_df: All the derived model outputs
+        targets: The calibration targets
+        req_target: The name of the target to plot in the lower panel
+
+    Returns:
+        The figure
+    """
+    target_name = req_target.replace('_', ' ')
+    cum_infection_processes_df = derived_df[[f'process_{i}X{j}' for i in STRAIN_STRATA for j in INFECTION_PROCESSES]].cumsum(axis=1)
+    fig = make_subplots(2, 1, subplot_titles=['infection processes', target_name], row_heights=[0.7, 0.3], vertical_spacing=0.05, shared_xaxes=True)
+    for output in cum_infection_processes_df.columns:
+        i_process = INFECTION_PROCESSES.index(output.split('X')[1])
+        i_strain = STRAIN_STRATA.index(output.split('X')[0].replace('process_', ''))
+        colour = f'hsl({17.0 + i_strain * 33.0}%, 70%, {30.0 + i_process * 20.0}%)'
+        output_name = output.replace('process_', '').replace('X', ', ').replace('_', ' ').replace('ba', 'BA.')
+        trace = go.Scatter(x=cum_infection_processes_df.index, y=cum_infection_processes_df[output], fill='tonexty', fillcolor=colour, line={'color': colour}, name=output_name)
+        fig.add_traces(trace, rows=1, cols=1)
+    fig.update_yaxes(range=(0.0, 1.0), row=1, col=1)
+
+    fig.add_traces(go.Scatter(x=derived_df.index, y=derived_df[req_target], name=target_name, line={'color': 'blue'}), rows=2, cols=1)
+    target = get_target_from_name(targets, req_target)
+    fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', name=f'{target_name} data', line={'color': 'black'}), rows=2, cols=1)
+    fig.update_xaxes(range=(PLOT_START_DATE, ANALYSIS_END_DATE))
+    return fig.update_layout(height=700, margin={i: 40 for i in ['t', 'b', 'l', 'r']})
