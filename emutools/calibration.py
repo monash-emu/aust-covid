@@ -287,7 +287,7 @@ def plot_output_ranges(
         The interactive figure
     """
     n_cols = 2
-    titles = [o.replace('_ma', '').replace('_', ' ') for o in outputs]
+    titles = [o.replace('prop', 'proportion').replace('seropos', 'seropositive').replace('_ma', '').replace('_', ' ') for o in outputs]
     fig = get_standard_subplot_fig(2, n_cols, titles)
     for i, output in enumerate(outputs):
         row, col = get_row_col_for_subplots(i, n_cols)
