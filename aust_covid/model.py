@@ -15,7 +15,7 @@ from emutools.utils import capture_kwargs, triangle_wave_func
 from inputs.constants import REFERENCE_DATE, ANALYSIS_START_DATE, ANALYSIS_END_DATE, WA_REOPEN_DATE, MATRIX_LOCATIONS
 from inputs.constants import N_LATENT_COMPARTMENTS, AGE_STRATA, STRAIN_STRATA, INFECTION_PROCESSES, DATA_PATH
 from aust_covid.inputs import load_pop_data, load_uk_pop_data, get_base_vacc_data
-from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number, track_immune_prop
+from aust_covid.tracking import track_incidence, track_notifications, track_deaths, track_adult_seroprev, track_strain_prop, track_reproduction_number, track_immune_prop, track_infection_processes
 from aust_covid.mobility import get_processed_mobility_data, get_interp_funcs_from_mobility, get_dynamic_matrix
 from aust_covid.vaccination import add_derived_data_to_vacc
 from aust_covid.plotting import plot_mixing_matrices
@@ -149,6 +149,7 @@ def build_model(
     track_strain_prop(aust_model, infectious_compartments, tex_doc)
     track_immune_prop(aust_model)
     track_reproduction_number(aust_model, infectious_compartments, tex_doc)
+    track_infection_processes(aust_model)
 
     for comp in compartments:
         aust_model.request_output_for_compartments(comp, [comp])
