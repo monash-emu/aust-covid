@@ -166,6 +166,7 @@ def plot_cdr_examples(
     Returns:
         The figure
     """
+    fig = go.Figure()
     hh_impact = load_household_impacts_data()
     hh_test_ratio = hh_impact['testing'] / hh_impact['symptomatic']
     cdr_values = pd.DataFrame()
@@ -173,7 +174,11 @@ def plot_cdr_examples(
         start_cdr = float(start_cdr)
         exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
         cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
-    fig = cdr_values.plot(markers=True, labels={'value': 'case detection ratio', 'index': ''}).update_layout(legend_title='starting value')
+    cdr_values = cdr_values[sorted(cdr_values.columns)]
+    for start_cdr in cdr_values.columns:
+        normalised_cdr = round((start_cdr - 0.1) / 0.5, 2)    
+        colour = f'rgb({normalised_cdr},0.3,{normalised_cdr})'
+        fig.add_trace(go.Scatter(x=cdr_values.index, y=cdr_values[start_cdr], name=round(start_cdr, 3), line={'color': colour}))
     return format_output_figure(fig)
 
 
