@@ -1,4 +1,5 @@
 from typing import List, Dict, Optional
+from datetime import timedelta
 import arviz as az
 from arviz.labels import MapLabeller
 import plotly.graph_objects as go
@@ -17,6 +18,7 @@ from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_P
 from emutools.plotting import get_row_col_for_subplots
 from emutools.utils import get_target_from_name, round_sigfig
 
+from aust_covid.inputs import get_subvariant_prop_dates
 from aust_covid.plotting import get_standard_subplot_fig
 
 
@@ -302,6 +304,14 @@ def plot_output_ranges(
             marker_format = {'size': 10.0, 'color': 'rgba(250, 135, 206, 0.2)', 'line': {'width': 1.0}}
             fig.add_traces(go.Scatter(x=target.index, y=target, mode='markers', marker=marker_format, name=target.name), rows=row, cols=col)
     fig.update_xaxes(range=[PLOT_START_DATE, ANALYSIS_END_DATE])
+    voc_emerge_df = get_subvariant_prop_dates()
+    lag = timedelta(days=3.5)
+    for voc in voc_emerge_df:
+        voc_info = voc_emerge_df[voc]
+        colour = voc_info['colour']
+        fig.add_vline(voc_info['any'] + lag, line_dash='dot', line_color=colour, row=2, col=2)
+        fig.add_vline(voc_info['>1%'] + lag, line_dash='dash', line_color=colour, row=2, col=2)
+        fig.add_vline(voc_info['>50%'] + lag, line_color=colour, row=2, col=2)
     return fig.update_layout(yaxis4={'range': [0.0, 2.5]}, showlegend=False)
 
 
