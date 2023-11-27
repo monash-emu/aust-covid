@@ -478,3 +478,26 @@ def plot_3d_param_hist(
     aspect_ratio = {'x': 2, 'y': 2, 'z': 1}
     margins = {i: 25 for i in ['t', 'b', 'l', 'r']}
     return fig.update_layout(height=800, scene=all_specs, margin=margins, scene1_aspectratio=aspect_ratio)
+
+
+def plot_3d_param_corr(
+    idata: az.InferenceData, 
+    params: List[str], 
+    marker_size: int=5,
+) -> go.Figure:
+    """Plot 3-dimensional correlation of combinations of three parameters.
+
+    Args:
+        idata: The arviz calibration data
+        params: The names of the parameters of interest
+        marker_size: Size of marker (may wish to adjust based on how many points are present)
+
+    Returns:
+        The figure
+    """
+    post_df = idata.posterior.to_dataframe()
+    colours = post_df.index.get_level_values(0)
+    trace = go.Scatter3d(x=post_df[params[0]], y=post_df[params[1]], z=post_df[params[2]], mode='markers', marker={'size': marker_size, 'color': colours})
+    fig = go.Figure(data=[trace])
+    ax_titles = [p.replace('_', ' ') for p in params]
+    return fig.update_layout(height=800, scene=dict(xaxis_title=ax_titles[0], yaxis_title=ax_titles[1], zaxis_title=ax_titles[2]))
