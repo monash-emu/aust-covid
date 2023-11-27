@@ -484,6 +484,7 @@ def plot_3d_param_corr(
     idata: az.InferenceData, 
     params: List[str], 
     marker_size: int=5,
+    n_samples: int=0,
 ) -> go.Figure:
     """Plot 3-dimensional correlation of combinations of three parameters.
 
@@ -491,11 +492,12 @@ def plot_3d_param_corr(
         idata: The arviz calibration data
         params: The names of the parameters of interest
         marker_size: Size of marker (may wish to adjust based on how many points are present)
+        n_samples: Number of samples to draw from the inference data, defaults to take entire dataset
 
     Returns:
         The figure
     """
-    post_df = idata.posterior.to_dataframe()
+    post_df = az.extract(idata, num_samples=n_samples).to_dataframe() if n_samples else idata.posterior.to_dataframe()
     colours = post_df.index.get_level_values(0)
     trace = go.Scatter3d(x=post_df[params[0]], y=post_df[params[1]], z=post_df[params[2]], mode='markers', marker={'size': marker_size, 'color': colours})
     fig = go.Figure(data=[trace])
