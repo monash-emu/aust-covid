@@ -484,7 +484,7 @@ def plot_targets(
         [{'colspan': 2}, None], 
         [{}, {}],
     ]
-    fig = make_subplots(rows=2, cols=2, specs=subplot_specs)
+    fig = make_subplots(rows=2, cols=2, specs=subplot_specs, subplot_titles=['notifications', 'deaths', 'seroprevalence'])
     combined_data = load_case_targets(dummy_doc)
     national_data = load_national_case_data(dummy_doc)
     serosurvey_targets = get_target_from_name(targets, 'adult_seropos_prop')
