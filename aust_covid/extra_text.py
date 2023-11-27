@@ -72,17 +72,19 @@ def add_likelihood_blurb_to_tex(tex_doc: TexDoc, cross_ref: bool=True, fig_ref: 
 
 
 def add_calibration_blurb_to_tex(tex_doc: TexDoc):
-    description = "We calibrated our epidemiological model using the `DE Metropolis Z' method " \
+    description = "We calibrated our epidemiological model using the `DE Metropolis(Z)' algorithm " \
         'provided in the \\href{https://www.pymc.io/welcome.html}{PyMC} package for Bayesian inference.\n\n' \
-        'First, we used Latin hypercube sampling to select parameter values from across the ' \
-        f'multi-dimensional parameter space. Next, we ran a short optimisation algorithm of {OPTI_DRAWS} draws ' \
-        "using Facebook Research's \\href{https://facebookresearch.github.io/nevergrad/}{nevergrad} " \
-        'to move the parameter sets from these dispersed starting positions towards ' \
-        'values that were associated with a greater likelihood, ' \
-        'but remained substantially dispersed from one-another. ' \
-        'We then ran the calibration algorithm from these starting points for 10,000 draws ' \
-        'during the tuning phase, and for 20,000 draws during the calibration phase ' \
-        f'of the algorithm, discarding the first {str(BURN_IN)} draws as burn-in. ' \
+        'Prior to running the algorithm, we ran a short optimisation using ' \
+        "2-point differential evolution provided by Facebook Research's " \
+        '\\href{https://facebookresearch.github.io/nevergrad/}{nevergrad} library. ' \
+        'Initialisation of the optimisation algorithm was performed using Latin hypercube sampling ' \
+        'to select initial parameter values that were broadly dispersed across the ' \
+        f'multi-dimensional parameter space. The deliberately short optimisation algorithm of {OPTI_DRAWS} draws ' \
+        'was used to move the parameter sets from these dispersed starting positions towards ' \
+        'values with greater likelihood, but remained substantially dispersed from one-another. ' \
+        '\n\nWe then ran the calibration algorithm from these starting points for 10,000 draws ' \
+        'during the tuning phase, and for 50,000 draws during the calibration phase ' \
+        f'of the algorithm, discarding the first {str(int(BURN_IN / 1000))},000 draws as burn-in. ' \
         'An identical and independent algorithm was applied for each of the four analysis approaches. '        
     tex_doc.add_line(description, 'Calibration methods')
     description = 'The metrics of the performance of our calibration algorithm are presented in ' \
