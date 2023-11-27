@@ -155,9 +155,7 @@ def plot_subvariant_props(
     return format_output_figure(fig)
 
 
-def plot_cdr_examples(
-    samples: Variable,
-) -> go.Figure:
+def plot_cdr_examples(samples: Variable) -> go.Figure:
     """Plot examples of the variation in the case detection rate over time.
 
     Args:
@@ -175,6 +173,10 @@ def plot_cdr_examples(
         exp_param = get_param_to_exp_plateau(hh_test_ratio[0], start_cdr)
         cdr_values[round(start_cdr, 3)] = get_cdr_values(exp_param, hh_test_ratio)
     cdr_values = cdr_values[sorted(cdr_values.columns)]
+    buffer = timedelta(days=7)  # Arbitrarily extend the ends so as not to see markers
+    cdr_values.loc[ANALYSIS_END_DATE + buffer, :] = cdr_values.iloc[-1, :]
+    cdr_values.loc[PLOT_START_DATE - buffer, :] = cdr_values.iloc[0, :]
+    cdr_values = cdr_values.sort_index()
     for start_cdr in cdr_values.columns:
         normalised_cdr = round((start_cdr - 0.1) / 0.5, 2)    
         colour = f'rgb({normalised_cdr},0.3,{normalised_cdr})'
