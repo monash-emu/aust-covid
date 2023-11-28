@@ -44,3 +44,6 @@ Analysis of the major initial waves of the Australian COVID-19 epidemic
 
 ## Vaccination inputs processing
 [https://colab.research.google.com/github/monash-emu/aust-covid/blob/main/notebooks/vacc_processing.ipynb]
+
+## Outputs
+[https://monash-emu.github.io/outputs/aust-covid/]
