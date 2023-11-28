@@ -179,8 +179,7 @@ def plot_cdr_examples(samples: Variable) -> go.Figure:
     cdr_values = cdr_values.sort_index()
     for start_cdr in cdr_values.columns:
         normalised_cdr = round((start_cdr - 0.1) / 0.5, 2)    
-        colour = f'hsl({normalised_cdr * 100.0}%,70%,50%)'
-        print(colour)
+        colour = f'hsl({round(normalised_cdr * 100.0)}%,70%,50%)'
         fig.add_trace(go.Scatter(x=cdr_values.index, y=cdr_values[start_cdr], name=round(start_cdr, 3), line={'color': colour}))
     return format_output_figure(fig)
 
