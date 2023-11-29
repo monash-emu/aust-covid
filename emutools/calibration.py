@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from datetime import timedelta
 import arviz as az
 from arviz.labels import MapLabeller
@@ -92,6 +92,7 @@ def plot_posterior_comparison(
     req_vars: list, 
     display_names: dict,
     span: float,
+    grid: Optional[Tuple[int]]=None,
 ) -> plt.Figure:
     """Area plot posteriors against prior distributions.
 
@@ -106,7 +107,7 @@ def plot_posterior_comparison(
         The figure
     """
     labeller = MapLabeller(var_name_map=display_names)
-    comparison_plot = az.plot_density(idata, var_names=req_vars, shade=0.5, labeller=labeller, point_estimate=None, hdi_prob=span)
+    comparison_plot = az.plot_density(idata, var_names=req_vars, shade=0.5, labeller=labeller, point_estimate=None, hdi_prob=span, grid=grid)
     req_priors = [p for p in priors if p.name in req_vars]
     for i_ax, ax in enumerate(comparison_plot.ravel()[:len(req_vars)]):
         ax_limits = ax.get_xlim()
