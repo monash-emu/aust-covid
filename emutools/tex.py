@@ -344,7 +344,7 @@ class ConcreteTexDoc:
         col_widths = [w * table_width for w in splits]
         col_str = ' '.join([f'>{{\\raggedright\\arraybackslash}}p{{{width}cm}}' for width in col_widths])
         label_str = f'\label{{{name}}}\n'
-        caption_str = f'\caption{{\\textbf{{{title}}}. {caption}}}\n'
+        caption_str = f'\caption{{\\textbf{{{title}}} {caption}}}\n'
         table_str = get_tex_longtable(table, col_str, caption_str, label_str) if longtable else get_tex_table(table, col_str, caption_str, label_str)
         self.add_line(table_str, section, subsection=subsection)
 
