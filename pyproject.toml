@@ -10,7 +10,7 @@ keywords = [
     "covid19",
     "summerepi"
 ]
-description = "A set of calibration and probabilistic programming tools for use with summerepi2"
+description = "Implementation of packages developed by EMU to the epidemiological problem of the 2022 COVID-19 epidemic in Australia"
 authors = ["James Trauer <james.trauer@monash.edu>"]
 packages = [
     {include = "aust_covid"},
