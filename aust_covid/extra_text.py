@@ -260,7 +260,7 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
 
     description = 'Second, the model was extended to allow that the historical profile of ' \
         'vaccination through 2022 could have influenced rates of infection. ' \
-        'Under this alternative analysis, all the model’s initial population ' \
+        "Under this alternative analysis, all the model's initial population " \
         'was assigned to the non-immune category, with population then transitioning ' \
         'to the partially immune class as new vaccination programs (booster and paediatric) ' \
         'were rolled out through 2022. Vaccine-derived immunity was then allowed to wane, ' \
@@ -271,8 +271,8 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
 
     description = 'From these two extensions to the base model, ' \
         'we created four alternative analytical approaches: ' \
-        'no additional structure (“none”), mobility extension only (“mob”), ' \
-        'vaccination extension only (“vacc”), and both mobility and vaccination extensions (“both”).\n'
+        'no additional structure (``none"), mobility extension only (``mob"), ' \
+        'vaccination extension only (``vacc"), and both mobility and vaccination extensions (``both").\n'
     tex_doc.add_line(description, 'Methods')
 
     description = 'Last, we calibrated each of the four candidate models described ' \
@@ -290,7 +290,7 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'SARS-CoV-2 exposure, which were adjusted for nucleocapsid test sensitivity and ' \
         'lagged forward by 14 days. Model calibration was then achieved independently for ' \
         'each of the four candidate models using the PyMC implementation of ' \
-        'the differential evolution Metropolis algorithm “DEMetropolis(Z)”.\\cite{salvatier2016} ' \
+        'the differential evolution Metropolis algorithm ``DEMetropolis(Z)".\\cite{salvatier2016} ' \
         'All important epidemiological parameter inputs were included in the calibration algorithm, ' \
         'creating a 17-dimensional parameter space for exploration. ' \
         'The approach with only mobility implemented was selected as the primary analysis for parameter inference, ' \
@@ -431,7 +431,7 @@ def add_discussion_blurbs_to_tex(tex_doc: TexDoc):
         'which may be attributable to the complex evolving profile of vaccination-induced population immunity, ' \
         'or the limited indirect protection conferred by vaccination.\\cite{braeye2023} ' \
         'By contrast, population mobility appeared to improve model fit slightly, ' \
-        'possibly by allowing for a smaller initial BA.1 wave through capturing the “shadow lockdown” in summer 2021/2022.' \
+        'possibly by allowing for a smaller initial BA.1 wave through capturing the ``shadow lockdown" in summer 2021/2022.' \
         '\\cite{dunstan2022,llyod2022}\n'
     tex_doc.add_line(description, 'Discussion')
 
@@ -474,7 +474,7 @@ def add_discussion_blurbs_to_tex(tex_doc: TexDoc):
         'Although the shape of this wave was likely modified by changing reporting requirements and ' \
         'poor national availability of rapid antigen tests, this implies a large epidemic. ' \
         'The mobility extension models we considered improved fit to the seroprevalence estimates, ' \
-        'implying that the “shadow” (public-led) lockdown over the 2021-2022 summer was ' \
+        'implying that the ``shadow" (public-led) lockdown over the 2021-2022 summer was ' \
         'likely part of the explanation for this wave being smaller than expected.\\cite{dunstan2022,llyod2022} ' \
         'We considered that accepting model runs that modestly over-estimated ' \
         'the first seroprevalence estimate but under-estimated the latter two estimates was the optimal balance, ' \
