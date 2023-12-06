@@ -391,7 +391,9 @@ class StandardTexDoc(ConcreteTexDoc):
         self.add_line('\date{}', 'preamble')
         self.add_line('\maketitle', 'preamble')
         if self.table_of_contents:
-            self.add_line('\\tableofcontents', 'preamble')        
+            self.add_line('\\tableofcontents', 'preamble')       
+        else: 
+            self.add_line('\\renewcommand{\\contentsname}{}', 'preamble')
         self.add_line('\\printbibliography', 'endings')
         self.add_line('\\end{document}', 'endings')
 

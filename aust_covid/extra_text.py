@@ -298,7 +298,6 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
     tex_doc.add_line(description, 'Methods')
 
 def add_results_blurbs_to_tex(tex_doc: TexDoc):
-    ## figure references not done
     description = 'We released a suite of open-source packages to support infectious disease modelling ' \
         'and used these packages to represent the key epidemiological processes relevant to ' \
         "Australia's 2022 COVID-19 epidemic (Figure **). At the heart of our pipeline, " \
