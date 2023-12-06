@@ -179,7 +179,7 @@ def add_summary_to_tex(tex_doc: TexDoc):
 def add_intro_blurbs_to_tex(tex_doc: TexDoc):
     description = 'Throughout the pandemic, epidemiological modelling has been used to influence ' \
         'some of the most significant and intrusive public health policy decisions in history, ' \
-        'providing analyses to justify a range of programs that extended from lockdowns to vaccination.\\cite{mccaw2022,pagel2022}2 ' \
+        'providing analyses to justify a range of programs that extended from lockdowns to vaccination.\\cite{mccaw2022,pagel2022} ' \
         'However, this policy impact brings with it a responsibility for modellers to ensure results are accurate, '  \
         'transparent and effectively communicated not only to policy makers, ' \
         'but also the public who are impacted by such decisions.\\cite{pagel2022}\n'
@@ -283,3 +283,64 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'The approach with only mobility implemented was selected as the primary analysis for parameter inference, ' \
         'largely because of its superior fit to seroprevalence estimates.\n'
     tex_doc.add_line(description, 'Methods')
+
+def add_results_blurbs_to_tex(tex_doc: TexDoc):
+    ## Two hyperlinks and two figure references not done
+    description = 'We released a suite of open-source packages to support infectious disease modelling ' \
+        'and used these packages to represent the key epidemiological processes relevant to ' \
+        "Australia's 2022 COVID-19 epidemic (Figure **). At the heart of our pipeline, " \
+        'we developed the summer Python package to support easy and reliable construction of ' \
+        'infectious disease models through an epidemiologically intuitive application programming interface. ' \
+        "summer's backend is integrated with Google's jax library for high-performance numerical computing. " \
+        'We validated summer against a popular textbook of infectious diseases modelling,\\cite{vynnycky2010} ' \
+        'demonstrating that it could recover the behaviours of a wide range of infectious diseases models ' \
+        'through a series of jupyter notebooks. Next, through a series of interactive Google Colab-hosted notebooks, ' \
+        'we released a textbook of infectious disease modelling that systematically demonstrates ' \
+        'core infectious disease modelling principles using summer. ' \
+        'Last, we released estival, a wrapper for the calibration and optimisation of summer-based models, ' \
+        'which supports the integration of these models with current ' \
+        'state-of-the-art calibration, optimisation and interpretation platforms, ' \
+        "including the PyMC package for Bayesian inference\\cite{salvatier2016} and Facebook's nevergrad library for " \
+        'gradient-free optimisation.\\cite{rapin2018} ArviZ was used for Bayesian diagnostics,\\cite{kumar2019} ' \
+        'with interactive visuals produced using plotly.\\cite{plotly2015}\n'
+    tex_doc.add_line(description, 'Results')
+
+    description = 'The analysis is provided as an installable Python package that incorporates ' \
+        'interactive Google Colab Jupyter notebooks for the inspection of model features and interrogation of outputs. ' \
+        'Through this approach, we fit a complex model of COVID-19 dynamics ' \
+        '(1984 compartments under the base case, 2976 compartments under the vaccination extension) ' \
+        'to three key epidemiological indicators (cases, deaths and nucleocapsid antibody seroprevalence, ' \
+        'a marker of having ever being infected).'
+    tex_doc.add_line(description, 'Results')
+
+    description = 'We considered four candidate models with and without extended structure for ' \
+        'mobility and vaccination for their ability to capture the broad epidemic profile of ' \
+        "Australia's 2022 Omicron waves (i.e. mobility extension, vaccination extension, " \
+        'both extensions, and neither). All four models were able to capture ' \
+        'the broad epidemic profile we targeted, with each achieving a good fit to the time-series of deaths. ' \
+        'The model configurations with additional structure for scaling contact rates ' \
+        'with mobility data achieved a somewhat better fit to the seroprevalence targets than ' \
+        'the two configurations without this extension ' \
+        '(median seroprevalence likelihood contribution 0.6 versus 0.9, Figure **). ' \
+        'Inclusion of additional model structure for time-varying vaccination-related immunity to ' \
+        'infection resulted in a slightly poorer fit to the time-series for cases ' \
+        '(median cases likelihood contribution -12.7 versus -12.2 to -12.4 for the other analyses). ' \
+        'We therefore selected the mobility extension model as the primary model analysis for ' \
+        'consideration in the following sections. Additional approaches to model construction, ' \
+        'calibration and interpretation of results can easily be explored via ' \
+        'the interactive notebooks available on the project homepage.'
+    tex_doc.add_line(description, 'Results', subsection='Candidate model comparison')
+
+    description = "Leveraging Google's jax package and calibration algorithms from PyMC, " \
+        'epidemiological models of 1984 to 2976 compartments ' \
+        '(depending on application of the vaccination extension) ' \
+        'completed 60,000 iterations per chain within 4-8 hours on 8-core 3rd Generation Intel Xeon machines ' \
+        'clocked at 2.9 to 3.5 GHz. For the primary (mobility extension) analysis, ' \
+        'each core completed 3.62 model iterations per second. ' \
+        'Metrics of the calibration algorithm for the primary analysis are presented in the Supplemental Material. ' \
+        'The algorithm achieved highly satisfying chain convergence, ' \
+        'with the Rhat statistic for all parameters below 1.05 and all effective sample sizes above 150 (Supplemental Figure **).\n'
+    tex_doc.add_line(description, 'Results', subsection='Calibration results')
+
+    description = ''
+    tex_doc.add_line(description, 'Results', subsection='Calibration results')
