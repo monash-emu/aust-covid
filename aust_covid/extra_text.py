@@ -218,7 +218,8 @@ def add_intro_blurbs_to_tex(tex_doc: TexDoc):
         '\\cite{trauer2021a,caldwell2021a,jayasundara2021,hughes2022}' \
         'Our platform is based around a library for the construction of compartmental models of ' \
         'infectious disease transmission and is now integrated with publicly available libraries for numerical computing, ' \
-        'optimisation, Bayesian inference, data visualisation and scientific documentation.14-17 ' \
+        'optimisation, Bayesian inference, data visualisation and scientific documentation.' \
+        '\\cite{salvatier2016,rapin2018,kumar2019,plotly2015} ' \
         'The combined platform constitutes an end-to-end pipeline for infectious disease modelling, ' \
         'which we used to derive insights into COVID-19 epidemiology through its application to ' \
         "Australia's three-wave 2022 epidemic."
@@ -363,8 +364,8 @@ def add_results_blurbs_to_tex(tex_doc: TexDoc):
         '(median -12.2) than for the deaths targets (median -4.7) (Figure 2). ' \
         'This difference was particularly noticeable during the first (BA.1) wave of 2022, ' \
         'at a time when notifications may have been a more variable epidemic indicator ' \
-        'as Australia struggled to scale testing capacity up to match demand (Figure 3).19 ' \
-        'Under the constraint that BA.1 and BA.5 had the same modelled severity,20 ' \
+        'as Australia struggled to scale testing capacity up to match demand (Figure 3).\\cite{timms2022} ' \
+        'Under the constraint that BA.1 and BA.5 had the same modelled severity,\\cite{wolter2022} ' \
         'accepted model runs often under-estimated the peak number of deaths for the third (BA.5) wave of 2022. ' \
         'Our results typically showed a higher seroprevalence than estimated from the serosurvey target values ' \
         'for its first round, but lower for the third. ' \
@@ -373,25 +374,27 @@ def add_results_blurbs_to_tex(tex_doc: TexDoc):
         'is presented in Figure 4**.'
     tex_doc.add_line(description, 'Results', subsection='Calibration results')
 
-    description = 'The short prior estimates for the durations for the latent and infectious periods22,23 ' \
+    description = 'The short prior estimates for the durations for the latent and infectious periods\\cite{xin2022,wu2023} ' \
         'were not substantially influenced by the process of fitting to target data, ' \
         'while the period of partial immunity following infection was estimated to be markedly shorter than ' \
         'our prior belief (Figure 5). Our uninformative prior estimate for the proportion of cases detected was ' \
         'also substantially influenced by the fitting process, ' \
         'suggesting that the highest case detection early in the BA.1 epidemic wave was around 17 to 50\%. ' \
         'The infection fatality rate had to be inflated around two- to three-fold from ' \
-        'the baseline estimates taken from a population-wide epidemiological study in Denmark.24 ' \
+        'the baseline estimates taken from a population-wide epidemiological study in Denmark.\\cite{erikstrup2022} ' \
         'The extent of immune escape of both BA.2 and BA.5 against previous infection with ' \
         'other sub-variant strains was moderately greater than anticipated in our prior distributions,25-30 ' \
+        '\\cite{altarawneh2022b,carazo2023,chemaitelly2022a,malato2022b,powell2023,tan2023}' \
         'and was centred around a value of 50\% for both subvariants ' \
         '(i.e. past infection only protected half as much against early reinfection with ' \
         'novel subvariants as compared to against early reinfection with the previously infecting subvariant). ' \
-        'The relative reduction in severity of BA.2 compared to BA.1 and BA.5 was consistent with past evidence,20,31-33 ' \
+        'The relative reduction in severity of BA.2 compared to BA.1 and BA.5 was consistent with past evidence,' \
+        '\\cite{wolter2022,hansen2023,robertson2023,webster2022} ' \
         'while little additional information was obtained for ' \
         'the time to WA fully mixing with the rest of the country ' \
         'or the parameters pertaining to the convolution processes for notifications and deaths. ' \
         'The seeding time parameters resulted in epidemic profiles that were consistent with ' \
-        'reports of national genomic data (see Supplemental Figure 25).34 ' \
+        'reports of national genomic data (see Supplemental Figure 25).\\cite{covidepireport2023} ' \
         'On examination of the bivariate distributions of combinations of two parameters, ' \
         'the contact rate parameter showed expected inverse interactions with the extent of population immunity ' \
         'and the infectious duration parameters (Figure 6). ' \
@@ -422,40 +425,42 @@ def add_discussion_blurbs_to_tex(tex_doc: TexDoc):
         'the time-series of deaths than we achieved for cases, ' \
         'which may be attributable to the higher quality or greater consistency of the mortality data during ' \
         'a period when testing recommendations and test availability changed markedly. ' \
-        'By contrast to our expectations in late 2021 when the Omicron variant first emerged in Southern Africa,35 ' \
+        'By contrast to our expectations in late 2021 when the Omicron variant first emerged in Southern Africa,\\cite{viana2022} ' \
         "the first (BA.1) epidemic wave of 2022 was likely not Australia's largest, " \
         'with the subsequent waves (largely attributable to BA.2 and BA.5) also associated with substantial attack rates. ' \
         'The vaccination extension did not improve calibration metrics, ' \
         'which may be attributable to the complex evolving profile of vaccination-induced population immunity, ' \
-        'or the limited indirect protection conferred by vaccination.36 ' \
+        'or the limited indirect protection conferred by vaccination.\\cite{braeye2023} ' \
         'By contrast, population mobility appeared to improve model fit slightly, ' \
-        'possibly by allowing for a smaller initial BA.1 wave through capturing the “shadow lockdown” in summer 2021/2022.37,38\n'
+        'possibly by allowing for a smaller initial BA.1 wave through capturing the “shadow lockdown” in summer 2021/2022.' \
+        '\\cite{dunstan2022,llyod2022}\n'
     tex_doc.add_line(description, 'Discussion')
 
     description = 'Parameter posterior estimates suggested a greater level of immune escape and ' \
-        'a shorter duration of immunity than our prior beliefs from the literature,39-41 ' \
+        'a shorter duration of immunity than our prior beliefs from the literature,' \
+        '\\cite{edridge2020,kissler2020,townsend2021} ' \
         "which can be attributed to the rapid succession of each subvariant's wave as " \
         'the preceding wave had only recently begun to decline. ' \
         'Our inflation factor for the infection fatality rate suggested considerably greater severity than ' \
-        'observed in a population with a longer history of COVID-19 epidemics,24 ' \
+        'observed in a population with a longer history of COVID-19 epidemics,\\cite{erikstrup2022} ' \
         'which may relate to lower natural immunity to COVID-19 along with a larger vulnerable population after ' \
-        'two years of lower circulation of influenza and other viruses.42\n'
+        'two years of lower circulation of influenza and other viruses.\\cite{oneill2023}\n'
     tex_doc.add_line(description, 'Discussion')
 
     description = 'The availability of seroprevalence estimates for nucleocapsid antibodies that increased markedly from ' \
         'close to zero to nearly 80\% within the simulation window we considered markedly increases ' \
-        'our confidence that our analysis captures the overall epidemic size.9 ' \
+        'our confidence that our analysis captures the overall epidemic size.\\cite{machalek2023} ' \
         'Although we did not consider antibody waning, ' \
         'the greatest delay from infection to antibody measurement relevant to our analysis would have been ' \
         'infection early in the BA.1 wave (January 2022) followed by antibody measurement in August 2022 ' \
         '(for persons not infected in the intervening waves), ' \
-        'whereas these antibodies are known to be well maintained over ten months.43 ' \
+        'whereas these antibodies are known to be well maintained over ten months.\\cite{vanelslande2022} ' \
         "Moreover, given the apparently large size of Australia's first BA.1 wave, " \
         'we found it surprising that adult seroprevalence only reached 20.7\% after the first wave, ' \
         'whereas the subsequent estimates implied around 50\% of persons not previously infected ' \
         'were exposed within the subsequent windows between survey rounds (February to June and June to August). ' \
         'There are several possible causes of bias in such estimates, ' \
-        'including selection bias of blood donors by comparison to the general population,44 ' \
+        'including selection bias of blood donors by comparison to the general population,\\cite{burgdoff2017} ' \
         'which has not been quantified in the Australian context to our knowledge. ' \
         'Rather than attempt to adjust for such biases, ' \
         'we acknowledged the bidirectional uncertainty in these data through the likelihood calculation for ' \
@@ -471,7 +476,7 @@ def add_discussion_blurbs_to_tex(tex_doc: TexDoc):
         'poor national availability of rapid antigen tests, this implies a large epidemic. ' \
         'The mobility extension models we considered improved fit to the seroprevalence estimates, ' \
         'implying that the “shadow” (public-led) lockdown over the 2021-2022 summer was ' \
-        'likely part of the explanation for this wave being smaller than expected.37,38 ' \
+        'likely part of the explanation for this wave being smaller than expected.\\cite{dunstan2022,llyod2022} ' \
         'We considered that accepting model runs that modestly over-estimated ' \
         'the first seroprevalence estimate but under-estimated the latter two estimates was the optimal balance, ' \
         'as was the case with our chosen primary analysis for parameter inference.'
@@ -511,4 +516,4 @@ def add_conclusions_blurb_to_tex(tex_doc: TexDoc):
         'Our pipeline for infectious disease modelling supports greater understanding of ' \
         'these results through interactive notebooks and online visuals and could constitute ' \
         'a new paradigm for infectious disease modelling.'
-    tex_doc.add_line(description, 'Conslusions')
+    tex_doc.add_line(description, 'Conclusions')
