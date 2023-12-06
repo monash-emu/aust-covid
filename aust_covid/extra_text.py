@@ -217,7 +217,7 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'SARS-CoV-2 exposure, which were adjusted for nucleocapsid test sensitivity and ' \
         'lagged forward by 14 days. Model calibration was then achieved independently for ' \
         'each of the four candidate models using the PyMC implementation of ' \
-        'the differential evolution Metropolis algorithm “DEMetropolis(Z)”.\\{salvatier2016} ' \
+        'the differential evolution Metropolis algorithm “DEMetropolis(Z)”.\\cite{salvatier2016} ' \
         'All important epidemiological parameter inputs were included in the calibration algorithm, ' \
         'creating a 17-dimensional parameter space for exploration. ' \
         'The approach with only mobility implemented was selected as the primary analysis for parameter inference, ' \
