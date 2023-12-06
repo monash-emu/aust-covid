@@ -415,6 +415,7 @@ def add_image_to_doc(
     Args:
         fig: The figure object
         filename: A string for the filenam to save the figure as
+        filetype: The extension to determine the type of figure
         caption: Figure caption for the document
         tex_doc: The working document
         section: Pass through to include_figure method to the document writing object

@@ -300,7 +300,7 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
 def add_results_blurbs_to_tex(tex_doc: TexDoc):
     description = 'We released a suite of open-source packages to support infectious disease modelling ' \
         'and used these packages to represent the key epidemiological processes relevant to ' \
-        "Australia's 2022 COVID-19 epidemic (Figure **). At the heart of our pipeline, " \
+        "Australia's 2022 COVID-19 epidemic (Figure \\ref{aust_covid_code_structure}). At the heart of our pipeline, " \
         'we developed the summer Python package to support easy and reliable construction of ' \
         'infectious disease models through an epidemiologically intuitive application programming interface. ' \
         "summer's backend is integrated with Google's jax library for high-performance numerical computing. " \
@@ -335,7 +335,7 @@ def add_results_blurbs_to_tex(tex_doc: TexDoc):
         'The model configurations with additional structure for scaling contact rates ' \
         'with mobility data achieved a somewhat better fit to the seroprevalence targets than ' \
         'the two configurations without this extension ' \
-        '(median seroprevalence likelihood contribution 0.6 versus 0.9, Figure **). ' \
+        '(median seroprevalence likelihood contribution 0.6 versus 0.9, Figure \\ref{like_comparison}). ' \
         'Inclusion of additional model structure for time-varying vaccination-related immunity to ' \
         'infection resulted in a slightly poorer fit to the time-series for cases ' \
         '(median cases likelihood contribution -12.7 versus -12.2 to -12.4 for the other analyses). ' \
@@ -354,29 +354,29 @@ def add_results_blurbs_to_tex(tex_doc: TexDoc):
         'Metrics of the calibration algorithm for the primary analysis are presented in the Supplemental Material. ' \
         'The algorithm achieved highly satisfying chain convergence, ' \
         'with the $\\hat{R}$ statistic for all parameters below 1.05 and all effective sample sizes above 150 ' \
-        '(Supplemental Figure **).\n'
+        '(Supplemental Figures \\ref{trace_fig_1} \\ref{trace_fig_2} \\ref{trace_fig_3}).\n'
     tex_doc.add_line(description, 'Results', subsection='Calibration results')
 
-    description = 'Figure 3** shows model fit for each of the target epidemiological indicators. ' \
+    description = 'Figure \\ref{base_ranges} shows model fit for each of the target epidemiological indicators. ' \
         'Calibration fit was better for deaths than for case notifications, ' \
         'which is reflected in the markedly lower likelihood contributions for the cases calibration target ' \
-        '(median -12.2) than for the deaths targets (median -4.7) (Figure 2). ' \
+        '(median -12.2) than for the deaths targets (median -4.7) (Figure \\ref{like_comparison}). ' \
         'This difference was particularly noticeable during the first (BA.1) wave of 2022, ' \
         'at a time when notifications may have been a more variable epidemic indicator ' \
-        'as Australia struggled to scale testing capacity up to match demand (Figure 3).\\cite{timms2022} ' \
+        'as Australia struggled to scale testing capacity up to match demand (Figure \\ref{base_ranges}).\\cite{timms2022} ' \
         'Under the constraint that BA.1 and BA.5 had the same modelled severity,\\cite{wolter2022} ' \
         'accepted model runs often under-estimated the peak number of deaths for the third (BA.5) wave of 2022. ' \
         'Our results typically showed a higher seroprevalence than estimated from the serosurvey target values ' \
         'for its first round, but lower for the third. ' \
         'The relative contribution of each variant and each infection process ' \
         '(i.e. de novo infection, early reinfection due to immune escape and late reinfection due to waned immunity) ' \
-        'is presented in Figure 4**.'
+        'is presented in Figure \\ref{infect_process}.'
     tex_doc.add_line(description, 'Results', subsection='Calibration results')
 
     description = 'The short prior estimates for the durations for the latent and infectious periods\\cite{xin2022,wu2023} ' \
         'were not substantially influenced by the process of fitting to target data, ' \
         'while the period of partial immunity following infection was estimated to be markedly shorter than ' \
-        'our prior belief (Figure 5). Our uninformative prior estimate for the proportion of cases detected was ' \
+        'our prior belief (Figure \\ref{comp_fig}). Our uninformative prior estimate for the proportion of cases detected was ' \
         'also substantially influenced by the fitting process, ' \
         'suggesting that the highest case detection early in the BA.1 epidemic wave was around 17 to 50\%. ' \
         'The infection fatality rate had to be inflated around two- to three-fold from ' \
@@ -393,10 +393,10 @@ def add_results_blurbs_to_tex(tex_doc: TexDoc):
         'the time to WA fully mixing with the rest of the country ' \
         'or the parameters pertaining to the convolution processes for notifications and deaths. ' \
         'The seeding time parameters resulted in epidemic profiles that were consistent with ' \
-        'reports of national genomic data (see Supplemental Figure 25).\\cite{covidepireport2023} ' \
+        'reports of national genomic data (see Supplemental Figure \\ref{variant_prop_spaghetti}).\\cite{covidepireport2023} ' \
         'On examination of the bivariate distributions of combinations of two parameters, ' \
         'the contact rate parameter showed expected inverse interactions with the extent of population immunity ' \
-        'and the infectious duration parameters (Figure 6). ' \
+        'and the infectious duration parameters (Supplemental Figure \\ref{key_param_correlation}). ' \
         'The association of shorter duration of post-infection immunity and a lower case detection proportion ' \
         'can be attributed to both these processes being associated with larger modelled epidemics. ' \
         'The expected association between short duration of post-infection immunity and ' \
