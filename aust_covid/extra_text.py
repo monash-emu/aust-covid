@@ -151,3 +151,75 @@ def add_vaccination_blurb_to_tex(tex_doc: TexDoc):
         'The reported coverage and coverage lagged by 14 days are compared against the ' \
         'modelled population distribution across the three immunity strata in Figure \\ref{vaccination_distribution}. '
     tex_doc.add_line(description, 'Vaccination extension', subsection='Application')
+
+
+def add_methods_blurbs_to_tex(tex_doc: TexDoc):
+    description = 'We constructed four candidate models with common underlying characteristics ' \
+        'to represent COVID-19 dynamics during the course of 2022 in Australia. ' \
+        'Epidemiological details are presented in the repository for this analysis ' \
+        'and described in detail in our Supplemental Material, ' \
+        'which is algorithmically generated from the code used in model construction ' \
+        'to ensure accuracy of documentation. ' \
+        'In brief, we built an SEIRS model with chained serial latent and infectious compartments ' \
+        'and reinfection from the waned (second S) compartment. ' \
+        'To this we added age structure in five-year bands from 0-4 years to 75 years and above. ' \
+        'Age stratification determined the initial population distribution, ' \
+        'and an age-specific mixing matrix was adapted to the Australian population structure ' \
+        'from United Kingdom survey data was applied to capture heterogeneous mixing between age groups.\cite{mossong2008} ' \
+        'The model was further stratified into Western Australia (WA) ' \
+        'and the other major jurisdictions of Australia to acknowledge the negligible community transmission ' \
+        'in WA prior to the re-opening of internal borders to the state. ' \
+        'Further stratification was applied to replicate all model compartments ' \
+        'into two populations with differing levels of immunity to infection and reinfection, ' \
+        'with no transition between these two classes permitted in the base model configuration ' \
+        '(without vaccination extension). Three subvariant strains were introduced into the base model ' \
+        'through the course of the simulation to represent the BA.1, BA.2 and BA.5 subvariants of Omicron, ' \
+        'with incomplete cross-immunity to subsequent strains during the early recovered stage ' \
+        'conferred through infection with earlier strains.'
+    tex_doc.add_line(description, 'Methods')
+
+    description = 'The unextended model described in the preceding paragraph was elaborated in two respects. ' \
+        'First, the mixing matrix that remains fixed over modelled time in the unextended model ' \
+        'was allowed to vary over time, with the location-specific contribution ' \
+        'to each cell of the matrix scaled according to metrics sourced from ' \
+        'Google’s Community Mobility Reports.\cite{googlemob2023}'
+    tex_doc.add_line(description, 'Methods')
+
+    description = 'Second, the model was extended to allow that the historical profile of ' \
+        'vaccination through 2022 could have influenced rates of infection. ' \
+        'Under this alternative analysis, all the model’s initial population ' \
+        'was assigned to the non-immune category, with population then transitioning ' \
+        'to the partially immune class as new vaccination programs (booster and paediatric) ' \
+        'were rolled out through 2022. Vaccine-derived immunity was then allowed to wane, ' \
+        'with vaccinated persons returning to a third immunity stratum ' \
+        'with the same susceptibility to infection as those who had never received vaccination ' \
+        'under these programs.'
+    tex_doc.add_line(description, 'Methods')
+
+    description = 'From these two extensions to the base model, ' \
+        'we created four alternative analytical approaches: ' \
+        'no additional structure (“none”), mobility extension only (“mob”), ' \
+        'vaccination extension only (“vacc”), and both mobility and vaccination extensions (“both”).'
+    tex_doc.add_line(description, 'Methods')
+
+    description = 'Last, we calibrated each of the four candidate models described ' \
+        'in the preceding paragraph to publicly available data ' \
+        'for three empirical indicators of the COVID-19 epidemic through 2022: ' \
+        'the seven-day moving average of national daily time-series for case notifications, ' \
+        'the seven-day moving average of national daily time-series for deaths ' \
+        'and the results of a nationally representative adult blood donor seroprevalence survey ' \
+        'at three key time points in 2022. Equivalent modelled quantities ' \
+        'to notifications and deaths were estimated through a convolution approach ' \
+        'that allowed a gamma-distributed delay from onset of symptoms ' \
+        '(taken as the time of transition from the first to the second serial infectious compartment) ' \
+        'to notification or death. The proportion of the population no longer in ' \
+        'the original susceptible compartment was further compared to seroprevalence estimates of ' \
+        'SARS-CoV-2 exposure, which were adjusted for nucleocapsid test sensitivity and ' \
+        'lagged forward by 14 days. Model calibration was then achieved independently for ' \
+        'each of the four candidate models using the PyMC implementation of ' \
+        'the differential evolution Metropolis algorithm “DEMetropolis(Z)”.\cite{salvatier2016} ' \
+        'All important epidemiological parameter inputs were included in the calibration algorithm, ' \
+        'creating a 17-dimensional parameter space for exploration. ' \
+        'The approach with only mobility implemented was selected as the primary analysis for parameter inference, ' \
+        'largely because of its superior fit to seroprevalence estimates.'
+    tex_doc.add_line(description, 'Methods')
