@@ -160,7 +160,7 @@ def add_abstract_blurb_to_tex(tex_doc: TexDoc):
         'efficient and transparent, which has been particularly important during the COVID-19 pandemic. ' \
         'We developed a package for the construction of infectious disease models, ' \
         'integrated this with several open-source libraries and applied this pipeline ' \
-        'to multiple data sources relevant to Australia’s 2022 COVID-19 epidemic. ' \
+        "to multiple data sources relevant to Australia's 2022 COVID-19 epidemic. " \
         'Extending the base model to include mobility effects slightly improved model fit, ' \
         'but including the effect of 2022 vaccination programs on transmission did not. ' \
         'Our simulations suggested that one in every two to six COVID-19 episodes were detected, ' \
@@ -432,7 +432,7 @@ def add_discussion_blurbs_to_tex(tex_doc: TexDoc):
         'or the limited indirect protection conferred by vaccination.\\cite{braeye2023} ' \
         'By contrast, population mobility appeared to improve model fit slightly, ' \
         'possibly by allowing for a smaller initial BA.1 wave through capturing the ``shadow lockdown" in summer 2021/2022.' \
-        '\\cite{dunstan2022,llyod2022}\n'
+        '\\cite{dunstan2022,lloyd2022}\n'
     tex_doc.add_line(description, 'Discussion')
 
     description = 'Parameter posterior estimates suggested a greater level of immune escape and ' \
@@ -475,7 +475,7 @@ def add_discussion_blurbs_to_tex(tex_doc: TexDoc):
         'poor national availability of rapid antigen tests, this implies a large epidemic. ' \
         'The mobility extension models we considered improved fit to the seroprevalence estimates, ' \
         'implying that the ``shadow" (public-led) lockdown over the 2021-2022 summer was ' \
-        'likely part of the explanation for this wave being smaller than expected.\\cite{dunstan2022,llyod2022} ' \
+        'likely part of the explanation for this wave being smaller than expected.\\cite{dunstan2022,lloyd2022} ' \
         'We considered that accepting model runs that modestly over-estimated ' \
         'the first seroprevalence estimate but under-estimated the latter two estimates was the optimal balance, ' \
         'as was the case with our chosen primary analysis for parameter inference.\n'
