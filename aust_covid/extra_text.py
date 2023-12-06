@@ -165,7 +165,7 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'To this we added age structure in five-year bands from 0-4 years to 75 years and above. ' \
         'Age stratification determined the initial population distribution, ' \
         'and an age-specific mixing matrix was adapted to the Australian population structure ' \
-        'from United Kingdom survey data was applied to capture heterogeneous mixing between age groups.\cite{mossong2008} ' \
+        'from United Kingdom survey data was applied to capture heterogeneous mixing between age groups.\\cite{mossong2008} ' \
         'The model was further stratified into Western Australia (WA) ' \
         'and the other major jurisdictions of Australia to acknowledge the negligible community transmission ' \
         'in WA prior to the re-opening of internal borders to the state. ' \
@@ -182,7 +182,7 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'First, the mixing matrix that remains fixed over modelled time in the unextended model ' \
         'was allowed to vary over time, with the location-specific contribution ' \
         'to each cell of the matrix scaled according to metrics sourced from ' \
-        'Google’s Community Mobility Reports.\cite{googlemob2023}'
+        'Google’s Community Mobility Reports.\\cite{googlemob2023}'
     tex_doc.add_line(description, 'Methods')
 
     description = 'Second, the model was extended to allow that the historical profile of ' \
@@ -217,7 +217,7 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'SARS-CoV-2 exposure, which were adjusted for nucleocapsid test sensitivity and ' \
         'lagged forward by 14 days. Model calibration was then achieved independently for ' \
         'each of the four candidate models using the PyMC implementation of ' \
-        'the differential evolution Metropolis algorithm “DEMetropolis(Z)”.\cite{salvatier2016} ' \
+        'the differential evolution Metropolis algorithm “DEMetropolis(Z)”.\\{salvatier2016} ' \
         'All important epidemiological parameter inputs were included in the calibration algorithm, ' \
         'creating a 17-dimensional parameter space for exploration. ' \
         'The approach with only mobility implemented was selected as the primary analysis for parameter inference, ' \
