@@ -371,7 +371,6 @@ class StandardTexDoc(ConcreteTexDoc):
         # Packages that don't require arguments
         standard_packages = [
             'hyperref',
-            'biblatex',
             'graphicx',
             'longtable',
             'booktabs',
@@ -382,6 +381,7 @@ class StandardTexDoc(ConcreteTexDoc):
         for package in standard_packages:
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')
         self.add_line('\DeclareUnicodeCharacter{2212}{-}', 'preamble')  # SVG compilation often crashes without this
+        self.add_line('\\usepackage[sorting=none]{biblatex}', 'preamble')
 
         self.add_line(r'\usepackage[a4paper, total={15cm, 20cm}]{geometry}', 'preamble')
         self.add_line(r'\usepackage[labelfont=bf,it]{caption}', 'preamble')
