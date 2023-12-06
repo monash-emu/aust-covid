@@ -153,6 +153,66 @@ def add_vaccination_blurb_to_tex(tex_doc: TexDoc):
     tex_doc.add_line(description, 'Vaccination extension', subsection='Application')
 
 
+def add_abstract_blurb_to_tex(tex_doc: TexDoc):
+    description = 'Software engineering is advancing at astonishing speed, ' \
+        'with packages now available to support many stages of data science pipelines. ' \
+        'These packages can support infectious disease modelling to be more robust, ' \
+        'efficient and transparent, which has been particularly important during the COVID-19 pandemic. ' \
+        'We developed a package for the construction of infectious disease models, ' \
+        'integrated this with several open-source libraries and applied this pipeline ' \
+        'to multiple data sources relevant to Australia’s 2022 COVID-19 epidemic. ' \
+        'Extending the base model to include mobility effects slightly improved model fit, ' \
+        'but including the effect of 2022 vaccination programs on transmission did not. ' \
+        'Our simulations suggested that one in every two to six COVID-19 episodes were detected, ' \
+        'subsequently emerging Omicron subvariants escaped 30 to 60\% of recently acquired natural immunity ' \
+        'and that natural immunity lasted only one to eight months. ' \
+        'We documented our analyses algorithmically and present our methods in conjunction with interactive online notebooks.'
+    tex_doc.add_line(description, 'Abstract')
+
+
+def add_summary_to_tex(tex_doc: TexDoc):
+    description = 'This manuscript outlines a novel approach to the development of mathematical models of infectious diseases, ' \
+        'applied to understand the epidemiology of COVID-19 in Australia in 2022.'
+    tex_doc.add_line(description, 'One sentence summary')
+
+
+def add_intro_blurbs_to_tex(tex_doc: TexDoc):
+    description = 'Throughout the pandemic, epidemiological modelling has been used to influence ' \
+        'some of the most significant and intrusive public health policy decisions in history, ' \
+        'providing analyses to justify a range of programs that extended from lockdowns to vaccination.\\cite{mccaw2022,pagel2022}2 ' \
+        'However, this policy impact brings with it a responsibility for modellers to ensure results are accurate, '  \
+        'transparent and effectively communicated not only to policy makers, ' \
+        'but also the public who are impacted by such decisions.\\cite{pagel2022}\n'
+    tex_doc.add_line(description, 'Introduction')
+
+    description = 'While libraries are available to support many components of the data science pipeline, ' \
+        'the application of software engineering principles to epidemiological modelling remains limited.\\cite{horner2020} ' \
+        'The rapid growth of data science as a field, and the corresponding investment in ' \
+        'platform development provides constant opportunities to expand the range of packages ' \
+        'that can be integrated with such models, provided the model code itself is developed with this in mind. ' \
+        'In particular, a software package whose single responsibility is model construction can separate ' \
+        'this concern from the multiple other stages in the formulation of a modelling-based analysis.'
+    tex_doc.add_line(description, 'Introduction')
+
+    description = "Australia's 2022 epidemic provides an important case study for understanding " \
+        'the epidemiological characteristics of COVID-19, because of the distinct epidemic waves, ' \
+        'negligible prevalence of natural immunity from past infection,\\cite{machalek2022,vette2022,gidding2021} ' \
+        'stable vaccination coverage and multiple high-quality data streams. ' \
+        'Australia pursued an elimination approach through the first two years of the pandemic, ' \
+        'achieving one of the lowest COVID-19-related mortality rates in the world.\\cite{wang2022} ' \
+        'Shortly after achieving very high coverage of wild-type vaccination, ' \
+        'most of the country emerged abruptly from this elimination phase in 2022, ' \
+        'relaxing most restrictions on population mobility as the Omicron variant rapidly replaced ' \
+        'the preceding Delta SARS-CoV-2 variant of concern.\\cite{covidepireport2022} ' \
+        'Through 2022, national data are available that include a daily time-series for cases and deaths, ' \
+        'serial survey-derived testing behaviour, population mobility, vaccination coverage and seroprevalence. ' \
+        'Of particular value, the serial serosurveys demonstrate a rapid rise in nucleocapsid antibodies to ' \
+        'more than 65\% seroprevalence by late August 2022.\\cite{machalek2023} The combination of these data sources provides ' \
+        'the opportunity to improve our understanding of COVID-19 epidemiology in the Omicron era, ' \
+        'such as quantification of the case detection rate and characteristics of population immunity. '
+    tex_doc.add_line(description, 'Introduction')
+
+
 def add_methods_blurbs_to_tex(tex_doc: TexDoc):
     description = 'We constructed four candidate models with common underlying characteristics ' \
         'to represent COVID-19 dynamics during the course of 2022 in Australia. ' \
@@ -182,7 +242,7 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'First, the mixing matrix that remains fixed over modelled time in the unextended model ' \
         'was allowed to vary over time, with the location-specific contribution ' \
         'to each cell of the matrix scaled according to metrics sourced from ' \
-        'Google’s Community Mobility Reports.\\cite{googlemob2023}\n'
+        "Google's Community Mobility Reports.\\cite{googlemob2023}\n"
     tex_doc.add_line(description, 'Methods')
 
     description = 'Second, the model was extended to allow that the historical profile of ' \
