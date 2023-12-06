@@ -2,7 +2,7 @@ from emutools.tex import TexDoc
 from inputs.constants import RUN_IDS, PRIMARY_ANALYSIS, BURN_IN, OPTI_DRAWS, ANALYSIS_FEATURES
 
 
-def add_intro_blurb_to_tex(tex_doc: TexDoc):
+def add_explanatory_blurb_to_tex(tex_doc: TexDoc):
     description = 'The following document describes the methods used in our analyses ' \
         'of the 2022 SARS-CoV-2 epidemic in Australia. ' \
         f'We constructed {len(RUN_IDS)} alternative dynamic transmission models ' \
@@ -297,6 +297,7 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'largely because of its superior fit to seroprevalence estimates.\n'
     tex_doc.add_line(description, 'Methods')
 
+
 def add_results_blurbs_to_tex(tex_doc: TexDoc):
     description = 'We released a suite of open-source packages to support infectious disease modelling ' \
         'and used these packages to represent the key epidemiological processes relevant to ' \
@@ -503,6 +504,7 @@ def add_discussion_blurbs_to_tex(tex_doc: TexDoc):
         'or for population heterogeneity in spatial structure or immunity beyond our two-category approach. ' \
         'Such configurations and others of interest to the reader can be explored through our interactive notebooks.'
     tex_doc.add_line(description, 'Discussion')
+
 
 def add_conclusions_blurb_to_tex(tex_doc: TexDoc):
     description = "Australia's 2022 COVID-19 epidemic was characterised by overlapping waves that " \
