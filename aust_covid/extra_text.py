@@ -175,14 +175,14 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         '(without vaccination extension). Three subvariant strains were introduced into the base model ' \
         'through the course of the simulation to represent the BA.1, BA.2 and BA.5 subvariants of Omicron, ' \
         'with incomplete cross-immunity to subsequent strains during the early recovered stage ' \
-        'conferred through infection with earlier strains.'
+        'conferred through infection with earlier strains.\n'
     tex_doc.add_line(description, 'Methods')
 
     description = 'The unextended model described in the preceding paragraph was elaborated in two respects. ' \
         'First, the mixing matrix that remains fixed over modelled time in the unextended model ' \
         'was allowed to vary over time, with the location-specific contribution ' \
         'to each cell of the matrix scaled according to metrics sourced from ' \
-        'Google’s Community Mobility Reports.\\cite{googlemob2023}'
+        'Google’s Community Mobility Reports.\\cite{googlemob2023}\n'
     tex_doc.add_line(description, 'Methods')
 
     description = 'Second, the model was extended to allow that the historical profile of ' \
@@ -193,13 +193,13 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'were rolled out through 2022. Vaccine-derived immunity was then allowed to wane, ' \
         'with vaccinated persons returning to a third immunity stratum ' \
         'with the same susceptibility to infection as those who had never received vaccination ' \
-        'under these programs.'
+        'under these programs.\n'
     tex_doc.add_line(description, 'Methods')
 
     description = 'From these two extensions to the base model, ' \
         'we created four alternative analytical approaches: ' \
         'no additional structure (“none”), mobility extension only (“mob”), ' \
-        'vaccination extension only (“vacc”), and both mobility and vaccination extensions (“both”).'
+        'vaccination extension only (“vacc”), and both mobility and vaccination extensions (“both”).\n'
     tex_doc.add_line(description, 'Methods')
 
     description = 'Last, we calibrated each of the four candidate models described ' \
@@ -221,5 +221,5 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'All important epidemiological parameter inputs were included in the calibration algorithm, ' \
         'creating a 17-dimensional parameter space for exploration. ' \
         'The approach with only mobility implemented was selected as the primary analysis for parameter inference, ' \
-        'largely because of its superior fit to seroprevalence estimates.'
+        'largely because of its superior fit to seroprevalence estimates.\n'
     tex_doc.add_line(description, 'Methods')
