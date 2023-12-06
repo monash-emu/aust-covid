@@ -463,7 +463,7 @@ def add_discussion_blurbs_to_tex(tex_doc: TexDoc):
         'which has not been quantified in the Australian context to our knowledge. ' \
         'Rather than attempt to adjust for such biases, ' \
         'we acknowledged the bidirectional uncertainty in these data through the likelihood calculation for ' \
-        'the seroprevalence calibration target.'
+        'the seroprevalence calibration target.\n'
     tex_doc.add_line(description, 'Discussion')
 
     description = 'More generally, while adjusting our approach to allow for a smaller first wave would have ' \
@@ -478,7 +478,7 @@ def add_discussion_blurbs_to_tex(tex_doc: TexDoc):
         'likely part of the explanation for this wave being smaller than expected.\\cite{dunstan2022,llyod2022} ' \
         'We considered that accepting model runs that modestly over-estimated ' \
         'the first seroprevalence estimate but under-estimated the latter two estimates was the optimal balance, ' \
-        'as was the case with our chosen primary analysis for parameter inference.'
+        'as was the case with our chosen primary analysis for parameter inference.\n'
     tex_doc.add_line(description, 'Discussion')
 
     description = 'By contrast to mobility, allowing for the additional vaccination programs rolled out during 2022 to ' \
@@ -492,7 +492,7 @@ def add_discussion_blurbs_to_tex(tex_doc: TexDoc):
         'by contrast to its marked decline during January driven by natural immunity following the major BA.1 wave. ' \
         'Therefore, the timing of this program did not help to explain the epidemic profile over a period when ' \
         'the overall change in population immunity was difficult to determine because of ' \
-        'the simultaneous implementation of several vaccination programs when immunity from past vaccination was waning.'
+        'the simultaneous implementation of several vaccination programs when immunity from past vaccination was waning.\n'
     tex_doc.add_line(description, 'Discussion')
 
     description = 'Our final model structure aimed to balance parsimony against complexity and ' \
