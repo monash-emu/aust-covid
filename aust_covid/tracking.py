@@ -155,7 +155,7 @@ def track_notifications(
     fig.add_traces(survey_fig.data, rows=1, cols=1)
     fig.add_traces(ratio_fig.data, rows=2, cols=1)
     fig.update_layout(showlegend=False, height=600)
-    add_image_to_doc(fig, 'cdr_construction', 'svg', 'Construction of CDR function.', tex_doc, 'Outputs', caption=caption)
+    add_image_to_doc(fig, 'cdr_construction', 'svg', 'Construction of CDR function.', tex_doc, 'Supplemental figures', caption=caption)
 
 
 def track_deaths(

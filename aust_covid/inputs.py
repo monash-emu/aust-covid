@@ -351,7 +351,7 @@ def get_ifrs(tex_doc: StandardTexDoc) -> dict:
     caption = "O'Driscoll and Erikstrup indicate the original data reported in the studies of interest. " \
         'Subsequent traces indicate the further steps in estimating values for use in the model, ' \
         'with the last trace representing the parameter applied according to the lower value of each age bracket. '
-    add_image_to_doc(fig, ifr_fig_name, 'svg', title, tex_doc, 'Parameters', caption=caption)
+    add_image_to_doc(fig, ifr_fig_name, 'svg', title, tex_doc, 'Supplemental figures', caption=caption)
     model_breakpoint_values.index = model_breakpoint_values.index.map(lambda i: f'ifr_{int(i)}')
     return model_breakpoint_values.to_dict()
 

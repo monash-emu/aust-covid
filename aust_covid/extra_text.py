@@ -528,4 +528,27 @@ def add_acknowledgements_blurb_to_tex(tex_doc: TexDoc):
         'EMU also provided modelling to countries of the Asia-Pacific through ' \
         'a series of contracts with the World Health Organization Western Pacific and South East Asia Regional Offices over the course of the pandemic, ' \
         'through which much of the software development underpinning this analysis was undertaken.'
-    tex_doc.add_line(description, 'Acknowledgements')
+    tex_doc.add_line(description, 'Acknowledgements', 'Funding')
+
+    description = 'Conceptualization: JMT\n' \
+        'Data curation: JMT, AEH, DSS\n' \
+        'Formal analysis: JMT\n' \
+        'Funding acquisition: JMT\n' \
+        'Investigation: JMT, AEH\n' \
+        'Methodology: JMT, AEH, DSS, MTM, ASH, ESM, RR\n' \
+        'Software: JMT, DS\n' \
+        'Supervision: RR\n' \
+        'Visualization: JMT\n' \
+        'Writing original draft: JMT\n' \
+        'Writing - review & editing: JMT, AEH, DSS, MTM, ASH, ESM, RR'
+    tex_doc.add_line(description, 'Acknowledgements', 'Author contributions')
+
+    description = 'The authors declare no competing interests.'
+    tex_doc.add_line(description, 'Acknowledgements', 'Competing interests')
+
+    description = 'All data sources used for the calibration and parameterisation of models is obtained from open-sources or published literature. ' \
+        'All sources for external data are documented in the main manuscript, methods or supplementary materials. ' \
+        'All code for this analysis is available at the analysis \\href{https://github.com/monash-emu/aust-covid}{homepage}. ' \
+        'A number of Google Colab notebooks that allow anyone to interact with the model code, ' \
+        'explore calibration results and outputs and test model assumptions are available at the provided github link. '
+    tex_doc.add_line(description, 'Acknowledgements', 'Data and materials availability')

@@ -355,14 +355,14 @@ def adapt_gb_matrices_to_aust(
     input_pop_fig = input_pop_fig.update_layout(height=400, showlegend=False)
     title = 'Stacked Australian population sizes implemented in the model.'
     caption = 'Western Australia (blue bars), aggregate of remaining major jurisdictions of Australia (red bars).'
-    add_image_to_doc(input_pop_fig, 'input_population', 'svg', title, tex_doc, 'Mixing', caption=caption)
+    add_image_to_doc(input_pop_fig, 'input_population', 'svg', title, tex_doc, 'Supplemental figures', caption=caption)
 
     # UK population
     raw_uk_data = load_uk_pop_data(tex_doc)
     uk_pop_fig = px.bar(raw_uk_data, labels=pop_labels)
     uk_pop_fig.update_layout(showlegend=False, height=400)
     caption = 'United Kingdom population sizes used in matrix weighting.'
-    add_image_to_doc(uk_pop_fig, 'uk_population', 'svg', caption, tex_doc, 'Mixing')
+    add_image_to_doc(uk_pop_fig, 'uk_population', 'svg', caption, tex_doc, 'Supplemental figures')
 
     # Weighting calculations
     aust_age_props = pop_data.sum(axis=1) / pop_data.sum().sum()
@@ -386,9 +386,9 @@ def adapt_gb_matrices_to_aust(
     adj_matrix_fig = plot_mixing_matrices(adjusted_matrices)
     caption = 'Number of contacts per day by respondent age group (row), contact age group (column) and location (panel). '
     title = 'Raw contact rates obtained from POLYMOD surveys for the United Kingdom.'
-    add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'svg', title, tex_doc, 'Mixing', caption=caption)
+    add_image_to_doc(raw_matrix_fig, 'raw_matrices', 'svg', title, tex_doc, 'Supplemental figures', caption=caption)
     title = 'Contact rates after adjustment to the Australian population distribution.'
-    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', 'svg', title, tex_doc, 'Mixing', caption=caption)
+    add_image_to_doc(adj_matrix_fig, 'adjusted_matrices', 'svg', title, tex_doc, 'Supplemental figures', caption=caption)
 
     return adjusted_matrices
 
