@@ -93,6 +93,7 @@ def plot_posterior_comparison(
     display_names: dict,
     span: float,
     grid: Optional[Tuple[int]]=None,
+    font_size=20,
 ) -> plt.Figure:
     """Area plot posteriors against prior distributions.
 
@@ -107,7 +108,7 @@ def plot_posterior_comparison(
         The figure
     """
     labeller = MapLabeller(var_name_map=display_names)
-    comparison_plot = az.plot_density(idata, var_names=req_vars, shade=0.5, labeller=labeller, point_estimate=None, hdi_prob=span, grid=grid)
+    comparison_plot = az.plot_density(idata, var_names=req_vars, shade=0.5, labeller=labeller, point_estimate=None, hdi_prob=span, grid=grid, textsize=font_size)
     req_priors = [p for p in priors if p.name in req_vars]
     for i_ax, ax in enumerate(comparison_plot.ravel()[:len(req_vars)]):
         ax_limits = ax.get_xlim()
@@ -115,7 +116,9 @@ def plot_posterior_comparison(
         y_vals = req_priors[i_ax].pdf(x_vals)
         ax.fill_between(x_vals, y_vals, color='k', alpha=0.2, linewidth=2)
     plt.close()
-    return comparison_plot[0, 0].figure
+    fig = comparison_plot[0, 0].figure
+    fig.tight_layout()
+    return fig
 
 
 def tabulate_priors(
