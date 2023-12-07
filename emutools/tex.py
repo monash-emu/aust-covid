@@ -301,7 +301,7 @@ class ConcreteTexDoc:
             command = 'includesvg'
         else:
             raise ValueError('File type for figure not supported yet')
-        self.add_line('\\begin{figure}', section, subsection)
+        self.add_line('\\begin{figure}[H]', section, subsection)
         self.add_line(f'\\caption{{\\textbf{{{title}}} {caption}}}', section, subsection)
         self.add_line('\\begin{adjustbox}{center, max width=\paperwidth}', section, subsection)
         command_str = f'\\{command}[width={str(round(fig_width, 2))}\\paperwidth]{{./{fig_path}/{filename}.{filetype}}}'
@@ -377,6 +377,7 @@ class StandardTexDoc(ConcreteTexDoc):
             'array',
             'svg',
             'adjustbox',
+            'float',
         ]
         for package in standard_packages:
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')
