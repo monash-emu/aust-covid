@@ -631,7 +631,7 @@ def plot_infection_processes(
     """
     target_name = req_target.replace('_ma', '')
     cum_infection_processes_df = derived_df[[f'process_{i}X{j}' for i in STRAIN_STRATA for j in INFECTION_PROCESSES]].cumsum(axis=1)
-    fig = make_subplots(2, 1, subplot_titles=['infection processes', target_name], row_heights=[0.7, 0.3], vertical_spacing=0.05, shared_xaxes=True)
+    fig = make_subplots(2, 1, subplot_titles=['A', 'B'], row_heights=[0.7, 0.3], vertical_spacing=0.05, shared_xaxes=True)
     for output in cum_infection_processes_df.columns:
         i_process = INFECTION_PROCESSES.index(output.split('X')[1])
         i_strain = STRAIN_STRATA.index(output.split('X')[0].replace('process_', ''))

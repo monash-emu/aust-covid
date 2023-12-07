@@ -290,7 +290,7 @@ def plot_output_ranges(
         The interactive figure
     """
     n_cols = 2
-    titles = [o.replace('prop', 'proportion').replace('seropos', 'seropositive').replace('_ma', '').replace('_', ' ') for o in outputs]
+    titles = ['A', 'B', 'C', 'D']
     fig = get_standard_subplot_fig(2, n_cols, titles)
     for i, output in enumerate(outputs):
         row, col = get_row_col_for_subplots(i, n_cols)
@@ -398,12 +398,13 @@ def plot_like_components_by_analysis(
     axes = axes.reshape(-1)
     plotter = getattr(sns, plot_type)
     legend_plot_types = ['kdeplot', 'histplot']
+    titles = ['A', 'B', 'C', 'D']
     for m, comp in enumerate(like_outputs.keys()):
         clip = plot_requests[comp][:2] if plot_requests else None
         kwargs = {'common_norm': False, 'clip': clip, 'fill': True, 'alpha': alpha, 'linewidth': linewidth} if plot_type == 'kdeplot' else {}        
         ax = axes[m]
         plotter(like_outputs[comp].loc[:, BURN_IN:, :], ax=ax, **kwargs)
-        ax.set_title(plot_requests[comp][2])
+        ax.set_title(titles[m])
         if m == 0 and plot_type in legend_plot_types:
             sns.move_legend(ax, loc='upper left')
         elif plot_type in legend_plot_types:
