@@ -276,7 +276,7 @@ def get_ifrs(tex_doc: StandardTexDoc) -> dict:
         'We now have estimates for each 5-year band from 0-4 to 75-79 and for 80+ years-old. ' \
         'To calculate the IFR parameter for the modelled 75+ age band, we took an average of the 75-79 and 80+ ' \
         'estimates, weighted using the proportion of the Australian population aged 75+ who are aged ' \
-        '75-79 and 80+. '
+        '75-79 and 80+. An illustration of this process is presented in Figure \\ref{ifr_calculation}. '
     tex_doc.add_line(description, 'Parameters', subsection='Infection Fatality Rates')
     
     # Raw data from O'Driscoll, 5-year age bands

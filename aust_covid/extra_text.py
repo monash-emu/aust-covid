@@ -95,7 +95,8 @@ def add_calibration_blurb_to_tex(tex_doc: TexDoc):
         'are presented in Figures \\ref{trace_fig_1}, \\ref{trace_fig_2} and \\ref{trace_fig_3}. ' \
         'These are used for the epidemiological interpretation of our results in the main manuscript. ' \
         'Overall posterior densitites (pooled over calibration chains) compared against prior distributions are ' \
-        'presented in Figures \\ref{comp_fig_1} and \\ref{comp_fig_2}. '
+        'presented in Figures \\ref{comp_fig_1_none}, \\ref{comp_fig_2_none}, ' \
+        '\\ref{comp_fig_1_mob}, \\ref{comp_fig_2_mob}, \\ref{comp_fig_1_vacc} and \\ref{comp_fig_2_vacc}. '
     tex_doc.add_line(description, 'Calibration results', subsection='Parameter inference')
 
 
