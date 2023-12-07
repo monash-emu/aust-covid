@@ -540,7 +540,7 @@ def add_acknowledgements_blurb_to_tex(tex_doc: TexDoc):
         'Supervision: RR\n' \
         'Visualization: JMT\n' \
         'Writing original draft: JMT\n' \
-        'Writing - review & editing: JMT, AEH, DSS, MTM, ASH, ESM, RR'
+        'Writing - review and editing: JMT, AEH, DSS, MTM, ASH, ESM, RR'
     tex_doc.add_line(description, 'Acknowledgements', 'Author contributions')
 
     description = 'The authors declare no competing interests.'
