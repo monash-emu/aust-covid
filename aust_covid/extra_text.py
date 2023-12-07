@@ -249,14 +249,14 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'through the course of the simulation to represent the BA.1, BA.2 and BA.5 subvariants of Omicron, ' \
         'with incomplete cross-immunity to subsequent strains during the early recovered stage ' \
         'conferred through infection with earlier strains.\n'
-    tex_doc.add_line(description, 'Methods')
+    tex_doc.add_line(description, 'Materials and methods')
 
     description = 'The unextended model described in the preceding paragraph was elaborated in two respects. ' \
         'First, the mixing matrix that remains fixed over modelled time in the unextended model ' \
         'was allowed to vary over time, with the location-specific contribution ' \
         'to each cell of the matrix scaled according to metrics sourced from ' \
         "Google's Community Mobility Reports.\\cite{googlemob2023}\n"
-    tex_doc.add_line(description, 'Methods')
+    tex_doc.add_line(description, 'Materials and methods')
 
     description = 'Second, the model was extended to allow that the historical profile of ' \
         'vaccination through 2022 could have influenced rates of infection. ' \
@@ -267,13 +267,13 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'with vaccinated persons returning to a third immunity stratum ' \
         'with the same susceptibility to infection as those who had never received vaccination ' \
         'under these programs.\n'
-    tex_doc.add_line(description, 'Methods')
+    tex_doc.add_line(description, 'Materials and methods')
 
     description = 'From these two extensions to the base model, ' \
         'we created four alternative analytical approaches: ' \
         'no additional structure (``none"), mobility extension only (``mob"), ' \
         'vaccination extension only (``vacc"), and both mobility and vaccination extensions (``both").\n'
-    tex_doc.add_line(description, 'Methods')
+    tex_doc.add_line(description, 'Materials and methods')
 
     description = 'Last, we calibrated each of the four candidate models described ' \
         'in the preceding paragraph to publicly available data ' \
@@ -295,7 +295,7 @@ def add_methods_blurbs_to_tex(tex_doc: TexDoc):
         'creating a 17-dimensional parameter space for exploration. ' \
         'The approach with only mobility implemented was selected as the primary analysis for parameter inference, ' \
         'largely because of its superior fit to seroprevalence estimates.\n'
-    tex_doc.add_line(description, 'Methods')
+    tex_doc.add_line(description, 'Materials and methods')
 
 
 def add_results_blurbs_to_tex(tex_doc: TexDoc):
@@ -518,3 +518,14 @@ def add_conclusions_blurb_to_tex(tex_doc: TexDoc):
         'these results through interactive notebooks and online visuals and could constitute ' \
         'a new paradigm for infectious disease modelling.'
     tex_doc.add_line(description, 'Conclusions')
+
+
+def add_acknowledgements_blurb_to_tex(tex_doc: TexDoc):
+    description = 'James Trauer is supported by a Discovery Early Career Researcher Award from the Australian Research Council (DE230100730). ' \
+        'The Epidemiological Modelling Unit at the School of Public Health and Preventive Medicine (EMU) ' \
+        'was supported by a Rapid Research Digital Infrastructure COVID-19 grant from ' \
+        'the Medical Research Future Fund during 2021 and 2022 (RRDHI000027). ' \
+        'EMU also provided modelling to countries of the Asia-Pacific through ' \
+        'a series of contracts with the World Health Organization Western Pacific and South East Asia Regional Offices over the course of the pandemic, ' \
+        'through which much of the software development underpinning this analysis was undertaken.'
+    tex_doc.add_line(description, 'Acknowledgements')
