@@ -301,7 +301,7 @@ class ConcreteTexDoc:
             command = 'includesvg'
         else:
             raise ValueError('File type for figure not supported yet')
-        self.add_line('\\begin{figure}', section, subsection)
+        self.add_line('\\begin{figure}[H]', section, subsection)
         self.add_line(f'\\caption{{\\textbf{{{title}}} {caption}}}', section, subsection)
         self.add_line('\\begin{adjustbox}{center, max width=\paperwidth}', section, subsection)
         command_str = f'\\{command}[width={str(round(fig_width, 2))}\\paperwidth]{{./{fig_path}/{filename}.{filetype}}}'
@@ -371,17 +371,18 @@ class StandardTexDoc(ConcreteTexDoc):
         # Packages that don't require arguments
         standard_packages = [
             'hyperref',
-            'biblatex',
             'graphicx',
             'longtable',
             'booktabs',
             'array',
             'svg',
             'adjustbox',
+            'float',
         ]
         for package in standard_packages:
             self.add_line(f'\\usepackage{{{package}}}', 'preamble')
         self.add_line('\DeclareUnicodeCharacter{2212}{-}', 'preamble')  # SVG compilation often crashes without this
+        self.add_line('\\usepackage[sorting=none, style=science]{biblatex}', 'preamble')
 
         self.add_line(r'\usepackage[a4paper, total={15cm, 20cm}]{geometry}', 'preamble')
         self.add_line(r'\usepackage[labelfont=bf,it]{caption}', 'preamble')
@@ -413,6 +414,7 @@ def add_image_to_doc(
     Args:
         fig: The figure object
         filename: A string for the filenam to save the figure as
+        filetype: The extension to determine the type of figure
         caption: Figure caption for the document
         tex_doc: The working document
         section: Pass through to include_figure method to the document writing object
