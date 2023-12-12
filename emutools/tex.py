@@ -8,7 +8,6 @@ from abc import abstractmethod, ABC
 from matplotlib.figure import Figure as MplFig
 from matplotlib import pyplot as plt
 from plotly.graph_objects import Figure as PlotlyFig
-from inputs.constants import SUPPLEMENT_PATH
 
 
 def get_tex_formatted_date(
@@ -413,7 +412,7 @@ def add_image_to_doc(
 
     Args:
         fig: The figure object
-        filename: A string for the filenam to save the figure as
+        filename: A string for the filename to save the figure as
         filetype: The extension to determine the type of figure
         caption: Figure caption for the document
         tex_doc: The working document
@@ -425,9 +424,11 @@ def add_image_to_doc(
     Raises:
         TypeError: If the figure is not one of the two supported formats
     """
+    if not hasattr(tex_doc, 'path'):
+        return
     fig_folder = 'figures'
-    fig_path = SUPPLEMENT_PATH / fig_folder
-    Path(fig_path).mkdir(exist_ok=True)
+    fig_path = tex_doc.path / fig_folder
+    fig_path.mkdir(exist_ok=True)
     full_filename = f'{filename}.{filetype}'
     if isinstance(fig, np.ndarray):
         plt.savefig(fig_path / full_filename)
