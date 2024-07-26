@@ -144,7 +144,7 @@ def add_vaccination_blurb_to_tex(tex_doc: TexDoc):
         'under each of these programs and divided by the time interval over which this occurred ' \
         'to calculate the rate at which these population groups ' \
         'received vaccination (Figure \\ref{vacc_implement}). ' \
-        'These were then applied as unidirectional flows taht transitioned persons from ' \
+        'These were then applied as unidirectional flows that transitioned persons from ' \
         'the unvaccinated stratum to the vaccinated stratum. ' \
         'For this extended model configuration, a third stratum was added to ' \
         'the immunity stratification. ' \
