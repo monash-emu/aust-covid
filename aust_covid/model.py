@@ -470,10 +470,24 @@ def get_default_imm_strat(
     """
     imm_strata = ['imm', 'nonimm']
     protect_param = 'imm_infect_protect'
-    description = 'All (multiply stratified) compartments introduced above were further ' \
-        f'stratified into {len(imm_strata)} strata with differing levels of susceptibility to infection ' \
-        'in the two analyses without extension for vaccination. ' \
+    description = f'All (multiply stratified) compartments introduced above were further stratified into {len(imm_strata)} strata ' \
+        'with differing levels of susceptibility to infection in the two analyses without extension for vaccination. ' \
         'For these two analyses, a calibrated parameter was used to represent ' \
+        'the proportion of the population with immunological protection against infection. ' \
+        'A second calibrated parameter (Immune protection) was then used to quantify the relative reduction in the rate of ' \
+        'infection and reinfection for those in the stratum with reduced susceptibility. ' \
+        'This approach was adopted because some population heterogeneity in susceptibility ' \
+        'may have been introduced through a proportion of the population having greater protection through vaccination, ' \
+        'boosting or other intrinsic individual variation that would not otherwise be captured ' \
+        'under the assumptions inherent in our compartmental model. By contrast to the vaccination extension approach. ' \
+        'For the model configurations without the vaccination extension, no flows between these strata were applied, ' \
+        'such that the proportion of the population in each of the two strata remains fixed over time. ' \
+        'Under these model configurations, this approach was introduced in order to increase ' \
+        'the extent of heterogeneity in susceptibility to infection in the modelled population ' \
+        'and was not intended to represent any observable characteristic of individuals in the simulated population. ' \
+        'This approach was chosen because it is likely that this is epidemiologically accurate, ' \
+        'and because the first simulated epidemic wave tended to be very large in early exploratory analyses. ' \
+        'For these analyses, a calibrated parameter was used to represent ' \
         'the proportion of the population with immunological protection against infection. ' \
         f'A second calibrated parameter ({abbreviations[protect_param]}) was then used ' \
         'to quantify the relative reduction in the rate of ' \
@@ -484,6 +498,7 @@ def get_default_imm_strat(
         'would not otherwise be captured under the assumptions inherent in our compartmental model. ' \
         'By contrast to the vaccination extension approach, no flows between these strata were applied, ' \
         'such that the proportion of the population in each of the two strata remains fixed over time. '
+    
     tex_doc.add_line(description, 'Stratification', subsection='Heterogeneous susceptibility')
 
     imm_strat = Stratification('immunity', imm_strata, compartments)
