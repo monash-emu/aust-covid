@@ -13,7 +13,7 @@ from scipy import stats
 from summer2 import CompartmentalModel
 
 from aust_covid.inputs import load_national_case_data, load_owid_case_data, load_case_targets, load_who_death_data, load_serosurvey_data
-from inputs.constants import PLOT_START_DATE, AGE_STRATA, ANALYSIS_END_DATE, CHANGE_STR, COLOURS, RUN_IDS, INFECTION_PROCESSES, STRAIN_STRATA
+from aust_covid.constants import PLOT_START_DATE, AGE_STRATA, ANALYSIS_END_DATE, CHANGE_STR, COLOURS, RUN_IDS, INFECTION_PROCESSES, STRAIN_STRATA
 from emutools.tex import DummyTexDoc
 from aust_covid.inputs import load_household_impacts_data, get_subvariant_prop_dates
 from aust_covid.tracking import get_param_to_exp_plateau, get_cdr_values

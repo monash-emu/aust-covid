@@ -8,7 +8,7 @@ from abc import abstractmethod, ABC
 from matplotlib.figure import Figure as MplFig
 from matplotlib import pyplot as plt
 from plotly.graph_objects import Figure as PlotlyFig
-from inputs.constants import SUPPLEMENT_PATH
+from aust_covid.constants import SUPPLEMENT_PATH
 
 
 def get_tex_formatted_date(

@@ -14,7 +14,7 @@ pd.options.plotting.backend = 'plotly'
 
 import estival.priors as esp
 
-from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_PATH, BURN_IN
+from aust_covid.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_PATH, BURN_IN
 from emutools.plotting import get_row_col_for_subplots
 from emutools.utils import get_target_from_name, round_sigfig
 

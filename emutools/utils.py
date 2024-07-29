@@ -6,8 +6,7 @@ import yaml as yml
 
 from summer2.parameters import Function, Data, DerivedOutput
 
-from inputs.constants import INPUTS_PATH
-
+from aust_covid.constants import PACKAGE_PATH
 
 def round_sigfig(
     value: float, 
@@ -123,7 +122,7 @@ def load_param_info() -> pd.DataFrame:
             evidence: TeX-formatted full description of the evidence underpinning the choice of value
             abbreviations: Short names for parameters, e.g. for some plots
     """
-    with open(INPUTS_PATH / 'parameters.yml', 'r') as param_file:
+    with open(PACKAGE_PATH / 'parameters.yml', 'r') as param_file:
         param_info = yml.safe_load(param_file)
 
     # Check each loaded set of keys (parameter names) are the same as the arbitrarily chosen first key

@@ -8,7 +8,7 @@ import numpy as np
 from summer2.parameters import Function, Data, Time
 from summer2.utils import Epoch
 
-from inputs.constants import IMMUNITY_LAG
+from aust_covid.constants import IMMUNITY_LAG
 
 
 def get_vacc_data_masks(
