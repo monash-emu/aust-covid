@@ -1,33 +1,39 @@
-[tool.poetry]
+[project]
 name = "aust_covid"
 version = "0.1"
-readme = "README.md"
-license = "BSD-2-Clause"
+description = "Implementation of packages developed by EMU to the epidemiological problem of the 2022 COVID-19 epidemic in Australia"
+authors = [
+    {name = "James Trauer", email = "james.trauer@monash.edu"}
+]
+dependencies = [
+    "pandas==1.5.3",
+    "estival ==0.4.9",
+    "kaleido ==0.2.1",
+    "pylatex ==1.4.1",
+    "summerepi2 >=1.3.0",
+    "tables >=3",
+    "openpyxl ==3.1.0",
+    "seaborn",
+    "PyYAML",
+    "nbformat",
+    "ipykernel",
+    "Jinja2"
+]
+
+[project.urls]
 homepage = "https://github.com/monash-emu/aust-covid"
 repository = "https://github.com/monash-emu/aust-covid"
 documentation = "https://github.com/monash-emu/aust-covid"
-keywords = [
-    "covid19",
-    "summerepi"
-]
-description = "Implementation of packages developed by EMU to the epidemiological problem of the 2022 COVID-19 epidemic in Australia"
-authors = ["James Trauer <james.trauer@monash.edu>"]
-packages = [
-    {include = "aust_covid"},
-    {include = "emutools"}
-]
 
-[tool.poetry.dependencies]
-python = ">=3.8.0, <4.0.0"
-estival = "==0.4.9"
-kaleido = "==0.2.1"
-pylatex = "==1.4.1"
-summerepi2 = ">=1.3.0"
-tables = "^3"
+[tool.setuptools]
+packages = ["aust_covid", "emutools"]
+
+[tool.setuptools.package-data]
+"aust_covid" = ["data/*.csv", "data/*.xlsx", "data/*.yml"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 100

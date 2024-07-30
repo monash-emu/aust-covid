@@ -8,7 +8,7 @@ from summer2.functions.time import get_linear_interpolation_function as linear_i
 
 from aust_covid.inputs import load_raw_pop_data, get_raw_state_mobility
 from emutools.tex import StandardTexDoc
-from inputs.constants import MOBILITY_MAP, MOBILITY_AVERAGE_WINDOW, CHANGE_STR
+from .constants import MOBILITY_MAP, MOBILITY_AVERAGE_WINDOW, CHANGE_STR
 
 
 def get_non_wa_mob_averages(

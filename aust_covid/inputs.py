@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 from plotly import graph_objects as go
 
 from emutools.tex import get_tex_formatted_date, TexDoc, StandardTexDoc
-from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
-from inputs.constants import DATA_PATH, NATIONAL_DATA_START_DATE, NUCLEOCAPS_SENS
+from .constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW, IMMUNITY_LAG, WHO_CHANGE_WEEKLY_REPORT_DATE, AGE_STRATA
+from .constants import DATA_PATH, NATIONAL_DATA_START_DATE, NUCLEOCAPS_SENS
 from emutools.tex import add_image_to_doc
 
 CHANGE_STR = '_percent_change_from_baseline'

@@ -7,7 +7,7 @@ import estival.priors as esp
 import estival.targets as est
 
 from emutools.tex import TexDoc, get_tex_formatted_date
-from inputs.constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
+from .constants import TARGETS_START_DATE, TARGETS_AVERAGE_WINDOW
 from aust_covid.inputs import load_case_targets, load_who_death_data, load_serosurvey_data
 
 

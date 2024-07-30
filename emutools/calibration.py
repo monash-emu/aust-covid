@@ -14,7 +14,7 @@ pd.options.plotting.backend = 'plotly'
 
 import estival.priors as esp
 
-from inputs.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, RUNS_PATH, BURN_IN
+from aust_covid.constants import PLOT_START_DATE, ANALYSIS_END_DATE, RUN_IDS, BURN_IN, get_project_paths
 from emutools.plotting import get_row_col_for_subplots
 from emutools.utils import get_target_from_name, round_sigfig
 
@@ -372,7 +372,7 @@ def get_like_components(
     for comp in components:
         like_outputs[comp] = pd.DataFrame(columns=list(RUN_IDS.keys()))
         for analysis, run_id in RUN_IDS.items():
-            working_data = pd.read_hdf(RUNS_PATH / run_id / 'output/results.hdf', 'likelihood')[comp]
+            working_data = pd.read_hdf(get_project_paths()["RUNS_PATH"] / run_id / 'output/results.hdf', 'likelihood')[comp]
             like_outputs[comp][analysis] = working_data
     return like_outputs
 

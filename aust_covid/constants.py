@@ -46,12 +46,9 @@ MOBILITY_MAP = {
         },  
 }
 
-PROJECT_PATH = Path(__file__).parent.parent.resolve()
-DATA_PATH = PROJECT_PATH / 'data'
-SUPPLEMENT_PATH = PROJECT_PATH / 'supplement'
-INPUTS_PATH = PROJECT_PATH / 'inputs'
-RUNS_PATH = PROJECT_PATH / 'runs'
-OUTPUTS_PATH = PROJECT_PATH / 'outputs'
+AUST_COVID_PATH = Path(__file__).parent.resolve()
+DATA_PATH = AUST_COVID_PATH / 'data'
+INPUTS_PATH = AUST_COVID_PATH / 'data'
 
 AGE_STRATA = list(range(0, 80, 5))
 STRAIN_STRATA = ['ba1', 'ba2', 'ba5']
@@ -89,3 +86,16 @@ PRIMARY_ANALYSIS = 'mob'
 
 BURN_IN = 25000
 OPTI_DRAWS = 100
+
+PROJECT_PATH = None
+
+def set_project_base_path(path: Path):
+    global PROJECT_PATH
+    PROJECT_PATH = Path(path)
+
+def get_project_paths():
+    return {
+        "SUPPLEMENT_PATH": PROJECT_PATH / 'supplement',
+        "RUNS_PATH": PROJECT_PATH / 'runs',
+        "OUTPUTS_PATH": PROJECT_PATH / 'outputs'
+    }

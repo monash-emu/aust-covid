@@ -6,7 +6,7 @@ import yaml as yml
 
 from summer2.parameters import Function, Data, DerivedOutput
 
-from inputs.constants import INPUTS_PATH
+from aust_covid.constants import INPUTS_PATH
 
 
 def round_sigfig(

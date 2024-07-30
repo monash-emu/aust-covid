@@ -8,7 +8,7 @@ from abc import abstractmethod, ABC
 from matplotlib.figure import Figure as MplFig
 from matplotlib import pyplot as plt
 from plotly.graph_objects import Figure as PlotlyFig
-from inputs.constants import SUPPLEMENT_PATH
+from aust_covid.constants import get_project_paths
 
 
 def get_tex_formatted_date(
@@ -426,7 +426,7 @@ def add_image_to_doc(
         TypeError: If the figure is not one of the two supported formats
     """
     fig_folder = 'figures'
-    fig_path = SUPPLEMENT_PATH / fig_folder
+    fig_path = get_project_paths()["SUPPLEMENT_PATH"] / fig_folder
     Path(fig_path).mkdir(exist_ok=True)
     full_filename = f'{filename}.{filetype}'
     if isinstance(fig, np.ndarray):
