@@ -85,17 +85,24 @@ PRIMARY_ANALYSIS = "mob"
 BURN_IN = 25000
 OPTI_DRAWS = 100
 
-PROJECT_PATH = None
+_PROJECT_PATH = None
 
 
 def set_project_base_path(path: Path):
-    global PROJECT_PATH
-    PROJECT_PATH = Path(path).resolve()
+    global _PROJECT_PATH
+    _PROJECT_PATH = Path(path).resolve()
+
+    return get_project_paths()
 
 
 def get_project_paths():
+    if _PROJECT_PATH is None:
+        raise Exception(
+            "set_project_base_path must be called before attempting to use project paths"
+        )
     return {
-        "SUPPLEMENT_PATH": PROJECT_PATH / "supplement",
-        "RUNS_PATH": PROJECT_PATH / "runs",
-        "OUTPUTS_PATH": PROJECT_PATH / "outputs",
+        "PROJECT_PATH": _PROJECT_PATH,
+        "SUPPLEMENT_PATH": _PROJECT_PATH / "supplement",
+        "RUNS_PATH": _PROJECT_PATH / "runs",
+        "OUTPUTS_PATH": _PROJECT_PATH / "outputs",
     }
