@@ -750,12 +750,17 @@ def get_spatial_stratification(
         "All model compartments previously described were further "
         f"stratified into strata to represent Western Australia ({strata[0].upper()}) and `{strata[1]}' "
         "to represent the remaining major jurisdictions of Australia. "
-        "This approach was adopted to remove WA's contribution to community transmission "
-        f"prior to WA re-opening its borders to the rest of the country on {WA_REOPEN_DATE}. "
+        "This approach removed WA's contribution to community transmission "
+        "prior to WA re-opening its borders to the rest of the country "
+        f"on {get_tex_formatted_date(WA_REOPEN_DATE)}. "
         f"To achieve this effect, transmission in {strata[0].upper()} was initially set to zero, "
-        f"and subsquently scaled up to being equal to that of the {strata[1]} "
-        f"jurisdictions of Australia over a period that governed by a calibrated "
-        f"parameter (`{abbreviations['wa_reopen_period']}'). "
+        f"and subsquently linearly scaled to being equal to that of the {strata[1]} "
+        "jurisdictions of Australia over a period of time governed by a "
+        f"parameter that was varied during calibration (`{abbreviations['wa_reopen_period']}'). "
+        "Mixing between the two modelled spatial patches was modelled as homogeneous. "
+        "The rationale for this approach was primarily to ensure that the modelled population "
+        "through which transmission was effectively occurring was reduced throughout "
+        "the period during which community transmission was only occurring outside of WA. "
     )
     tex_doc.add_line(description, "Stratification", subsection="Spatial")
 
