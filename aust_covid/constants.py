@@ -90,7 +90,7 @@ PROJECT_PATH = None
 
 def set_project_base_path(path: Path):
     global PROJECT_PATH
-    PROJECT_PATH = Path(path)
+    PROJECT_PATH = Path(path).resolve()
 
 
 def get_project_paths():
