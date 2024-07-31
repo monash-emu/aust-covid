@@ -411,12 +411,13 @@ def plot_example_model_matrices(
     fig = get_standard_subplot_fig(3, n_cols, [i.strftime("%B") for i in dates])
     for i_date, date in enumerate(dates):
         index = epoch.datetime_to_number(date)
-        matrix = matrix_func(model_variables={"time": index}, parameters=parameters)[
-            "mixing_matrix"
-        ]
+        matrix = matrix_func(model_variables={"time": index}, parameters=parameters)["mixing_matrix"]
         heatmap = go.Heatmap(x=agegroups, y=agegroups, z=matrix, zmin=0.0, zmax=6.4)
         row, col = get_row_col_for_subplots(i_date, n_cols)
         fig.add_trace(heatmap, row=row, col=col)
+        eigs, _ = np.linalg.eig(matrix)
+        subtitle = f"{date.strftime('%B')}, {str(round(np.real(max(eigs)), 1))}"
+        fig["layout"]["annotations"][i_date].update(text=subtitle)
     return fig.update_layout(height=650)
 
 
