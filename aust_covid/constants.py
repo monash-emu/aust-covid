@@ -105,4 +105,5 @@ def get_project_paths():
         "SUPPLEMENT_PATH": _PROJECT_PATH / "supplement",
         "RUNS_PATH": _PROJECT_PATH / "runs",
         "OUTPUTS_PATH": _PROJECT_PATH / "outputs",
+        "DATA_PATH": _PROJECT_PATH / "aust_covid" / "data",
     }
