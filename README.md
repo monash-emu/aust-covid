@@ -3,7 +3,7 @@ Analysis of the major initial waves of the Australian COVID-19 epidemic
  
 # Links to Google Colab notebooks to run code interactively
 
-## Single (optimised) model run
+## Single model run
 [https://colab.research.google.com/github/monash-emu/aust-covid/blob/main/notebooks/optimise.ipynb]
 
 ## Supplement
