@@ -105,6 +105,7 @@ def plot_posterior_comparison(
     req_vars: list,
     display_names: dict,
     span: float,
+    param_units: Optional[List[str]] = None,
     grid: Optional[Tuple[int]] = None,
 ) -> plt.Figure:
     """Area plot posteriors against prior distributions.
@@ -115,6 +116,7 @@ def plot_posterior_comparison(
         req_vars: The names of the priors to plot
         display_names: Translation of names to names for display
         span: How much of the central density to plot
+        param_units: Information on the units to use for the parameters
 
     Returns:
         The figure
@@ -131,10 +133,15 @@ def plot_posterior_comparison(
     )
     req_priors = [p for p in priors if p.name in req_vars]
     for i_ax, ax in enumerate(comparison_plot.ravel()[: len(req_vars)]):
+        prior = req_priors[i_ax]
         ax_limits = ax.get_xlim()
         x_vals = np.linspace(ax_limits[0], ax_limits[1], 100)
-        y_vals = req_priors[i_ax].pdf(x_vals)
+        if param_units is not None:
+            ax.set_xlabel(param_units[prior.name], fontsize=20)
+        ax.title.set_size(28)
+        y_vals = prior.pdf(x_vals)
         ax.fill_between(x_vals, y_vals, color="k", alpha=0.2, linewidth=2)
+    plt.tight_layout()
     plt.close()
     return comparison_plot[0, 0].figure
 
