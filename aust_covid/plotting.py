@@ -135,13 +135,14 @@ def plot_single_run_outputs(
                 row=output_map[out][0],
                 col=output_map[out][1],
             )
-    for agegroup in model.stratifications["agegroup"].strata:
+    for a, agegroup in enumerate(model.stratifications["agegroup"].strata):
         for col in range(1, 3):
             fig.add_trace(
                 go.Scatter(
                     x=x_vals,
                     y=derived_outputs[f"deathsXagegroup_{agegroup}"],
                     name=f"{agegroup} deaths",
+                    line={"color": f"rgb(0, {1.0 - a / 16.0}, {1.0 - a / 16.0})"}
                 ),
                 row=3,
                 col=col,
