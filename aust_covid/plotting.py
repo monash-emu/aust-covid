@@ -487,10 +487,12 @@ def plot_vacc_implementation(
     Returns:
         Plot in three vertical panels
     """
-    fig = get_standard_subplot_fig(3, 1, ["persons vaccinated", "coverage", "rates implemented"])
+    fig = get_standard_subplot_fig(3, 1, ["number vaccinated", "coverage", "rates implemented"])
     fig.add_traces(df[["primary full", "adult booster"]].plot().data, rows=1, cols=1)
     fig.add_traces(df[["prop primary full", "prop adult booster"]].plot().data, rows=2, cols=1)
     fig.add_traces(df[["rate primary full", "rate adult booster"]].plot().data, rows=3, cols=1)
+    fig["layout"]["yaxis1"]["title"] = "persons"
+    fig["layout"]["yaxis3"]["title"] = "per day"
     return fig.update_layout(showlegend=False)
 
 
