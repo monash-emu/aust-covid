@@ -105,7 +105,7 @@ def plot_posterior_comparison(
     req_vars: list,
     display_names: dict,
     span: float,
-    param_units: Optional[List[str]] = None,
+    param_units: List[str],
     grid: Optional[Tuple[int]] = None,
 ) -> plt.Figure:
     """Area plot posteriors against prior distributions.
@@ -121,6 +121,10 @@ def plot_posterior_comparison(
     Returns:
         The figure
     """
+    title_fontsize = 28
+    axis_fontsize = 20
+    tick_fontsize = 18
+
     labeller = MapLabeller(var_name_map=display_names)
     comparison_plot = az.plot_density(
         idata,
@@ -136,9 +140,9 @@ def plot_posterior_comparison(
         prior = req_priors[i_ax]
         ax_limits = ax.get_xlim()
         x_vals = np.linspace(ax_limits[0], ax_limits[1], 100)
-        if param_units is not None:
-            ax.set_xlabel(param_units[prior.name], fontsize=20)
-        ax.title.set_size(28)
+        ax.set_xlabel(param_units[prior.name], fontsize=axis_fontsize)
+        ax.title.set_size(title_fontsize)
+        ax.tick_params(axis="x", labelsize=tick_fontsize)
         y_vals = prior.pdf(x_vals)
         ax.fill_between(x_vals, y_vals, color="k", alpha=0.2, linewidth=2)
     plt.tight_layout()
