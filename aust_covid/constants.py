@@ -12,90 +12,90 @@ WHO_CHANGE_WEEKLY_REPORT_DATE = datetime(2022, 9, 16)
 NATIONAL_DATA_START_DATE = datetime(2022, 1, 1)
 
 TARGETS_AVERAGE_WINDOW = 7
-MOBILITY_AVERAGE_WINDOW = 7 
+MOBILITY_AVERAGE_WINDOW = 7
 IMMUNITY_LAG = 14.0
 NUCLEOCAPS_SENS = 0.78
 VACC_IMMUNE_DURATION = 100
 N_LATENT_COMPARTMENTS = 4
 
 MATRIX_LOCATIONS = [
-    'school', 
-    'home', 
-    'work', 
-    'other_locations',
+    "school",
+    "home",
+    "work",
+    "other_locations",
 ]
 
 MOBILITY_MAP = {
-    'other_locations': 
-        {
-            'retail_and_recreation': 0.34, 
-            'grocery_and_pharmacy': 0.33,
-            'parks': 0.0,
-            'transit_stations': 0.33,
-            'workplaces': 0.0,
-            'residential': 0.0,
-        },
-    'work':
-        {
-            'retail_and_recreation': 0.0, 
-            'grocery_and_pharmacy': 0.0,
-            'parks': 0.0,
-            'transit_stations': 0.0,
-            'workplaces': 1.0,
-            'residential': 0.0,
-        },  
+    "other_locations": {
+        "retail_and_recreation": 0.34,
+        "grocery_and_pharmacy": 0.33,
+        "parks": 0.0,
+        "transit_stations": 0.33,
+        "workplaces": 0.0,
+        "residential": 0.0,
+    },
+    "work": {
+        "retail_and_recreation": 0.0,
+        "grocery_and_pharmacy": 0.0,
+        "parks": 0.0,
+        "transit_stations": 0.0,
+        "workplaces": 1.0,
+        "residential": 0.0,
+    },
 }
 
 AUST_COVID_PATH = Path(__file__).parent.resolve()
-DATA_PATH = AUST_COVID_PATH / 'data'
-INPUTS_PATH = AUST_COVID_PATH / 'data'
+DATA_PATH = AUST_COVID_PATH / "data"
+INPUTS_PATH = AUST_COVID_PATH / "data"
 
 AGE_STRATA = list(range(0, 80, 5))
-STRAIN_STRATA = ['ba1', 'ba2', 'ba5']
-IMMUNITY_STRATA = ['imm', 'nonimm']
-INFECTION_PROCESSES = ['infection', 'early_reinfection', 'late_reinfection']
+STRAIN_STRATA = ["ba1", "ba2", "ba5"]
+IMMUNITY_STRATA = ["imm", "nonimm"]
+INFECTION_PROCESSES = ["infection", "early_reinfection", "late_reinfection"]
 
 COLOURS = colorbrewer.Accent
-CHANGE_STR = '_percent_change_from_baseline'
+CHANGE_STR = "_percent_change_from_baseline"
 
 RUN_IDS = {
-    'none': '2023-11-02T1101-none-d50k-t10k-b5k',
-    'mob': '2023-11-01T1547-mob-d50k-t10k-b5k',
-    'vacc': '2023-11-02T1102-vacc-d50k-t10k-b5k',
-    'both': '2023-11-02T1103-both-d50k-t10k-b5k',
+    "none": "2023-11-02T1101-none-d50k-t10k-b5k",
+    "mob": "2023-11-01T1547-mob-d50k-t10k-b5k",
+    "vacc": "2023-11-02T1102-vacc-d50k-t10k-b5k",
+    "both": "2023-11-02T1103-both-d50k-t10k-b5k",
 }
 ANALYSIS_FEATURES = {
-    'none': {
-        'mob': False,
-        'vacc': False,
+    "none": {
+        "mob": False,
+        "vacc": False,
     },
-    'mob': {
-        'mob': True,
-        'vacc': False,
+    "mob": {
+        "mob": True,
+        "vacc": False,
     },
-    'vacc': {
-        'mob': False,
-        'vacc': True,
+    "vacc": {
+        "mob": False,
+        "vacc": True,
     },
-    'both': {
-        'mob': True,
-        'vacc': True,
+    "both": {
+        "mob": True,
+        "vacc": True,
     },
 }
-PRIMARY_ANALYSIS = 'mob'
+PRIMARY_ANALYSIS = "mob"
 
 BURN_IN = 25000
 OPTI_DRAWS = 100
 
 PROJECT_PATH = None
 
+
 def set_project_base_path(path: Path):
     global PROJECT_PATH
     PROJECT_PATH = Path(path)
 
+
 def get_project_paths():
     return {
-        "SUPPLEMENT_PATH": PROJECT_PATH / 'supplement',
-        "RUNS_PATH": PROJECT_PATH / 'runs',
-        "OUTPUTS_PATH": PROJECT_PATH / 'outputs'
+        "SUPPLEMENT_PATH": PROJECT_PATH / "supplement",
+        "RUNS_PATH": PROJECT_PATH / "runs",
+        "OUTPUTS_PATH": PROJECT_PATH / "outputs",
     }
