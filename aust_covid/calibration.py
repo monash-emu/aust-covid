@@ -121,6 +121,8 @@ def get_targets(tex_doc: TexDoc, cross_ref: bool = True) -> list:
     seropos_ceiling = 0.04
     ceiling_date = datetime(2021, 12, 1)
     fig_ref = ", which is illustrated in Figure \\ref{target_fig}" if cross_ref else ""
+    notifs_dispersion = (10.0, 140.0)
+    deaths_dispersion = (60.0, 200.0)
     description = (
         "The proportion of the population seropositive was compared against "
         "the modelled proportion of the population ever infected using a binomial distribution. \n\n"
@@ -130,6 +132,12 @@ def get_targets(tex_doc: TexDoc, cross_ref: bool = True) -> list:
         "We term this the `seroprevalence ceiling'. "
         "This was achieved by adding a large negative number to the likelihood estimate for any runs with a "
         f"proportion ever infected greater than {int(seropos_ceiling * 100)}\% on {get_tex_formatted_date(ceiling_date)}. "
+        "Uniform prior distributions were used for the dispersion parameter to prior distribution for the "
+        "notifications and deaths targets. "
+        "The range for the prior distribution for the notifications dispersion parameter was "
+        f"{round(notifs_dispersion[0])} to {round(notifs_dispersion[1])}, "
+        "and for deaths was "
+        f"{round(deaths_dispersion[0])} to {round(deaths_dispersion[1])}. "
     )
     tex_doc.add_line(description, "Targets", "Seroprevalence")
 
@@ -137,12 +145,12 @@ def get_targets(tex_doc: TexDoc, cross_ref: bool = True) -> list:
         est.NegativeBinomialTarget(
             "notifications_ma",
             case_targets,
-            dispersion_param=esp.UniformPrior("notifications_ma_dispersion", (10.0, 140.0)),
+            dispersion_param=esp.UniformPrior("notifications_ma_dispersion", notifs_dispersion),
         ),
         est.NegativeBinomialTarget(
             "deaths_ma",
             death_targets,
-            dispersion_param=esp.UniformPrior("deaths_ma_dispersion", (60.0, 200.0)),
+            dispersion_param=esp.UniformPrior("deaths_ma_dispersion", deaths_dispersion),
         ),
         est.BetaTarget.from_mean_and_ci("adult_seropos_prop", serosurvey_targets, seroprev_spread),
     ]
