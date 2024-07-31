@@ -133,9 +133,17 @@ def add_dispersion_blurb_to_tex(tex_doc: TexDoc):
 
 def add_mobility_blurb_to_tex(tex_doc: TexDoc):
     description = (
-        "The two scaling functions developed in the previous section were used to adjust "
-        "rates of contact over time in the two time-varying matrix locations. "
-        "These were summed with the two static locations to obtain the final matrix. "
+        "In order to consider changes to population mobility over the simulation period, "
+        "we scaled the matrix location-specific values according to empiric estimates "
+        "of population mobility (as described in the following section). "
+        "The school and home locations contributions to the mixing matrix "
+        "were kept fixed throughout the simulation. "
+        "However, for work and other locations, we used Google mobility estimates "
+        "to develop functions of time that scaled the contributions of these locations "
+        "to the total values for the matrix. "
+        "At a given time point, the product of the scalar function values "
+        "with each of these two matrix location components was summed "
+        "with the two static location values to obtain the final mixing matrix. "
         "Examples of the final effect of the matrix scaling function on the dynamic "
         "mixing matrices are presented in Figure \\ref{example_matrices}. "
     )

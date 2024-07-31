@@ -761,6 +761,8 @@ def get_spatial_stratification(
         "The rationale for this approach was primarily to ensure that the modelled population "
         "through which transmission was effectively occurring was reduced throughout "
         "the period during which community transmission was only occurring outside of WA. "
+        "However, as described below, in the mobility extension, "
+        "we also adjusted contact rates based on spatial patch-specific mobility estimates. "
     )
     tex_doc.add_line(description, "Stratification", subsection="Spatial")
 

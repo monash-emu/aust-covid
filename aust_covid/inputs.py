@@ -430,8 +430,6 @@ def get_raw_state_mobility(
     """
     fig_ref = " (Figure \\ref{state_mobility})" if cross_ref else ""
     description = (
-        "We undertook an alternative analysis in which estimates of population mobility "
-        "were used to scale transmission rates.\n\n "
         "Raw estimates of Australian population mobility were obtained "
         "\\href{https://www.google.com/covid19/mobility/}{from Google} "
         f"with 2021 and 2022 data concatenated together{fig_ref}. "
