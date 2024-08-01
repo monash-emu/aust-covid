@@ -6,31 +6,30 @@ import yaml as yml
 
 from summer2.parameters import Function, Data, DerivedOutput
 
-from inputs.constants import INPUTS_PATH
+from aust_covid.constants import DATA_PATH
 
 
-def round_sigfig(
-    value: float, 
-    sig_figs: int
-) -> float:
+def round_sigfig(value: float, sig_figs: int) -> float:
     """
-    Round a number to a certain number of significant figures, 
+    Round a number to a certain number of significant figures,
     rather than decimal places.
-    
+
     Args:
         value: Number to round
         sig_figs: Number of significant figures to round to
     """
     if np.isinf(value):
-        return 'infinity'
+        return "infinity"
     else:
-        return round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1)) if value != 0.0 else 0.0
+        return (
+            round(value, -int(np.floor(np.log10(value))) + (sig_figs - 1)) if value != 0.0 else 0.0
+        )
 
 
 def triangle_wave_func(
-    time: float, 
-    start: float, 
-    duration: float, 
+    time: float,
+    start: float,
+    duration: float,
     peak: float,
 ) -> float:
     """Generate a peaked triangular wave function
@@ -52,7 +51,7 @@ def triangle_wave_func(
 
 
 def convolve_probability(
-    source_output: DerivedOutput, 
+    source_output: DerivedOutput,
     density_kernel: Function,
 ) -> jnp.array:
     """Create function to convolve two processes,
@@ -65,12 +64,12 @@ def convolve_probability(
     Returns:
         Jaxified function to convolve the two processes
     """
-    return jnp.convolve(source_output, density_kernel)[:len(source_output)]
+    return jnp.convolve(source_output, density_kernel)[: len(source_output)]
 
 
 def gamma_cdf(
-    shape: float, 
-    mean: float, 
+    shape: float,
+    mean: float,
     x: jnp.array,
 ) -> jnp.array:
     """The regularised gamma function is the CDF of the gamma distribution
@@ -88,8 +87,8 @@ def gamma_cdf(
 
 
 def build_gamma_dens_interval_func(
-    shape: float, 
-    mean: float, 
+    shape: float,
+    mean: float,
     model_times: np.ndarray,
 ) -> Function:
     """Create a function to return the density of the gamma distribution.
@@ -123,7 +122,7 @@ def load_param_info() -> pd.DataFrame:
             evidence: TeX-formatted full description of the evidence underpinning the choice of value
             abbreviations: Short names for parameters, e.g. for some plots
     """
-    with open(INPUTS_PATH / 'parameters.yml', 'r') as param_file:
+    with open(DATA_PATH / "parameters.yml", "r") as param_file:
         param_info = yml.safe_load(param_file)
 
     # Check each loaded set of keys (parameter names) are the same as the arbitrarily chosen first key
@@ -131,9 +130,9 @@ def load_param_info() -> pd.DataFrame:
     for cat in param_info:
         working_keys = param_info[cat].keys()
         if working_keys != first_key_set:
-            msg = f'Keys to {cat} category: {working_keys} - do not match first category {first_key_set}'
+            msg = f"Keys to {cat} category: {working_keys} - do not match first category {first_key_set}"
             raise ValueError(msg)
-    
+
     return pd.DataFrame(param_info)
 
 
@@ -141,7 +140,7 @@ def param_table_to_tex(
     param_info: pd.DataFrame,
     prior_names: list,
 ) -> pd.DataFrame:
-    """Process aesthetics of the parameter info dataframe into 
+    """Process aesthetics of the parameter info dataframe into
     readable information that can be output to TeX.
 
     Args:
@@ -150,19 +149,23 @@ def param_table_to_tex(
     Returns:
         table: Ready to write version of the table
     """
-    table = param_info[[c for c in param_info.columns if c != 'description']]
-    table['value'] = table['value'].apply(lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0))  # Round
-    table.loc[[i for i in table.index if i in prior_names], 'value'] = 'Calibrated'  # Suppress value if calibrated
-    table.index = param_info['descriptions']  # Readable description for row names
-    table.columns = table.columns.str.replace('_', ' ').str.capitalize()
+    table = param_info[[c for c in param_info.columns if c != "description"]]
+    table["value"] = table["value"].apply(
+        lambda x: str(round_sigfig(x, 3) if x != 0.0 else 0.0)
+    )  # Round
+    table.loc[[i for i in table.index if i in prior_names], "value"] = (
+        "Calibrated"  # Suppress value if calibrated
+    )
+    table.index = param_info["descriptions"]  # Readable description for row names
+    table.columns = table.columns.str.replace("_", " ").str.capitalize()
     table.index.name = None
-    table = table[['Value', 'Units', 'Evidence']]  # Reorder columns
-    table['Units'] = table['Units'].str.capitalize()
+    table = table[["Value", "Units", "Evidence"]]  # Reorder columns
+    table["Units"] = table["Units"].str.capitalize()
     return table
 
 
 def get_target_from_name(
-    targets: list, 
+    targets: list,
     name: str,
 ) -> pd.Series:
     """Get the data for a specific target from a set of targets from its name.
