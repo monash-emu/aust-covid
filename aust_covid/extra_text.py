@@ -117,7 +117,7 @@ def add_calibration_blurb_to_tex(tex_doc: TexDoc):
         "are presented in Figures \\ref{trace_fig_1}, \\ref{trace_fig_2} and \\ref{trace_fig_3}. "
         "These are used for the epidemiological interpretation of our results in the main manuscript. "
         "Overall posterior densitites (pooled over calibration chains) compared against prior distributions are "
-        "presented in Figures \\ref{comp_fig_1} and \\ref{comp_fig_2}. "
+        "presented in Figures \\ref{comp_fig_1_mob} and \\ref{comp_fig_2_mob}. "
     )
     tex_doc.add_line(description, "Calibration results", subsection="Parameter inference")
 
@@ -191,7 +191,7 @@ def add_vaccination_blurb_to_tex(tex_doc: TexDoc):
         "Central to this approach is our assumption that with regards to transmission, "
         "it is recency of booster vaccination (third or fourth dose) "
         "that is most likely to influence transmission, "
-        "rather than the total number of doses received. "
+        "rather than the total number of doses received \\cite{canevari2024}. "
         "For the modelled age group from 15 to 19-years-old and above, "
         "we aggregated the number of persons reciveing their third or fourth dose "
         "to calculate the total number of persons vaccinated each day through 2022 "
